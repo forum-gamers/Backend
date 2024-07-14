@@ -3,6 +3,7 @@ export declare global {
     interface ProcessEnv {
       CORS_LIST: string;
       PORT: string;
+      SECRET: string;
       MAILER_EMAIL: string;
       MAILER_PASSWORD: string;
       IMAGEKIT_PRIVATE_KEY: string;

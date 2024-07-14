@@ -12,6 +12,8 @@ import { memoryStorage } from 'multer';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { SequelizeModule } from '@nestjs/sequelize';
 import { ThirdPartyModule } from './third-party/third-party.module';
+import { User } from './models/user';
+import { Admin } from './models/admin';
 const conf = require('../config/config.json');
 const environment = process.env.NODE_ENV ?? 'development';
 
@@ -61,7 +63,7 @@ config();
         idle: 5,
         max: 20,
       },
-      models: [],
+      models: [User, Admin],
       synchronize: environment !== 'production',
     }),
     ThirdPartyModule,
