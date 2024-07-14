@@ -1,10 +1,74 @@
-import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
+import {
+  type MiddlewareConsumer,
+  Module,
+  type NestModule,
+} from '@nestjs/common';
+import { WinstonModule } from 'nest-winston';
+import { transports, format } from 'winston';
+import { config } from 'dotenv';
+import { LoggerMiddleware } from './middlewares/global/logger.middleware';
+import { MulterModule } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
+import { MailerModule } from '@nestjs-modules/mailer';
+import { SequelizeModule } from '@nestjs/sequelize';
+import { ThirdPartyModule } from './third-party/third-party.module';
+const conf = require('../config/config.json');
+const environment = process.env.NODE_ENV ?? 'development';
+
+config();
 
 @Module({
-  imports: [],
-  controllers: [AppController],
-  providers: [AppService],
+  imports: [
+    MulterModule.register({ storage: memoryStorage() }),
+    WinstonModule.forRoot({
+      transports: [
+        new transports.Console({
+          format: format.combine(
+            format.timestamp(),
+            format.printf(
+              ({ level, message, timestamp }) =>
+                `${timestamp} ${level}: ${message}`,
+            ),
+            format.colorize({ all: true }),
+          ),
+        }),
+      ],
+    }),
+    MailerModule.forRoot({
+      transport: {
+        host: 'smtp.gmail.com',
+        tls: {
+          rejectUnauthorized: false,
+        },
+        debug: true,
+        auth: {
+          user: process.env.MAILER_EMAIL,
+          pass: process.env.MAILER_PASSWORD,
+        },
+      },
+    }),
+    SequelizeModule.forRoot({
+      username: conf[environment].username,
+      password: conf[environment].password,
+      database: conf[environment].database,
+      dialect: conf[environment].dialect,
+      uri:
+        environment === 'production'
+          ? conf.production.use_env_variable
+          : undefined,
+      logging: environment !== 'production',
+      pool: {
+        idle: 5,
+        max: 20,
+      },
+      models: [],
+      synchronize: environment !== 'production',
+    }),
+    ThirdPartyModule,
+  ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  public configure(consumer: MiddlewareConsumer) {
+    consumer.apply(LoggerMiddleware).forRoutes('*');
+  }
+}
