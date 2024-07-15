@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { BaseValidation } from '../../base/validation.base';
 import * as yup from 'yup';
 import type {
+  EditBioProps,
   IChangeImage,
   IChangeImageQuery,
   ILoginProps,
@@ -91,6 +92,21 @@ export class UserValidation extends BaseValidation {
               .oneOf(SUPPORTED_IMAGE_TYPE, 'unsupported file type'),
           }),
         }),
+      }),
+      data,
+    );
+
+  public validateBio = async (data: any) =>
+    await this.validate<EditBioProps>(
+      yup.object().shape({
+        bio: yup
+          .string()
+          .test(
+            'is valid text',
+            'Bio must be between 0 and 160 characters and can only contain letters, numbers, and basic punctuation.',
+            (val) => /^(?=.*\S)[a-zA-Z0-9.,!?'"()\-\n ]{0,160}$/.test(val),
+          )
+          .required('bio is required'),
       }),
       data,
     );

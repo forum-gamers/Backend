@@ -251,4 +251,16 @@ export class UserController extends BaseController {
         this.imagekitService.bulkDelete([oldFileId]);
     }
   }
+
+  @Patch('bio')
+  @HttpCode(200)
+  public async changeBio(@UserMe() me: UserAttributes, @Body() payload: any) {
+    const { bio } = await this.userValidation.validateBio(payload);
+
+    await this.userService.editBio(me.id, bio);
+    return this.sendResponseBody({
+      message: 'bio updated successfully',
+      code: 200,
+    });
+  }
 }

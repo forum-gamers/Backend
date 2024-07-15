@@ -83,4 +83,12 @@ export class UserService {
       },
     });
   }
+
+  public async editBio(
+    id: string,
+    bio: string,
+    opts?: UpdateOptions<UserAttributes>,
+  ) {
+    return await this.userModel.update({ bio }, { ...opts, where: { id } });
+  }
 }

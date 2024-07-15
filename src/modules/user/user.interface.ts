@@ -48,3 +48,7 @@ export interface IChangeImageQuery {
 export interface IChangeImage {
   file: Express.Multer.File;
 }
+
+export interface EditBioProps {
+  bio: string;
+}
