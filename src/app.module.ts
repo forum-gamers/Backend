@@ -18,6 +18,13 @@ import { UserModule } from './modules/user/user.module';
 import { WalletModule } from './modules/wallet/wallet.module';
 import { Wallet } from './models/wallet';
 import { XssMiddleware } from './middlewares/global/xss.middleware';
+import { Post } from './models/post';
+import { PostLike } from './models/postlike';
+import { PostBookmark } from './models/postbookmark';
+import { PostComment } from './models/postcomment';
+import { PostMedia } from './models/postMedia';
+import { ReplyComment } from './models/replycomment';
+import { Community } from './models/community';
 const conf = require('../config/config.json');
 const environment = process.env.NODE_ENV ?? 'development';
 
@@ -67,7 +74,18 @@ config();
         idle: 5,
         max: 20,
       },
-      models: [User, Admin, Wallet],
+      models: [
+        User,
+        Admin,
+        Wallet,
+        Post,
+        PostLike,
+        PostBookmark,
+        PostComment,
+        PostMedia,
+        ReplyComment,
+        Community,
+      ],
       synchronize: environment !== 'production',
     }),
     ThirdPartyModule,
