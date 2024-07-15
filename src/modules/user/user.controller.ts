@@ -7,6 +7,7 @@ import {
   Get,
   HttpCode,
   NotFoundException,
+  Param,
   Patch,
   Post,
   Query,
@@ -34,6 +35,7 @@ import { type UserAttributes } from '../../models/user';
 import { UserMe } from './decorators/me.decorator';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { USER_BACKGROUND_FOLDER, USER_PROFILE_FOLDER } from './user.constant';
+import { UserFindById } from './pipes/findById.pipe';
 
 @Controller('user')
 export class UserController extends BaseController {
@@ -261,6 +263,17 @@ export class UserController extends BaseController {
     return this.sendResponseBody({
       message: 'bio updated successfully',
       code: 200,
+    });
+  }
+
+  @Get(':id')
+  @HttpCode(200)
+  public async getById(@Param('id', UserFindById) user: UserAttributes | null) {
+    if (!user) throw new NotFoundException('user not found');
+    return this.sendResponseBody({
+      message: 'user found',
+      code: 200,
+      data: user,
     });
   }
 }
