@@ -61,3 +61,11 @@ export const ERROR_NAME = {
   510: 'Not Extended',
   511: 'Network Authentication Required',
 };
+
+export const SUPPORTED_IMAGE_TYPE = [
+  'image/png',
+  'image/jpg',
+  'image/jpeg',
+  'image/gif',
+  'image/bmp',
+];

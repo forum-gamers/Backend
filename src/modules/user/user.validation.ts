@@ -2,10 +2,13 @@ import { Injectable } from '@nestjs/common';
 import { BaseValidation } from '../../base/validation.base';
 import * as yup from 'yup';
 import type {
+  IChangeImage,
+  IChangeImageQuery,
   ILoginProps,
   IResendEmailProps,
   RegisterInputProps,
 } from './user.interface';
+import { SUPPORTED_IMAGE_TYPE } from '../../constants/global.constant';
 
 @Injectable()
 export class UserValidation extends BaseValidation {
@@ -56,6 +59,38 @@ export class UserValidation extends BaseValidation {
           .string()
           .email('invalid email format')
           .required('email is required'),
+      }),
+      data,
+    );
+
+  public validateChangeImageQuery = async (data: any) =>
+    await this.validate<IChangeImageQuery>(
+      yup.object().shape({
+        field: yup
+          .string()
+          .oneOf(
+            ['profile', 'background'],
+            'field must be profile or background',
+          )
+          .required('field is required'),
+      }),
+      data,
+    );
+
+  public validateProfileImage = async (data: any) =>
+    await this.validate<IChangeImage>(
+      yup.object().shape({
+        file: yup.object({
+          ...this.validateFiles({
+            size: yup
+              .number()
+              .max(2 * 1024 * 1024, 'max size 2mb')
+              .required('size is required'),
+            mimetype: yup
+              .string()
+              .oneOf(SUPPORTED_IMAGE_TYPE, 'unsupported file type'),
+          }),
+        }),
       }),
       data,
     );

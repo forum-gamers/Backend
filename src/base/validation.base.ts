@@ -1,4 +1,8 @@
 import { BadRequestException } from '@nestjs/common';
+import type {
+  BaseQuery,
+  ICustomValidateFiles,
+} from '../interfaces/request.interface';
 import * as yup from 'yup';
 
 export abstract class BaseValidation {
@@ -55,4 +59,35 @@ export abstract class BaseValidation {
     .string()
     .email('invalid email format')
     .required('email is required');
+
+  protected baseQuery = ({
+    page = 1,
+    limit = 10,
+    sortBy = 'createdAt',
+    sortDirection = 'DESC',
+  }: BaseQuery) => ({
+    page: yup.number().default(page).optional(),
+    limit: yup.number().default(limit).optional(),
+    sortBy: yup.string().default(sortBy).optional(),
+    sortDirection: yup.string().default(sortDirection).optional(),
+  });
+
+  protected validateFiles = ({
+    fieldname = yup.string().required('field name is required'),
+    originalname = yup.string().required('original name is required'),
+    encoding = yup.string().required('encoding is required'),
+    size = yup
+      .number()
+      .max(10 * 1024 * 1024, 'max size 10mb')
+      .required('size is required'),
+    filename = yup.string().optional(),
+    buffer = yup.mixed().required('buffer is required'),
+  }: ICustomValidateFiles) => ({
+    fieldname,
+    originalname,
+    encoding,
+    size,
+    filename,
+    buffer,
+  });
 }

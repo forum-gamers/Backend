@@ -40,3 +40,11 @@ export interface ILoginProps {
 export interface IResendEmailProps {
   email: string;
 }
+
+export interface IChangeImageQuery {
+  field: 'profile' | 'background';
+}
+
+export interface IChangeImage {
+  file: Express.Multer.File;
+}

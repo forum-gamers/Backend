@@ -1,4 +1,6 @@
 import {
+  BadGatewayException,
+  BadRequestException,
   Body,
   ConflictException,
   Controller,
@@ -9,7 +11,9 @@ import {
   Post,
   Query,
   UnauthorizedException,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { BaseController } from '../../base/controller.base';
 import { Sequelize } from 'sequelize-typescript';
@@ -28,6 +32,8 @@ import encryption from '../../utils/encryption.utils';
 import { UserFindByToken } from './pipes/findByToken.pipe';
 import { type UserAttributes } from '../../models/user';
 import { UserMe } from './decorators/me.decorator';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { USER_BACKGROUND_FOLDER, USER_PROFILE_FOLDER } from './user.constant';
 
 @Controller('user')
 export class UserController extends BaseController {
@@ -182,5 +188,67 @@ export class UserController extends BaseController {
       code: 200,
       data: user,
     });
+  }
+
+  @Patch('image')
+  @HttpCode(200)
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: {
+        fileSize: 2 * 1024 * 1024, // 2mb
+      },
+    }),
+  )
+  public async changeImage(
+    @UploadedFile() rawFile: Express.Multer.File | null,
+    @UserMe() me: UserAttributes,
+    @Query() query: any,
+  ) {
+    if (!rawFile) throw new BadRequestException('file is required');
+
+    const [
+      { field },
+      {
+        file: { originalname, buffer },
+      },
+    ] = await Promise.all([
+      this.userValidation.validateChangeImageQuery(query),
+      this.userValidation.validateProfileImage({ file: rawFile }),
+    ]);
+
+    const cond = field === 'profile';
+    let newFileId: string | null,
+      oldFileId: string | null = null;
+    let isError = false;
+    try {
+      const uploaded = await this.imagekitService.uploadFile({
+        file: buffer,
+        fileName: originalname,
+        useUniqueFileName: true,
+        folder: cond ? USER_PROFILE_FOLDER : USER_BACKGROUND_FOLDER,
+      });
+      if (!uploaded) throw new BadGatewayException('failed to upload file');
+      newFileId = uploaded.fileId;
+
+      oldFileId = me[cond ? 'imageId' : 'backgroundImageId'];
+      await this.userService[cond ? 'changeProfile' : 'changeBackground'](
+        me.id,
+        uploaded.url,
+        uploaded.fileId,
+      );
+
+      return this.sendResponseBody({
+        message: 'OK',
+        code: 200,
+        data: uploaded.url,
+      });
+    } catch (err) {
+      isError = true;
+      if (newFileId) this.imagekitService.bulkDelete([newFileId]);
+      throw err;
+    } finally {
+      if (!isError && newFileId && oldFileId)
+        this.imagekitService.bulkDelete([oldFileId]);
+    }
   }
 }
