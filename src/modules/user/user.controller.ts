@@ -3,7 +3,9 @@ import {
   ConflictException,
   Controller,
   HttpCode,
+  Patch,
   Post,
+  Query,
   UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
@@ -21,6 +23,8 @@ import { CreateWallet } from '../wallet/dto/createWallet.dto';
 import { CreateUser } from './dto/create.dto';
 import { RateLimitGuard } from '../../middlewares/global/rateLimit.middleware';
 import encryption from '../../utils/encryption.utils';
+import { UserFindByToken } from './pipes/findByToken.pipe';
+import { type UserAttributes } from '../../models/user';
 
 @Controller('user')
 export class UserController extends BaseController {
@@ -93,7 +97,13 @@ export class UserController extends BaseController {
   }
 
   @Post('login')
-  @UseGuards(new RateLimitGuard({ windowMs: 1 * 60 * 1000, max: 10 }))
+  @UseGuards(
+    new RateLimitGuard({
+      windowMs: 1 * 60 * 1000,
+      max: 10,
+      message: 'Too many requests from this IP, please try again in 1 minute.',
+    }),
+  )
   @HttpCode(200)
   public async login(@Body() payload: any) {
     const { email, password } =
@@ -107,6 +117,30 @@ export class UserController extends BaseController {
       code: 200,
       message: 'Login successful',
       data: jwt.createToken({ id: user.id, isVerified: user.isVerified }),
+    });
+  }
+
+  @Patch('verify')
+  @UseGuards(
+    new RateLimitGuard({
+      windowMs: 1 * 60 * 1000,
+      max: 5,
+      message: 'Too many requests from this IP, please try again in 1 minute.',
+    }),
+  )
+  @HttpCode(200)
+  public async verify(
+    @Query('token', UserFindByToken) user: UserAttributes | null,
+  ) {
+    if (!user)
+      throw new UnauthorizedException('missing or invalid authorization');
+    if (user.isVerified) throw new ConflictException('user already verified');
+
+    await this.userService.activatedUser(user.id);
+
+    return this.sendResponseBody({
+      message: 'user verified successfully',
+      code: 200,
     });
   }
 }
