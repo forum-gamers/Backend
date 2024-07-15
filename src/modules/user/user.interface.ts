@@ -31,3 +31,8 @@ export interface ICheckExisting {
   phoneNumber: string;
   username: string;
 }
+
+export interface ILoginProps {
+  email: string;
+  password: string;
+}

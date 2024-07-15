@@ -4,6 +4,8 @@ import {
   Controller,
   HttpCode,
   Post,
+  UnauthorizedException,
+  UseGuards,
 } from '@nestjs/common';
 import { BaseController } from '../../base/controller.base';
 import { Sequelize } from 'sequelize-typescript';
@@ -17,6 +19,8 @@ import jwt from '../../utils/jwt.utils';
 import { WalletService } from '../wallet/wallet.service';
 import { CreateWallet } from '../wallet/dto/createWallet.dto';
 import { CreateUser } from './dto/create.dto';
+import { RateLimitGuard } from '../../middlewares/global/rateLimit.middleware';
+import encryption from '../../utils/encryption.utils';
 
 @Controller('user')
 export class UserController extends BaseController {
@@ -86,5 +90,23 @@ export class UserController extends BaseController {
       await transaction.rollback();
       throw err;
     }
+  }
+
+  @Post('login')
+  @UseGuards(new RateLimitGuard({ windowMs: 1 * 60 * 1000, max: 10 }))
+  @HttpCode(200)
+  public async login(@Body() payload: any) {
+    const { email, password } =
+      await this.userValidation.validateLogin(payload);
+
+    const user = await this.userService.findByEmail(email);
+    if (!user || !(await encryption.compareEncryption(password, user.password)))
+      throw new UnauthorizedException('invalid credentials');
+
+    return this.sendResponseBody({
+      code: 200,
+      message: 'Login successful',
+      data: jwt.createToken({ id: user.id, isVerified: user.isVerified }),
+    });
   }
 }

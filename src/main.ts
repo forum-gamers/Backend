@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import { config } from 'dotenv';
 import { ForbiddenException } from '@nestjs/common';
 import { AllExceptionsFilter } from './middlewares/global/exceptions.middleware';
+import { GlobalLimiter } from './middlewares/global/globalLimiter.middleware';
 
 config();
 
@@ -12,6 +13,7 @@ async function bootstrap() {
 
   app.setGlobalPrefix('/api/v1');
   app.useGlobalFilters(new AllExceptionsFilter());
+  app.use(new GlobalLimiter().use);
 
   app.enableCors({
     origin(origin, cb) {
