@@ -4,5 +4,6 @@ import { ImageKitService } from './imagekit/imagekit.service';
 
 @Module({
   providers: [MailService, ImageKitService],
+  exports: [MailService, ImageKitService],
 })
 export class ThirdPartyModule {}

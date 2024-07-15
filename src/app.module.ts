@@ -14,6 +14,10 @@ import { SequelizeModule } from '@nestjs/sequelize';
 import { ThirdPartyModule } from './third-party/third-party.module';
 import { User } from './models/user';
 import { Admin } from './models/admin';
+import { UserModule } from './modules/user/user.module';
+import { WalletModule } from './modules/wallet/wallet.module';
+import { Wallet } from './models/wallet';
+import { XssMiddleware } from './middlewares/global/xss.middleware';
 const conf = require('../config/config.json');
 const environment = process.env.NODE_ENV ?? 'development';
 
@@ -63,14 +67,20 @@ config();
         idle: 5,
         max: 20,
       },
-      models: [User, Admin],
+      models: [User, Admin, Wallet],
       synchronize: environment !== 'production',
     }),
     ThirdPartyModule,
+    UserModule,
+    WalletModule,
   ],
 })
 export class AppModule implements NestModule {
   public configure(consumer: MiddlewareConsumer) {
-    consumer.apply(LoggerMiddleware).forRoutes('*');
+    consumer
+      .apply(LoggerMiddleware)
+      .forRoutes('*')
+      .apply(XssMiddleware)
+      .forRoutes('*');
   }
 }

@@ -5,7 +5,7 @@ import type {
   PaginationRespProps,
 } from '../interfaces/response.interface';
 
-export class BaseController {
+export abstract class BaseController {
   protected sendResponseBody = (
     { message, data, code }: IRespBodyProps,
     opts?: PaginationRespProps,

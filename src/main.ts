@@ -2,7 +2,6 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import helmet from 'helmet';
 import { config } from 'dotenv';
-import xss from 'xss';
 import { ForbiddenException } from '@nestjs/common';
 import { AllExceptionsFilter } from './middlewares/global/exceptions.middleware';
 
@@ -14,7 +13,6 @@ async function bootstrap() {
   app.setGlobalPrefix('/api/v1');
   app.useGlobalFilters(new AllExceptionsFilter());
 
-  app.use(xss);
   app.enableCors({
     origin(origin, cb) {
       const isWhiteList = process.env.CORS_LIST.indexOf(origin) !== -1;
@@ -32,6 +30,6 @@ async function bootstrap() {
       referrerPolicy: { policy: 'same-origin' },
     }),
   );
-  await app.listen(process.env.PORT || 3000);
+  await app.listen(process.env.PORT || 3001);
 }
 bootstrap();

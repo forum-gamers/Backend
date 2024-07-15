@@ -3,7 +3,6 @@ import { Table, Model, Column, HasOne } from 'sequelize-typescript';
 
 export interface UserAttributes {
   id: string;
-  fullname: string;
   username: string;
   email: string;
   password: string;
@@ -35,20 +34,6 @@ export class User
   @Column({
     type: DataTypes.STRING,
     allowNull: false,
-    validate: {
-      notEmpty: {
-        msg: 'fullname is required',
-      },
-      notNull: {
-        msg: 'fullname is required',
-      },
-    },
-  })
-  public fullname: string;
-
-  @Column({
-    type: DataTypes.STRING,
-    allowNull: false,
     unique: true,
     validate: {
       notEmpty: {
@@ -71,9 +56,6 @@ export class User
       },
       notNull: {
         msg: 'email is required',
-      },
-      isEmail: {
-        msg: 'invalid email format',
       },
     },
   })

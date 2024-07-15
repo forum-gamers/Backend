@@ -7,18 +7,6 @@ module.exports = {
         allowNull: false,
       },
 
-      fullname: {
-        type: Sequelize.STRING,
-        allowNull: false,
-        validate: {
-          notEmpty: {
-            msg: 'fullname is required',
-          },
-          notNull: {
-            msg: 'fullname is required',
-          },
-        },
-      },
       username: {
         type: Sequelize.STRING,
         allowNull: false,
@@ -43,9 +31,6 @@ module.exports = {
           },
           notNull: {
             msg: 'email is required',
-          },
-          isEmail: {
-            msg: 'invalid email format',
           },
         },
       },

@@ -31,9 +31,6 @@ module.exports = {
           notNull: {
             msg: 'email is required',
           },
-          isEmail: {
-            msg: 'invalid email format',
-          },
         },
       },
       password: {
