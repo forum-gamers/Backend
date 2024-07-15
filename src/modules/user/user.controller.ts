@@ -2,6 +2,7 @@ import {
   Body,
   ConflictException,
   Controller,
+  Get,
   HttpCode,
   NotFoundException,
   Patch,
@@ -26,6 +27,7 @@ import { RateLimitGuard } from '../../middlewares/global/rateLimit.middleware';
 import encryption from '../../utils/encryption.utils';
 import { UserFindByToken } from './pipes/findByToken.pipe';
 import { type UserAttributes } from '../../models/user';
+import { UserMe } from './decorators/me.decorator';
 
 @Controller('user')
 export class UserController extends BaseController {
@@ -169,6 +171,16 @@ export class UserController extends BaseController {
     return this.sendResponseBody({
       message: 'email sent successfully',
       code: 200,
+    });
+  }
+
+  @Get('me')
+  @HttpCode(200)
+  public me(@UserMe() user: UserAttributes) {
+    return this.sendResponseBody({
+      message: 'user found',
+      code: 200,
+      data: user,
     });
   }
 }
