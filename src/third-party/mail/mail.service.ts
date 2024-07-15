@@ -26,7 +26,7 @@ export class MailService {
       from: `${process.env.MAILER_EMAIL} <no reply>`,
     });
 
-  public sendCofirmMail = async (to: string, token: string) =>
+  public sendConfirmMail = async (to: string, token: string) =>
     await this.sendEmail({
       to,
       subject: 'Confirm Email',

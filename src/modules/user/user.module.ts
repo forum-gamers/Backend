@@ -25,6 +25,7 @@ export class UserModule implements NestModule {
       .exclude(
         { path: 'user/register', method: RequestMethod.POST },
         { path: 'user/login', method: RequestMethod.POST },
+        { path: 'user/resend-email', method: RequestMethod.POST },
         { path: 'user/verify', method: RequestMethod.PATCH },
       )
       .forRoutes(UserController);

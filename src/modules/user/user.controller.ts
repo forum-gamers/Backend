@@ -3,6 +3,7 @@ import {
   ConflictException,
   Controller,
   HttpCode,
+  NotFoundException,
   Patch,
   Post,
   Query,
@@ -82,7 +83,7 @@ export class UserController extends BaseController {
       });
 
       const token = jwt.createToken({ id: user.id, isVerified: false });
-      this.mailService.sendCofirmMail(email, token);
+      this.mailService.sendConfirmMail(email, token);
 
       await transaction.commit();
       return this.sendResponseBody({
@@ -140,6 +141,33 @@ export class UserController extends BaseController {
 
     return this.sendResponseBody({
       message: 'user verified successfully',
+      code: 200,
+    });
+  }
+
+  @Post('resend-email')
+  @UseGuards(
+    new RateLimitGuard({
+      windowMs: 1 * 60 * 1000,
+      max: 5,
+      message: 'Too many requests from this IP, please try again in 1 minute.',
+    }),
+  )
+  @HttpCode(200)
+  public async resend(@Body() payload: any) {
+    const { email } = await this.userValidation.validateResendEmail(payload);
+
+    const user = await this.userService.findByEmail(email);
+    if (!user) throw new NotFoundException('user not found');
+    if (user.isVerified) throw new ConflictException('user already verified');
+
+    this.mailService.sendConfirmMail(
+      email,
+      jwt.createToken({ id: user.id, isVerified: false }),
+    );
+
+    return this.sendResponseBody({
+      message: 'email sent successfully',
       code: 200,
     });
   }
