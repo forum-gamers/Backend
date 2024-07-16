@@ -5,7 +5,11 @@ import {
   SUPPORTED_VIDEO_TYPE,
 } from 'src/constants/global.constant';
 import * as yup from 'yup';
-import type { IPostPayloadProps, IPostVideoProps } from './post.interface';
+import type {
+  IEditTextProps,
+  IPostPayloadProps,
+  IPostVideoProps,
+} from './post.interface';
 
 @Injectable()
 export class PostValidation extends BaseValidation {
@@ -64,6 +68,14 @@ export class PostValidation extends BaseValidation {
           .oneOf(['public', 'private', 'friend-only'], 'invalid privacy')
           .default('public'),
         communityId: yup.number().optional(),
+      }),
+      data,
+    );
+
+  public validateEditText = async (data: any, defaultValue: string | null) =>
+    await this.validate<IEditTextProps>(
+      yup.object().shape({
+        text: yup.string().nullable().default(defaultValue).optional(),
       }),
       data,
     );

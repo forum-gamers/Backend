@@ -10,3 +10,7 @@ export interface IPostPayloadProps {
   privacy: PostPrivacy;
   communityId?: number;
 }
+
+export interface IEditTextProps {
+  text: string | null;
+}

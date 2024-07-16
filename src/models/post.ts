@@ -12,6 +12,7 @@ export interface PostAttributes {
   communityId: number;
   createdAt: Date;
   updatedAt: Date;
+  editedText: boolean;
 }
 
 @Table<Model<PostAttributes, PostAttributes>>({
@@ -55,6 +56,12 @@ export class Post
     defaultValue: true,
   })
   public allowComment: boolean;
+
+  @Column({
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+  })
+  public editedText: boolean;
 
   @Column({
     type: DataTypes.ENUM,

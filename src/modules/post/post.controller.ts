@@ -7,6 +7,7 @@ import {
   HttpCode,
   NotFoundException,
   Param,
+  Patch,
   Post,
   UploadedFiles,
   UseInterceptors,
@@ -122,6 +123,7 @@ export class PostController extends BaseController {
   }
 
   @Delete(':id')
+  @HttpCode(200)
   public async deletePost(
     @UserMe('id') id: string,
     @Param('id', PostFindByIdPipe) post: PostAttributes | null,
@@ -147,5 +149,30 @@ export class PostController extends BaseController {
       await transaction.rollback();
       throw err;
     }
+  }
+
+  @Patch(':id')
+  @HttpCode(200)
+  public async editText(
+    @Param('id', PostFindByIdPipe) post: PostAttributes | null,
+    @UserMe('id') userId: string,
+    @Body() payload: any,
+  ) {
+    if (!post) throw new NotFoundException('post not found');
+    if (post.userId !== userId)
+      throw new ForbiddenException('forbidden access');
+
+    const { text } = await this.postValidation.validateEditText(
+      payload,
+      post.text,
+    );
+
+    if (!!text && text !== post.text)
+      await this.postService.editText(post.id, text);
+
+    return this.sendResponseBody({
+      message: 'OK',
+      code: 200,
+    });
   }
 }
