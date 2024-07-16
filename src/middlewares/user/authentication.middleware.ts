@@ -4,7 +4,7 @@ import {
   type NestMiddleware,
 } from '@nestjs/common';
 import type { Request, Response, NextFunction } from 'express';
-import jwt from '../../utils/jwt.utils';
+import jwt from '../../utils/global/jwt.utils';
 import { UserService } from '../../modules/user/user.service';
 
 @Injectable()

@@ -1,7 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 import type { FileType } from 'src/interfaces/model.interface';
 import type { UploadResp } from 'src/third-party/imagekit/imagekit.interface';
-import globalUtils from 'src/utils/global.utils';
+import globalUtils from 'src/utils/global/global.utils';
 
 export class CreatePostMediaDto {
   public readonly type: FileType;

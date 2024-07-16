@@ -4,7 +4,7 @@ import { User, type UserAttributes } from '../../models/user';
 import { Op, type UpdateOptions, type CreateOptions } from 'sequelize';
 import { v4 } from 'uuid';
 import { CreateUser } from './dto/create.dto';
-import encryption from '../../utils/encryption.utils';
+import encryption from '../../utils/global/encryption.utils';
 import { GetByQueryPayload } from './dto/getByQueryPayload.dto';
 
 @Injectable()

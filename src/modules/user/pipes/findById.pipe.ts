@@ -5,7 +5,7 @@ import {
   type PipeTransform,
 } from '@nestjs/common';
 import { UserService } from '../user.service';
-import globalUtils from '../../../utils/global.utils';
+import globalUtils from '../../../utils/global/global.utils';
 
 @Injectable()
 export class UserFindByIdPipe implements PipeTransform {

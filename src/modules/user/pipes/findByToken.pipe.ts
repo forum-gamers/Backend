@@ -4,7 +4,7 @@ import {
   type PipeTransform,
 } from '@nestjs/common';
 import { UserService } from '../user.service';
-import jwt from '../../../utils/jwt.utils';
+import jwt from '../../../utils/global/jwt.utils';
 
 @Injectable()
 export class UserFindByTokenPipe implements PipeTransform {

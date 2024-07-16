@@ -1,5 +1,5 @@
 import type { CreateUserProps } from '../user.interface';
-import encryption from '../../../utils/encryption.utils';
+import encryption from '../../../utils/global/encryption.utils';
 import { InternalServerErrorException } from '@nestjs/common';
 
 export class CreateUser implements CreateUserProps {
