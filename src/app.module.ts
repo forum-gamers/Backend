@@ -31,6 +31,7 @@ import { PostMediaModule } from './modules/postMedia/postMedia.module';
 import { LikeModule } from './modules/like/like.module';
 import { UserAuthentication } from './middlewares/user/authentication.middleware';
 import { VerifiedMiddleware } from './middlewares/user/verified.middleware';
+import { BookmarkModule } from './modules/bookmark/bookmark.module';
 const conf = require('../config/config.json');
 const environment = process.env.NODE_ENV ?? 'development';
 
@@ -100,6 +101,7 @@ config();
     PostModule,
     PostMediaModule,
     LikeModule,
+    BookmarkModule,
   ],
 })
 export class AppModule implements NestModule {

@@ -26,6 +26,8 @@
     "@nestjs/platform-express": "^10.3.10",
     "@nestjs/sequelize": "^10.0.1",
     "bcryptjs": "^2.4.3",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.1",
     "crypto-ts": "^1.0.2",
     "dotenv": "^16.4.5",
     "express-rate-limit": "^7.3.1",

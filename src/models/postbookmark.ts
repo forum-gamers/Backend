@@ -1,5 +1,6 @@
 import { DataTypes } from 'sequelize';
-import { Column, Model, Table } from 'sequelize-typescript';
+import { BelongsTo, Column, Model, Table } from 'sequelize-typescript';
+import { Post } from './post';
 
 export interface PostBookmarkAttributes {
   id: number;
@@ -64,4 +65,7 @@ export class PostBookmark
     type: DataTypes.DATE,
   })
   public updatedAt: Date;
+
+  @BelongsTo(() => Post, 'postId')
+  public post: Post;
 }
