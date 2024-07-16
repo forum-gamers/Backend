@@ -40,4 +40,15 @@ export class PostService {
       { ...opts, where: { id } },
     );
   }
+
+  public async updateTotalLike(
+    id: number,
+    totalLike: number,
+    opts?: Partial<UpdateOptions<PostAttributes>>,
+  ) {
+    return await this.postModel.update(
+      { totalLike },
+      { ...opts, where: { id } },
+    );
+  }
 }

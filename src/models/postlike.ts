@@ -10,8 +10,8 @@ export interface PostLikeAttributes {
 }
 
 @Table<Model<PostLikeAttributes, PostLikeAttributes>>({
-  modelName: 'PostLike',
-  tableName: 'PostLike',
+  modelName: 'PostLikes',
+  tableName: 'PostLikes',
 })
 export class PostLike
   extends Model<PostLikeAttributes, PostLikeAttributes>

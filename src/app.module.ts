@@ -2,6 +2,7 @@ import {
   type MiddlewareConsumer,
   Module,
   type NestModule,
+  RequestMethod,
 } from '@nestjs/common';
 import { WinstonModule } from 'nest-winston';
 import { transports, format } from 'winston';
@@ -27,6 +28,9 @@ import { ReplyComment } from './models/replycomment';
 import { Community } from './models/community';
 import { PostModule } from './modules/post/post.module';
 import { PostMediaModule } from './modules/postMedia/postMedia.module';
+import { LikeModule } from './modules/like/like.module';
+import { UserAuthentication } from './middlewares/user/authentication.middleware';
+import { VerifiedMiddleware } from './middlewares/user/verified.middleware';
 const conf = require('../config/config.json');
 const environment = process.env.NODE_ENV ?? 'development';
 
@@ -95,6 +99,7 @@ config();
     WalletModule,
     PostModule,
     PostMediaModule,
+    LikeModule,
   ],
 })
 export class AppModule implements NestModule {
@@ -103,6 +108,22 @@ export class AppModule implements NestModule {
       .apply(LoggerMiddleware)
       .forRoutes('*')
       .apply(XssMiddleware)
+      .forRoutes('*')
+      .apply(UserAuthentication)
+      .exclude(
+        { path: 'user/register', method: RequestMethod.POST },
+        { path: 'user/login', method: RequestMethod.POST },
+        { path: 'user/resend-email', method: RequestMethod.POST },
+        { path: 'user/verify', method: RequestMethod.PATCH },
+      )
+      .forRoutes('*')
+      .apply(VerifiedMiddleware)
+      .exclude(
+        { path: 'user/register', method: RequestMethod.POST },
+        { path: 'user/login', method: RequestMethod.POST },
+        { path: 'user/resend-email', method: RequestMethod.POST },
+        { path: 'user/verify', method: RequestMethod.PATCH },
+      )
       .forRoutes('*');
   }
 }
