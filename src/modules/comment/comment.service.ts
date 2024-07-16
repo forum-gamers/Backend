@@ -31,4 +31,8 @@ export class CommentService {
   public async findAllByPostId(postId: number) {
     return await this.commentModel.findAll({ where: { postId } });
   }
+
+  public async findById(id: number) {
+    return await this.commentModel.findByPk(id);
+  }
 }

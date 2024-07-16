@@ -2,6 +2,8 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
+  ForbiddenException,
   HttpCode,
   NotFoundException,
   Param,
@@ -16,12 +18,18 @@ import { PostFindByIdPipe } from '../post/pipes/findById.pipe';
 import { type PostAttributes } from 'src/models/post';
 import { CreateCommentDto } from './dto/create.dto';
 import { RateLimitGuard } from 'src/middlewares/global/rateLimit.middleware';
+import { CommentFindByIdPipe } from './pipes/commentFindById.pipe';
+import { type PostCommentAttributes } from 'src/models/postcomment';
+import { Sequelize } from 'sequelize-typescript';
+import { ReplyService } from '../reply/reply.service';
 
 @Controller('comment')
 export class CommentController extends BaseController {
   constructor(
     private readonly commentService: CommentService,
     private readonly commentValidation: CommentValidation,
+    private readonly sequelize: Sequelize,
+    private readonly replyService: ReplyService,
   ) {
     super();
   }
@@ -55,5 +63,37 @@ export class CommentController extends BaseController {
         new CreateCommentDto({ userId, text, postId: post.id }),
       ),
     });
+  }
+
+  @Delete(':id')
+  @HttpCode(200)
+  public async delete(
+    @UserMe('id') userId: string,
+    @Param('id', CommentFindByIdPipe) comment: PostCommentAttributes | null,
+  ) {
+    if (!comment) throw new NotFoundException('comment not found');
+    if (comment.userId !== userId)
+      throw new ForbiddenException(
+        'you are not allowed to delete this comment',
+      );
+
+    const transaction = await this.sequelize.transaction();
+    try {
+      await this.replyService.deleteAllByCommentId(comment.id, {
+        transaction,
+      });
+      await this.commentService.deleteAllByPostId(comment.postId, {
+        transaction,
+      });
+
+      await transaction.commit();
+      return this.sendResponseBody({
+        message: 'comment deleted successfully',
+        code: 200,
+      });
+    } catch (err) {
+      await transaction.rollback();
+      throw err;
+    }
   }
 }
