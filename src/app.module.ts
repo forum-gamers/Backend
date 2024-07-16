@@ -25,6 +25,8 @@ import { PostComment } from './models/postcomment';
 import { PostMedia } from './models/postMedia';
 import { ReplyComment } from './models/replycomment';
 import { Community } from './models/community';
+import { PostModule } from './modules/post/post.module';
+import { PostMediaModule } from './modules/postMedia/postMedia.module';
 const conf = require('../config/config.json');
 const environment = process.env.NODE_ENV ?? 'development';
 
@@ -91,6 +93,8 @@ config();
     ThirdPartyModule,
     UserModule,
     WalletModule,
+    PostModule,
+    PostMediaModule,
   ],
 })
 export class AppModule implements NestModule {

@@ -11,6 +11,7 @@ module.exports = {
      */
     await queryInterface.addColumn('Posts', 'communityId', {
       type: Sequelize.INTEGER,
+      allowNull: true,
       references: {
         model: {
           tableName: 'Communities',

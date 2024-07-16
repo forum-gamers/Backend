@@ -8,11 +8,11 @@ export interface BaseQuery {
 }
 
 export interface ICustomValidateFiles {
-  fieldname?: StringSchema;
-  originalname?: StringSchema;
-  encoding?: StringSchema;
-  mimetype?: StringSchema;
-  size?: NumberSchema;
-  filename?: StringSchema;
-  buffer?: any;
+  fieldname: StringSchema;
+  originalname: StringSchema;
+  encoding: StringSchema;
+  mimetype: StringSchema;
+  size: NumberSchema;
+  filename: StringSchema;
+  buffer: any;
 }

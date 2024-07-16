@@ -1,5 +1,6 @@
 import { DataTypes } from 'sequelize';
 import { Column, Model, Table } from 'sequelize-typescript';
+import type { FileType } from 'src/interfaces/model.interface';
 
 export interface PostMediaAttributes {
   id: number;
@@ -40,7 +41,7 @@ export class PostMedia
       },
     },
   })
-  public type: 'image' | 'video';
+  public type: FileType;
 
   @Column({
     type: DataTypes.STRING,

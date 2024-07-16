@@ -18,6 +18,7 @@ import { VerifiedMiddleware } from '../../middlewares/user/verified.middleware';
   imports: [ThirdPartyModule, SequelizeModule.forFeature([User]), WalletModule],
   providers: [UserValidation, UserService],
   controllers: [UserController],
+  exports: [UserService],
 })
 export class UserModule implements NestModule {
   public configure(consumer: MiddlewareConsumer) {

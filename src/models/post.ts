@@ -1,12 +1,13 @@
 import { DataTypes } from 'sequelize';
 import { Column, Model, Table } from 'sequelize-typescript';
+import type { PostPrivacy } from 'src/interfaces/model.interface';
 
 export interface PostAttributes {
   id: number;
   text?: string;
   userId: string;
   allowComment: boolean;
-  privacy: 'public' | 'private' | 'friend-only';
+  privacy: PostPrivacy;
   totalLike: number;
   communityId: number;
   createdAt: Date;
@@ -81,7 +82,7 @@ export class Post
   public updatedAt: Date;
 
   @Column({
-    allowNull: false,
+    allowNull: true,
     type: DataTypes.INTEGER,
     references: {
       model: {

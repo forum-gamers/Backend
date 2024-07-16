@@ -69,3 +69,14 @@ export const SUPPORTED_IMAGE_TYPE = [
   'image/gif',
   'image/bmp',
 ];
+
+export const SUPPORTED_VIDEO_TYPE = [
+  'video/mp4',
+  'video/avi',
+  'video/mpeg',
+  'video/quicktime',
+];
+
+export const SUPPORTED_IMAGE_EXT = ['.png', '.jpg', '.jpeg', '.gif', '.bmp'];
+
+export const SUPPORTED_VIDEO_EXT = ['.mp4', '.avi', '.mpeg', '.qt', '.mov'];

@@ -4,6 +4,10 @@ import type {
   ICustomValidateFiles,
 } from '../interfaces/request.interface';
 import * as yup from 'yup';
+import {
+  SUPPORTED_IMAGE_TYPE,
+  SUPPORTED_VIDEO_TYPE,
+} from 'src/constants/global.constant';
 
 export abstract class BaseValidation {
   protected async validate<T = any>(schema: yup.Schema, data: any): Promise<T> {
@@ -82,12 +86,20 @@ export abstract class BaseValidation {
       .required('size is required'),
     filename = yup.string().optional(),
     buffer = yup.mixed().required('buffer is required'),
-  }: ICustomValidateFiles) => ({
+    mimetype = yup
+      .string()
+      .oneOf(
+        [...SUPPORTED_IMAGE_TYPE, ...SUPPORTED_VIDEO_TYPE],
+        'unsupported file',
+      )
+      .required('mimetype is required'),
+  }: Partial<ICustomValidateFiles>): ICustomValidateFiles => ({
     fieldname,
     originalname,
     encoding,
     size,
     filename,
     buffer,
+    mimetype,
   });
 }
