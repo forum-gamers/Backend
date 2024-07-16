@@ -55,4 +55,11 @@ export class BookmarkService {
       include: [{ model: Post }],
     });
   }
+
+  public async deleteAllByPostId(
+    postId: number,
+    opts?: DestroyOptions<PostBookmarkAttributes>,
+  ) {
+    return await this.bookmarkModel.destroy({ ...opts, where: { postId } });
+  }
 }

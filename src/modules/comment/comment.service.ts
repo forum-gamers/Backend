@@ -5,7 +5,7 @@ import {
   type PostCommentAttributes,
 } from 'src/models/postcomment';
 import { CreateCommentDto } from './dto/create.dto';
-import { type CreateOptions } from 'sequelize';
+import { type UpdateOptions, type CreateOptions } from 'sequelize';
 
 @Injectable()
 export class CommentService {
@@ -19,5 +19,16 @@ export class CommentService {
     opts?: CreateOptions<PostCommentAttributes>,
   ) {
     return await this.commentModel.create(payload, opts);
+  }
+
+  public async deleteAllByPostId(
+    postId: number,
+    opts?: Partial<UpdateOptions<PostCommentAttributes>>,
+  ) {
+    return await this.commentModel.destroy({ ...opts, where: { postId } });
+  }
+
+  public async findAllByPostId(postId: number) {
+    return await this.commentModel.findAll({ where: { postId } });
   }
 }

@@ -6,6 +6,7 @@ export interface ReplyCommentAttributes {
   commentId: number;
   userId: string;
   text: string;
+  postId: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -53,6 +54,20 @@ export class ReplyComment
     },
   })
   public text: string;
+
+  @Column({
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: {
+        tableName: 'Posts',
+      },
+      key: 'id',
+    },
+    onDelete: 'CASCADE',
+    onUpdate: 'CASCADE',
+  })
+  public postId: number;
 
   @Column({
     type: DataTypes.INTEGER,

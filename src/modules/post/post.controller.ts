@@ -29,6 +29,10 @@ import { PostMedia } from 'src/models/postMedia';
 import { PostFindByIdPipe } from './pipes/findById.pipe';
 import { type PostAttributes } from 'src/models/post';
 import { RateLimitGuard } from 'src/middlewares/global/rateLimit.middleware';
+import { BookmarkService } from '../bookmark/bookmark.service';
+import { LikeService } from '../like/like.service';
+import { CommentService } from '../comment/comment.service';
+import { ReplyService } from '../reply/reply.service';
 
 @Controller('post')
 export class PostController extends BaseController {
@@ -38,6 +42,10 @@ export class PostController extends BaseController {
     private readonly imagekitService: ImageKitService,
     private readonly sequelize: Sequelize,
     private readonly postMediaService: PostMediaService,
+    private readonly bookmarkService: BookmarkService,
+    private readonly likeService: LikeService,
+    private readonly commentService: CommentService,
+    private readonly replyService: ReplyService,
   ) {
     super();
   }
@@ -146,7 +154,13 @@ export class PostController extends BaseController {
       if (medias.length)
         await this.imagekitService.bulkDelete(medias.map((el) => el.fileId));
 
-      await this.postMediaService.deleteByPostId(post.id, { transaction });
+      await Promise.all([
+        this.postMediaService.deleteByPostId(post.id, { transaction }),
+        this.bookmarkService.deleteAllByPostId(post.id, { transaction }),
+        this.commentService.deleteAllByPostId(post.id, { transaction }),
+        this.likeService.deleteAllByPostId(post.id, { transaction }),
+        this.replyService.deleteAllByPostId(post.id, { transaction }),
+      ]);
       await this.postService.deleteOne(post.id, { transaction });
 
       await transaction.commit();

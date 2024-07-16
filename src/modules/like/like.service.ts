@@ -32,4 +32,11 @@ export class LikeService {
       where: { postId, userId },
     });
   }
+
+  public async deleteAllByPostId(
+    postId: number,
+    opts?: DestroyOptions<PostLikeAttributes>,
+  ) {
+    return await this.postLikeModel.destroy({ ...opts, where: { postId } });
+  }
 }
