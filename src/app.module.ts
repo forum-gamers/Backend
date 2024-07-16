@@ -32,6 +32,7 @@ import { LikeModule } from './modules/like/like.module';
 import { UserAuthentication } from './middlewares/user/authentication.middleware';
 import { VerifiedMiddleware } from './middlewares/user/verified.middleware';
 import { BookmarkModule } from './modules/bookmark/bookmark.module';
+import { CommentModule } from './modules/comment/comment.module';
 const conf = require('../config/config.json');
 const environment = process.env.NODE_ENV ?? 'development';
 
@@ -102,6 +103,7 @@ config();
     PostMediaModule,
     LikeModule,
     BookmarkModule,
+    CommentModule,
   ],
 })
 export class AppModule implements NestModule {

@@ -10,6 +10,7 @@ import {
   Patch,
   Post,
   UploadedFiles,
+  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { BaseController } from 'src/base/controller.base';
@@ -27,6 +28,7 @@ import { PostMediaService } from '../postMedia/postMedia.service';
 import { PostMedia } from 'src/models/postMedia';
 import { PostFindByIdPipe } from './pipes/findById.pipe';
 import { type PostAttributes } from 'src/models/post';
+import { RateLimitGuard } from 'src/middlewares/global/rateLimit.middleware';
 
 @Controller('post')
 export class PostController extends BaseController {
@@ -42,6 +44,13 @@ export class PostController extends BaseController {
 
   @Post()
   @HttpCode(201)
+  @UseGuards(
+    new RateLimitGuard({
+      windowMs: 5 * 60 * 1000,
+      max: 50,
+      message: 'Too many requests from this IP, please try again in 5 minutes.',
+    }),
+  )
   @UseInterceptors(
     FilesInterceptor('files', 4, {
       limits: {
