@@ -1,5 +1,6 @@
 import { DataTypes } from 'sequelize';
-import { Column, Model, Table } from 'sequelize-typescript';
+import { BelongsTo, Column, Model, Table } from 'sequelize-typescript';
+import { Post } from './post';
 
 export interface PostCommentAttributes {
   id: number;
@@ -79,4 +80,7 @@ export class PostComment
     type: DataTypes.DATE,
   })
   public updatedAt: Date;
+
+  @BelongsTo(() => Post, 'postId')
+  public post: Post;
 }

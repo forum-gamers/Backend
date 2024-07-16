@@ -6,6 +6,7 @@ import {
 } from 'src/models/postcomment';
 import { CreateCommentDto } from './dto/create.dto';
 import { type UpdateOptions, type CreateOptions } from 'sequelize';
+import { QueryParamsDto } from 'src/utils/dto/pagination.dto';
 
 @Injectable()
 export class CommentService {
@@ -34,5 +35,22 @@ export class CommentService {
 
   public async findById(id: number) {
     return await this.commentModel.findByPk(id);
+  }
+
+  public async getPostComment(
+    postId: number,
+    {
+      page = 1,
+      limit = 10,
+      sortDirection = 'desc',
+      sortby = 'createdAt',
+    }: QueryParamsDto,
+  ) {
+    return await this.commentModel.findAndCountAll({
+      where: { postId },
+      limit,
+      offset: (page - 1) * limit,
+      order: [[sortby, sortDirection]],
+    });
   }
 }

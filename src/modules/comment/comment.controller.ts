@@ -4,10 +4,12 @@ import {
   Controller,
   Delete,
   ForbiddenException,
+  Get,
   HttpCode,
   NotFoundException,
   Param,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { BaseController } from 'src/base/controller.base';
@@ -22,6 +24,7 @@ import { CommentFindByIdPipe } from './pipes/commentFindById.pipe';
 import { type PostCommentAttributes } from 'src/models/postcomment';
 import { Sequelize } from 'sequelize-typescript';
 import { ReplyService } from '../reply/reply.service';
+import { QueryParamsDto } from 'src/utils/dto/pagination.dto';
 
 @Controller('comment')
 export class CommentController extends BaseController {
@@ -95,5 +98,41 @@ export class CommentController extends BaseController {
       await transaction.rollback();
       throw err;
     }
+  }
+
+  @Get(':id')
+  @HttpCode(200)
+  public async getPostComment(
+    @Param('id', PostFindByIdPipe) post: PostAttributes | null,
+    @Query()
+    {
+      page = 1,
+      limit = 10,
+      sortDirection = 'desc',
+      sortby = 'createdAt',
+    }: QueryParamsDto,
+  ) {
+    if (!post) throw new NotFoundException('post not found');
+
+    const { rows, count } = await this.commentService.getPostComment(post.id, {
+      page,
+      limit,
+      sortDirection,
+      sortby,
+    });
+
+    return this.sendResponseBody(
+      {
+        message: 'comments fetched successfully',
+        code: 200,
+        data: rows,
+      },
+      {
+        page,
+        limit,
+        totalData: count,
+        totalPage: Math.ceil(count / limit),
+      },
+    );
   }
 }
