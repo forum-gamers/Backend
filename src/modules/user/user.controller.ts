@@ -30,12 +30,12 @@ import { CreateWallet } from '../wallet/dto/createWallet.dto';
 import { CreateUser } from './dto/create.dto';
 import { RateLimitGuard } from '../../middlewares/global/rateLimit.middleware';
 import encryption from '../../utils/encryption.utils';
-import { UserFindByToken } from './pipes/findByToken.pipe';
+import { UserFindByTokenPipe } from './pipes/findByToken.pipe';
 import { type UserAttributes } from '../../models/user';
 import { UserMe } from './decorators/me.decorator';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { USER_BACKGROUND_FOLDER, USER_PROFILE_FOLDER } from './user.constant';
-import { UserFindById } from './pipes/findById.pipe';
+import { UserFindByIdPipe } from './pipes/findById.pipe';
 
 @Controller('user')
 export class UserController extends BaseController {
@@ -141,7 +141,7 @@ export class UserController extends BaseController {
   )
   @HttpCode(200)
   public async verify(
-    @Query('token', UserFindByToken) user: UserAttributes | null,
+    @Query('token', UserFindByTokenPipe) user: UserAttributes | null,
   ) {
     if (!user)
       throw new UnauthorizedException('missing or invalid authorization');
@@ -268,7 +268,9 @@ export class UserController extends BaseController {
 
   @Get(':id')
   @HttpCode(200)
-  public async getById(@Param('id', UserFindById) user: UserAttributes | null) {
+  public async getById(
+    @Param('id', UserFindByIdPipe) user: UserAttributes | null,
+  ) {
     if (!user) throw new NotFoundException('user not found');
     return this.sendResponseBody({
       message: 'user found',

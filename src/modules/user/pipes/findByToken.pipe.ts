@@ -7,7 +7,7 @@ import { UserService } from '../user.service';
 import jwt from '../../../utils/jwt.utils';
 
 @Injectable()
-export class UserFindByToken implements PipeTransform {
+export class UserFindByTokenPipe implements PipeTransform {
   constructor(private readonly userService: UserService) {}
 
   public transform(value: string, metadata: ArgumentMetadata) {

@@ -2,7 +2,11 @@ import {
   BadGatewayException,
   Body,
   Controller,
+  Delete,
+  ForbiddenException,
   HttpCode,
+  NotFoundException,
+  Param,
   Post,
   UploadedFiles,
   UseInterceptors,
@@ -20,6 +24,8 @@ import { CreatePostDto } from './dto/create.dto';
 import { UserMe } from '../user/decorators/me.decorator';
 import { PostMediaService } from '../postMedia/postMedia.service';
 import { PostMedia } from 'src/models/postMedia';
+import { PostFindByIdPipe } from './pipes/findById.pipe';
+import { type PostAttributes } from 'src/models/post';
 
 @Controller('post')
 export class PostController extends BaseController {
@@ -110,6 +116,34 @@ export class PostController extends BaseController {
     } catch (err) {
       if (postMedias.length)
         this.imagekitService.bulkDelete(postMedias.map((el) => el.fileId));
+      await transaction.rollback();
+      throw err;
+    }
+  }
+
+  @Delete(':id')
+  public async deletePost(
+    @UserMe('id') id: string,
+    @Param('id', PostFindByIdPipe) post: PostAttributes | null,
+  ) {
+    if (!post) throw new NotFoundException('post not found');
+    if (post.userId !== id) throw new ForbiddenException('forbidden access');
+
+    const transaction = await this.sequelize.transaction();
+    try {
+      const medias = await this.postMediaService.findByPostId(post.id);
+      if (medias.length)
+        await this.imagekitService.bulkDelete(medias.map((el) => el.fileId));
+
+      await this.postMediaService.deleteByPostId(post.id, { transaction });
+      await this.postService.deleteOne(post.id, { transaction });
+
+      await transaction.commit();
+      return this.sendResponseBody({
+        message: 'post deleted successfully',
+        code: 200,
+      });
+    } catch (err) {
       await transaction.rollback();
       throw err;
     }
