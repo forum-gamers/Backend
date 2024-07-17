@@ -1,5 +1,6 @@
 import { DataTypes } from 'sequelize';
-import { Column, Model, Table } from 'sequelize-typescript';
+import { Column, HasMany, Model, Table } from 'sequelize-typescript';
+import { CommunityMembers } from './communitymember';
 
 export interface CommunityAttributes {
   id: number;
@@ -88,4 +89,7 @@ export class Community
     type: DataTypes.DATE,
   })
   public updatedAt: Date;
+
+  @HasMany(() => CommunityMembers, 'communityId')
+  public members: CommunityMembers[];
 }

@@ -1,6 +1,7 @@
 import { DataTypes } from 'sequelize';
-import { Column, Model, Table } from 'sequelize-typescript';
+import { BelongsTo, Column, Model, Table } from 'sequelize-typescript';
 import type { CommunityMemberRole } from 'src/interfaces/model.interface';
+import { User } from './user';
 
 export interface CommunityMembersAttributes {
   id: number;
@@ -73,4 +74,7 @@ export class CommunityMembers
     type: DataTypes.DATE,
   })
   public updatedAt: Date;
+
+  @BelongsTo(() => User, 'userId')
+  public user: User;
 }

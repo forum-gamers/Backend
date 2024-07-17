@@ -3,6 +3,8 @@ import { InjectModel } from '@nestjs/sequelize';
 import { Community, type CommunityAttributes } from 'src/models/community';
 import { CreateCommunityDto } from './dto/create.dto';
 import { DestroyOptions, type CreateOptions } from 'sequelize';
+import { CommunityMembers } from 'src/models/communitymember';
+import { User } from 'src/models/user';
 
 @Injectable()
 export class CommunityService {
@@ -24,6 +26,26 @@ export class CommunityService {
 
   public async findById(id: number) {
     return await this.communityModel.findByPk(id);
+  }
+
+  public async findByIdAndFindMe(id: number, userId: string) {
+    return (await this.communityModel.findByPk(id, {
+      include: [
+        {
+          model: CommunityMembers,
+          where: { userId },
+          required: false,
+          include: [
+            {
+              model: User,
+              as: 'user',
+            },
+          ],
+        },
+      ],
+    })) as
+      | (Community & { members: (CommunityMembers & { user: User }) | null })
+      | null;
   }
 
   public async deleteOne(

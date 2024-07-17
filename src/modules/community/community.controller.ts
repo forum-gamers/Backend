@@ -6,7 +6,6 @@ import {
   ForbiddenException,
   HttpCode,
   NotFoundException,
-  Param,
   Post,
   UploadedFile,
   UseGuards,
@@ -24,8 +23,8 @@ import { Sequelize } from 'sequelize-typescript';
 import { CommunityMemberService } from '../communityMember/communityMember.service';
 import { CreateCommunityMemberDto } from '../communityMember/dto/create.dto';
 import { RateLimitGuard } from 'src/middlewares/global/rateLimit.middleware';
-import { CommunityFindByIdPipe } from './pipes/findById.pipe';
 import { type CommunityAttributes } from 'src/models/community';
+import { CommunityContext } from './decorators/community.decorator';
 
 @Controller('community')
 export class CommunityController extends BaseController {
@@ -120,8 +119,8 @@ export class CommunityController extends BaseController {
   @Delete(':id')
   @HttpCode(200)
   public async deleteCommunity(
-    @Param('id', CommunityFindByIdPipe) community: CommunityAttributes | null,
     @UserMe('id') userId: string,
+    @CommunityContext('community') community: CommunityAttributes,
   ) {
     if (!community) throw new NotFoundException('community not found');
 

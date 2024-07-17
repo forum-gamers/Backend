@@ -214,11 +214,7 @@ export class PostController extends BaseController {
   @Get()
   @HttpCode(200)
   @UsePipes(PaginationPipe)
-  public async getPosts(
-    @Query()
-    query: any,
-    @UserMe('id') userId: string,
-  ) {
+  public async getPosts(@Query() query: any, @UserMe('id') userId: string) {
     const { page, limit } =
       await this.postValidation.validateGetPostQuery(query);
 
