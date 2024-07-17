@@ -2,7 +2,7 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('CommunityMembers', {
+    await queryInterface.createTable('RoomMembers', {
       id: {
         allowNull: false,
         autoIncrement: true,
@@ -21,22 +21,22 @@ module.exports = {
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE',
       },
-      communityId: {
+      role: {
+        type: Sequelize.ENUM,
+        values: ['admin', 'member', 'owner'],
+        defaultValue: 'member',
+      },
+      roomId: {
         type: Sequelize.INTEGER,
         allowNull: false,
         references: {
           model: {
-            tableName: 'Communities',
+            tableName: 'RoomChats',
           },
           key: 'id',
         },
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE',
-      },
-      role: {
-        type: Sequelize.ENUM,
-        values: ['admin', 'member', 'owner'],
-        defaultValue: 'member',
       },
       createdAt: {
         allowNull: false,
@@ -49,6 +49,6 @@ module.exports = {
     });
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable('CommunityMembers');
+    await queryInterface.dropTable('RoomMembers');
   },
 };

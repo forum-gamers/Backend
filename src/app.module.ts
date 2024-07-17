@@ -39,6 +39,9 @@ import { FollowModule } from './modules/follow/follow.module';
 import { CommunityModule } from './modules/community/community.module';
 import { CommunityMembers } from './models/communitymember';
 import { CommunityMemberModule } from './modules/communityMember/communityMember.module';
+import { RoomChat } from './models/roomchat';
+import { RoomMember } from './models/roommember';
+import { Chat } from './models/chat';
 const conf = require('../config/config.json');
 const environment = process.env.NODE_ENV ?? 'development';
 
@@ -101,6 +104,9 @@ config();
         Community,
         Follow,
         CommunityMembers,
+        RoomChat,
+        RoomMember,
+        Chat,
       ],
       synchronize: environment !== 'production',
     }),

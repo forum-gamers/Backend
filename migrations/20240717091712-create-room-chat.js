@@ -2,14 +2,14 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('CommunityMembers', {
+    await queryInterface.createTable('RoomChats', {
       id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER,
       },
-      userId: {
+      owner: {
         type: Sequelize.UUID,
         allowNull: false,
         references: {
@@ -21,22 +21,26 @@ module.exports = {
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE',
       },
-      communityId: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        references: {
-          model: {
-            tableName: 'Communities',
-          },
-          key: 'id',
-        },
-        onDelete: 'CASCADE',
-        onUpdate: 'CASCADE',
+      name: {
+        type: Sequelize.STRING,
+        allowNull: true,
       },
-      role: {
+      image: {
+        type: Sequelize.STRING,
+        allowNull: true,
+      },
+      imageId: {
+        type: Sequelize.STRING,
+        allowNull: true,
+      },
+      description: {
+        type: Sequelize.TEXT,
+        allowNull: true,
+      },
+      type: {
         type: Sequelize.ENUM,
-        values: ['admin', 'member', 'owner'],
-        defaultValue: 'member',
+        values: ['private', 'group'],
+        defaultValue: 'private',
       },
       createdAt: {
         allowNull: false,
@@ -49,6 +53,6 @@ module.exports = {
     });
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable('CommunityMembers');
+    await queryInterface.dropTable('RoomChats');
   },
 };
