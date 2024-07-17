@@ -63,7 +63,7 @@ export class PostService {
     userId: string,
   ) {
     const now = new Date();
-    const threeDaysAgo = new Date(now.setDate(now.getDate() - 7)).toISOString();
+    const aWeekAgo = new Date(now.setDate(now.getDate() - 7)).toISOString();
     const offset = (page - 1) * limit;
     return await this.sequelize.query<{
       datas: PostResponse[];
@@ -84,6 +84,11 @@ export class PostService {
           AND "privacy" = 'public'
           ${tags && tags.length > 0 ? `AND "tags" && ARRAY[${tags.map((tag) => `'${tag}'`).join(',')}]::varchar[]` : ''}
           ${userIds && userIds.length > 0 ? `AND "userId" IN (${userIds.map((id) => `'${id}'`).join(',')})` : ''}
+          OR "Posts"."userId" IN (
+            SELECT "Follows"."followedId"
+            FROM "Follows"
+            WHERE "Follows"."followerId" = $2
+          )
       ), 
       post_data AS (
         SELECT 
@@ -119,7 +124,7 @@ export class PostService {
       FROM post_data;`,
       {
         type: QueryTypes.SELECT,
-        bind: [threeDaysAgo, userId, limit, offset],
+        bind: [aWeekAgo, userId, limit, offset],
       },
     );
   }
