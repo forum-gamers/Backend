@@ -1,3 +1,5 @@
+import { Community } from 'src/models/community';
+
 export class PostResponse {
   id: number;
   userId: string;
@@ -13,4 +15,5 @@ export class PostResponse {
   isLiked: boolean;
   isShared: boolean;
   totalData: number;
+  community: Community | null;
 }

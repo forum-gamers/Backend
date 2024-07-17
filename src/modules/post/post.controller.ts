@@ -219,10 +219,6 @@ export class PostController extends BaseController {
     query: any,
     @UserMe('id') userId: string,
   ) {
-    /**
-     * TODOs
-     * - add get by community
-     */
     const { page, limit } =
       await this.postValidation.validateGetPostQuery(query);
 

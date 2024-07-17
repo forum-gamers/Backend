@@ -67,93 +67,118 @@ export class PostService {
 
     return await this.sequelize.query<PostResponseQueryDB>(
       `WITH 
-      top_tags AS (
-        SELECT
-          "tags"
-        FROM (
+        top_tags AS (
           SELECT
+            "tags"
+          FROM (
+            SELECT
+              "tags",
+              COUNT(*) AS tag_count
+            FROM "Posts"
+            WHERE "createdAt" >= NOW() - INTERVAL '7 days'
+                AND "privacy" = 'public'
+            GROUP BY "tags"
+            ORDER BY tag_count DESC
+            LIMIT 1
+          ) AS top_tag
+        ),
+        filtered_posts AS (
+          SELECT 
+            "id",
+            "userId",
+            "text",
+            "allowComment",
+            "createdAt",
+            "updatedAt",
             "tags",
-            COUNT(*) AS tag_count
+            "privacy",
+            "communityId"
           FROM "Posts"
-          WHERE "createdAt" >= NOW() - INTERVAL '7 days'
-              AND "privacy" = 'public'
-          GROUP BY "tags"
-          ORDER BY tag_count DESC
-          LIMIT 1
-        ) AS top_tag
-      ),
-      filtered_posts AS (
-        SELECT 
-          "id",
-          "userId",
-          "text",
-          "allowComment",
-          "createdAt",
-          "updatedAt",
-          "tags",
-          "privacy"
-        FROM "Posts"
-        WHERE "createdAt" >= $1
-          AND "privacy" = 'public'
-          OR "Posts"."userId" IN (
-            SELECT "Follows"."followedId"
-            FROM "Follows"
-            WHERE "Follows"."followerId" = $2
-          )
-          OR EXISTS (
-            SELECT 1
-            FROM top_tags
-            WHERE "tags" && ARRAY[top_tags.tags]::varchar[]
-          )
-      ),  
-      trending_data AS (
-        SELECT 
-          p."id",
-          p."userId",
-          p."text",
-          p."allowComment",
-          p."createdAt",
-          p."updatedAt",
-          p."privacy",
-          COALESCE(json_agg(
-          json_build_object(
-            'fileId', pm."fileId",
-            'url', pm."url",
-            'type', pm."type"
+          WHERE "createdAt" >= $1
+            AND "privacy" = 'public'
+            OR "Posts"."userId" IN (
+              SELECT "Follows"."followedId"
+              FROM "Follows"
+              WHERE "Follows"."followerId" = $2
             )
-          ) FILTER (WHERE pm."fileId" IS NOT NULL), '[]'::json) AS "medias",
-          (SELECT COUNT(*) FROM "PostLikes" l WHERE l."postId" = p."id") AS "countLike",
-          (SELECT COUNT(*) FROM "PostComments" c WHERE c."postId" = p."id") AS "countComment",
-          EXISTS (SELECT 1 FROM "PostLikes" l2 WHERE l2."postId" = p."id" AND l2."userId" = $2) AS "isLiked"
-        FROM filtered_posts p
-        LEFT JOIN "PostMedia" pm ON pm."postId" = p."id"
-        GROUP BY 
-          p."id",
-          p."userId",
-          p."text",
-          p."allowComment",
-          p."createdAt",
-          p."updatedAt",
-          p."privacy"
-      ),
-      post_data AS (
-        SELECT 
-          p."id",
-          p."userId",
-          p."text",
-          p."allowComment",
-          p."createdAt",
-          p."updatedAt",
-          p."privacy",
-          p."medias",
-          p."countLike",
-          p."countComment",
-          p."isLiked",
-          COUNT(*) OVER() AS "totalData"
-        FROM trending_data p
-        ORDER BY "createdAt" DESC
-        LIMIT $3 OFFSET $4
-      )
+            OR EXISTS (
+              SELECT 1
+              FROM top_tags
+              WHERE "tags" && ARRAY[top_tags.tags]::varchar[]
+            )
+            OR "communityId" IN (
+              SELECT "communityId"
+              FROM "CommunityMembers"
+              WHERE "userId" = $2
+            )
+        ),  
+        trending_data AS (
+          SELECT 
+            p."id",
+            p."userId",
+            p."text",
+            p."allowComment",
+            p."createdAt",
+            p."updatedAt",
+            p."privacy",
+            p."communityId",
+            COALESCE(json_agg(
+            json_build_object(
+              'fileId', pm."fileId",
+              'url', pm."url",
+              'type', pm."type"
+              )
+            ) FILTER (WHERE pm."fileId" IS NOT NULL), '[]'::json) AS "medias",
+            (SELECT COUNT(*) FROM "PostLikes" l WHERE l."postId" = p."id") AS "countLike",
+            (SELECT COUNT(*) FROM "PostComments" c WHERE c."postId" = p."id") AS "countComment",
+            EXISTS (SELECT 1 FROM "PostLikes" l2 WHERE l2."postId" = p."id" AND l2."userId" = $2) AS "isLiked",
+            CASE
+              WHEN p."communityId" IS NOT NULL THEN json_build_object(
+                'id', c."id",
+                'name', c."name",
+                'description', c."description",
+                'imageUrl', c."imageUrl",
+                'imageId', c."imageId",
+                'owner', c."owner",
+                'createdAt', c."createdAt",
+                'updatedAt', c."updatedAt"
+              )
+              ELSE NULL
+            END AS "community"
+          FROM filtered_posts p
+          LEFT JOIN "PostMedia" pm ON pm."postId" = p."id"
+          LEFT JOIN "Communities" c ON c."id" = p."communityId"
+          GROUP BY 
+            p."id",
+            p."userId",
+            p."text",
+            p."allowComment",
+            p."createdAt",
+            p."updatedAt",
+            p."privacy",
+            p."communityId",
+            c."id"
+        ),
+        post_data AS (
+          SELECT 
+            p."id",
+            p."userId",
+            p."text",
+            p."allowComment",
+            p."createdAt",
+            p."updatedAt",
+            p."privacy",
+            p."communityId",
+            p."medias",
+            p."countLike",
+            p."countComment",
+            p."isLiked",
+            p."community",
+            COUNT(*) OVER() AS "totalData"
+          FROM trending_data p
+          ORDER BY "createdAt" DESC
+          LIMIT $3 OFFSET $4
+        )
       SELECT 
         json_agg(json_build_object(
           'id', pd."id",
@@ -166,7 +191,8 @@ export class PostService {
           'medias', pd."medias",
           'countLike', pd."countLike",
           'countComment', pd."countComment",
-          'isLiked', pd."isLiked"
+          'isLiked', pd."isLiked",
+          'community', pd."community"
         )) as "datas",
         MAX(pd."totalData") as "totalData"
       FROM post_data pd;`,
