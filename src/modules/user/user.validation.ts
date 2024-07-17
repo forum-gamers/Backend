@@ -89,7 +89,8 @@ export class UserValidation extends BaseValidation {
               .required('size is required'),
             mimetype: yup
               .string()
-              .oneOf(SUPPORTED_IMAGE_TYPE, 'unsupported file type'),
+              .oneOf(SUPPORTED_IMAGE_TYPE, 'unsupported file type')
+              .required('mimetype is required'),
           }),
         }),
       }),

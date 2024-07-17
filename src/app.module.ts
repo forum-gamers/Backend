@@ -36,6 +36,9 @@ import { CommentModule } from './modules/comment/comment.module';
 import { ReplyModule } from './modules/reply/reply.module';
 import { Follow } from './models/follow';
 import { FollowModule } from './modules/follow/follow.module';
+import { CommunityModule } from './modules/community/community.module';
+import { CommunityMembers } from './models/communitymember';
+import { CommunityMemberModule } from './modules/communityMember/communityMember.module';
 const conf = require('../config/config.json');
 const environment = process.env.NODE_ENV ?? 'development';
 
@@ -97,6 +100,7 @@ config();
         ReplyComment,
         Community,
         Follow,
+        CommunityMembers,
       ],
       synchronize: environment !== 'production',
     }),
@@ -110,6 +114,8 @@ config();
     CommentModule,
     ReplyModule,
     FollowModule,
+    CommunityModule,
+    CommunityMemberModule,
   ],
 })
 export class AppModule implements NestModule {
