@@ -9,8 +9,8 @@ import {
   QueryTypes,
 } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
-import { PostResponse } from './dto/postResponse.dto';
 import { PostResponseQuery } from './dto/postResponseQuery.dto';
+import { PostResponseQueryDB } from './post.interface';
 
 @Injectable()
 export class PostService {
@@ -59,17 +59,30 @@ export class PostService {
   }
 
   public async getPublicContent(
-    { tags, userIds, page, limit }: PostResponseQuery,
+    { page, limit }: PostResponseQuery,
     userId: string,
   ) {
     const now = new Date();
     const aWeekAgo = new Date(now.setDate(now.getDate() - 7)).toISOString();
-    const offset = (page - 1) * limit;
-    return await this.sequelize.query<{
-      datas: PostResponse[];
-      totalData: number;
-    }>(
-      `WITH filtered_posts AS (
+
+    return await this.sequelize.query<PostResponseQueryDB>(
+      `WITH 
+      top_tags AS (
+        SELECT
+          "tags"
+        FROM (
+          SELECT
+            "tags",
+            COUNT(*) AS tag_count
+          FROM "Posts"
+          WHERE "createdAt" >= NOW() - INTERVAL '7 days'
+              AND "privacy" = 'public'
+          GROUP BY "tags"
+          ORDER BY tag_count DESC
+          LIMIT 1
+        ) AS top_tag
+      ),
+      filtered_posts AS (
         SELECT 
           "id",
           "userId",
@@ -82,14 +95,47 @@ export class PostService {
         FROM "Posts"
         WHERE "createdAt" >= $1
           AND "privacy" = 'public'
-          ${tags && tags.length > 0 ? `AND "tags" && ARRAY[${tags.map((tag) => `'${tag}'`).join(',')}]::varchar[]` : ''}
-          ${userIds && userIds.length > 0 ? `AND "userId" IN (${userIds.map((id) => `'${id}'`).join(',')})` : ''}
           OR "Posts"."userId" IN (
             SELECT "Follows"."followedId"
             FROM "Follows"
             WHERE "Follows"."followerId" = $2
           )
-      ), 
+          OR EXISTS (
+            SELECT 1
+            FROM top_tags
+            WHERE "tags" && ARRAY[top_tags.tags]::varchar[]
+          )
+      ),  
+      trending_data AS (
+        SELECT 
+          p."id",
+          p."userId",
+          p."text",
+          p."allowComment",
+          p."createdAt",
+          p."updatedAt",
+          p."privacy",
+          COALESCE(json_agg(
+          json_build_object(
+            'fileId', pm."fileId",
+            'url', pm."url",
+            'type', pm."type"
+            )
+          ) FILTER (WHERE pm."fileId" IS NOT NULL), '[]'::json) AS "medias",
+          (SELECT COUNT(*) FROM "PostLikes" l WHERE l."postId" = p."id") AS "countLike",
+          (SELECT COUNT(*) FROM "PostComments" c WHERE c."postId" = p."id") AS "countComment",
+          EXISTS (SELECT 1 FROM "PostLikes" l2 WHERE l2."postId" = p."id" AND l2."userId" = $2) AS "isLiked"
+        FROM filtered_posts p
+        LEFT JOIN "PostMedia" pm ON pm."postId" = p."id"
+        GROUP BY 
+          p."id",
+          p."userId",
+          p."text",
+          p."allowComment",
+          p."createdAt",
+          p."updatedAt",
+          p."privacy"
+      ),
       post_data AS (
         SELECT 
           p."id",
@@ -98,33 +144,35 @@ export class PostService {
           p."allowComment",
           p."createdAt",
           p."updatedAt",
-          p."tags",
           p."privacy",
-          (SELECT COUNT(*) FROM "PostLikes" l WHERE l."postId" = p."id") as "countLike",
-          (SELECT COUNT(*) FROM "PostComments" c WHERE c."postId" = p."id") as "countComment",
-          EXISTS (SELECT 1 FROM "PostLikes" l2 WHERE l2."postId" = p."id" AND l2."userId" = $2) as "isLiked"
-        FROM filtered_posts p
-        LEFT JOIN "PostLikes" l ON l."postId" = p."id"
-        LEFT JOIN "PostComments" c ON c."postId" = p."id"
-        GROUP BY 
-          p."id",
-          p."userId",
-          p."text",
-          p."allowComment",
-          p."createdAt",
-          p."updatedAt",
-          p."tags",
-          p."privacy"
-        ORDER BY p."createdAt" DESC
+          p."medias",
+          p."countLike",
+          p."countComment",
+          p."isLiked",
+          COUNT(*) OVER() AS "totalData"
+        FROM trending_data p
+        ORDER BY "createdAt" DESC
         LIMIT $3 OFFSET $4
       )
       SELECT 
-        (SELECT COUNT(*) FROM filtered_posts)::INTEGER as "totalData",
-        json_agg(post_data) as "datas"
-      FROM post_data;`,
+        json_agg(json_build_object(
+          'id', pd."id",
+          'userId', pd."userId",
+          'text', pd."text",
+          'allowComment', pd."allowComment",
+          'createdAt', pd."createdAt",
+          'updatedAt', pd."updatedAt",
+          'privacy', pd."privacy",
+          'medias', pd."medias",
+          'countLike', pd."countLike",
+          'countComment', pd."countComment",
+          'isLiked', pd."isLiked"
+        )) as "datas",
+        MAX(pd."totalData") as "totalData"
+      FROM post_data pd;`,
       {
         type: QueryTypes.SELECT,
-        bind: [aWeekAgo, userId, limit, offset],
+        bind: [aWeekAgo, userId, limit, (page - 1) * limit],
       },
     );
   }

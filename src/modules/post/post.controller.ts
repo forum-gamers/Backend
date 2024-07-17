@@ -220,9 +220,7 @@ export class PostController extends BaseController {
     @UserMe('id') userId: string,
   ) {
     /**
-     * TODO
-     * - add get by user/friend
-     * - add get by tag/trend
+     * TODOs
      * - add get by community
      */
     const { page, limit } =
@@ -232,8 +230,6 @@ export class PostController extends BaseController {
       {
         page,
         limit,
-        tags: [],
-        userIds: [],
       },
       userId,
     );
