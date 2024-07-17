@@ -8,6 +8,7 @@ import {
   HttpCode,
   NotFoundException,
   Param,
+  ParseIntPipe,
   Post,
   Query,
   UseGuards,
@@ -103,7 +104,7 @@ export class CommentController extends BaseController {
   @Get(':id')
   @HttpCode(200)
   public async getPostComment(
-    @Param('id', PostFindByIdPipe) post: PostAttributes | null,
+    @Param('id', ParseIntPipe) id: number,
     @Query()
     {
       page = 1,
@@ -112,9 +113,9 @@ export class CommentController extends BaseController {
       sortby = 'createdAt',
     }: QueryParamsDto,
   ) {
-    if (!post) throw new NotFoundException('post not found');
+    if (isNaN(id)) throw new BadRequestException('postId must be a number');
 
-    const { rows, count } = await this.commentService.getPostComment(post.id, {
+    const { rows, count } = await this.commentService.getPostComment(id, {
       page,
       limit,
       sortDirection,

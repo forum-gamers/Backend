@@ -4,14 +4,17 @@ import {
   Controller,
   Delete,
   ForbiddenException,
+  Get,
   HttpCode,
   NotFoundException,
   Param,
   Patch,
   Post,
+  Query,
   UploadedFiles,
   UseGuards,
   UseInterceptors,
+  UsePipes,
 } from '@nestjs/common';
 import { BaseController } from 'src/base/controller.base';
 import { PostService } from './post.service';
@@ -33,6 +36,9 @@ import { BookmarkService } from '../bookmark/bookmark.service';
 import { LikeService } from '../like/like.service';
 import { CommentService } from '../comment/comment.service';
 import { ReplyService } from '../reply/reply.service';
+import { CreateTagsDto } from './dto/createTags.dto';
+import { PaginationPipe } from 'src/utils/pipes/pagination.pipe';
+import { QueryParamsDto } from 'src/utils/dto/pagination.dto';
 
 @Controller('post')
 export class PostController extends BaseController {
@@ -73,6 +79,8 @@ export class PostController extends BaseController {
   ) {
     const { text, allowComment, communityId, privacy } =
       await this.postValidation.validateCreatePost(payload, !!rawFiles?.length);
+    const tags: string[] = !!text ? new CreateTagsDto(text).tags : [];
+
     const postMedias: PostMedia[] = [];
     const transaction = await this.sequelize.transaction();
     try {
@@ -83,6 +91,7 @@ export class PostController extends BaseController {
           privacy,
           userId,
           text,
+          tags,
         }),
         {
           transaction,
@@ -191,11 +200,47 @@ export class PostController extends BaseController {
     );
 
     if (!!text && text !== post.text)
-      await this.postService.editText(post.id, text);
+      await this.postService.editText(
+        post.id,
+        text,
+        new CreateTagsDto(text).tags,
+      );
 
     return this.sendResponseBody({
       message: 'OK',
       code: 200,
     });
+  }
+
+  @Get()
+  @HttpCode(200)
+  @UsePipes(PaginationPipe)
+  public async getPosts(
+    @Query()
+    { page = 1, limit = 10 }: QueryParamsDto,
+    @UserMe('id') userId: string,
+  ) {
+    const [{ datas, totalData }] = await this.postService.getPublicContent(
+      {
+        page,
+        limit,
+        tags: [],
+        userIds: [],
+      },
+      userId,
+    );
+    return this.sendResponseBody(
+      {
+        message: 'OK',
+        code: 200,
+        data: datas,
+      },
+      {
+        totalData,
+        totalPage: Math.ceil(totalData / limit),
+        page,
+        limit,
+      },
+    );
   }
 }

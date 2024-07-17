@@ -13,6 +13,7 @@ export interface PostAttributes {
   createdAt: Date;
   updatedAt: Date;
   editedText: boolean;
+  tags: string[];
 }
 
 @Table<Model<PostAttributes, PostAttributes>>({
@@ -62,6 +63,12 @@ export class Post
     defaultValue: false,
   })
   public editedText: boolean;
+
+  @Column({
+    type: DataTypes.ARRAY(DataTypes.STRING),
+    defaultValue: [],
+  })
+  public tags: string[];
 
   @Column({
     type: DataTypes.ENUM,

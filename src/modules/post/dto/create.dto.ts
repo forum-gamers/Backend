@@ -6,6 +6,7 @@ export interface CreatePostDtoProps {
   allowComment?: boolean;
   privacy?: PostPrivacy;
   communityId?: number;
+  tags: string[];
 }
 
 export class CreatePostDto {
@@ -15,6 +16,7 @@ export class CreatePostDto {
   public readonly privacy: PostPrivacy;
   public readonly communityId?: number;
   public readonly totalLike = 0;
+  public readonly tags: string[];
 
   constructor({
     text,
@@ -22,11 +24,13 @@ export class CreatePostDto {
     allowComment = true,
     privacy = 'public',
     communityId,
+    tags = [],
   }: CreatePostDtoProps) {
     this.text = text;
     this.userId = userId;
     this.allowComment = allowComment;
     this.privacy = privacy;
     this.communityId = communityId;
+    this.tags = tags;
   }
 }
