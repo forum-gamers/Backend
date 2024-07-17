@@ -42,9 +42,9 @@ export class CommunityController extends BaseController {
   @HttpCode(201)
   @UseGuards(
     new RateLimitGuard({
-      windowMs: 1 * 60 * 1000,
-      max: 5,
-      message: 'Too many requests from this IP, please try again in 1 minute.',
+      windowMs: 5 * 60 * 1000,
+      max: 50,
+      message: 'Too many requests from this IP, please try again in 5 minutes.',
     }),
   )
   @UseInterceptors(

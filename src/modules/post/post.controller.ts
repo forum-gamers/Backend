@@ -213,6 +213,13 @@ export class PostController extends BaseController {
 
   @Get()
   @HttpCode(200)
+  @UseGuards(
+    new RateLimitGuard({
+      windowMs: 1 * 60 * 1000,
+      max: 50,
+      message: 'Too many requests from this IP, please try again in 1 minute.',
+    }),
+  )
   @UsePipes(PaginationPipe)
   public async getPosts(@Query() query: any, @UserMe('id') userId: string) {
     const { page, limit } =
