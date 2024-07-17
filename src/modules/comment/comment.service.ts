@@ -42,7 +42,7 @@ export class CommentService {
     {
       page = 1,
       limit = 10,
-      sortDirection = 'desc',
+      sortDirection = 'DESC',
       sortby = 'createdAt',
     }: QueryParamsDto,
   ) {

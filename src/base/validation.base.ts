@@ -67,13 +67,21 @@ export abstract class BaseValidation {
   protected baseQuery = ({
     page = 1,
     limit = 10,
-    sortBy = 'createdAt',
+    sortBy = ['createdAt'],
     sortDirection = 'DESC',
   }: BaseQuery) => ({
     page: yup.number().default(page).optional(),
     limit: yup.number().default(limit).optional(),
-    sortBy: yup.string().default(sortBy).optional(),
-    sortDirection: yup.string().default(sortDirection).optional(),
+    sortBy: yup
+      .string()
+      .oneOf(sortBy, 'invalid sort by')
+      .default(sortBy[0])
+      .optional(),
+    sortDirection: yup
+      .string()
+      .oneOf(['ASC', 'DESC'], 'invalid sort direction')
+      .default(sortDirection)
+      .optional(),
   });
 
   protected validateFiles = ({

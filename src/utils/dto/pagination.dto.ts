@@ -20,6 +20,6 @@ export class QueryParamsDto {
 
   @IsOptional()
   @IsString()
-  @IsIn(['asc', 'desc'])
-  sortDirection?: 'asc' | 'desc';
+  @IsIn(['ASC', 'DESC'])
+  sortDirection?: 'ASC' | 'DESC';
 }

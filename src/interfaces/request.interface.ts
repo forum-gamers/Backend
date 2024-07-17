@@ -3,7 +3,7 @@ import type { NumberSchema, StringSchema } from 'yup';
 export interface BaseQuery {
   page?: number;
   limit?: number;
-  sortBy?: string;
+  sortBy?: string[];
   sortDirection?: 'ASC' | 'DESC';
 }
 

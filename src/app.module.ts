@@ -34,6 +34,8 @@ import { VerifiedMiddleware } from './middlewares/user/verified.middleware';
 import { BookmarkModule } from './modules/bookmark/bookmark.module';
 import { CommentModule } from './modules/comment/comment.module';
 import { ReplyModule } from './modules/reply/reply.module';
+import { Follow } from './models/follow';
+import { FollowModule } from './modules/follow/follow.module';
 const conf = require('../config/config.json');
 const environment = process.env.NODE_ENV ?? 'development';
 
@@ -94,6 +96,7 @@ config();
         PostMedia,
         ReplyComment,
         Community,
+        Follow,
       ],
       synchronize: environment !== 'production',
     }),
@@ -106,6 +109,7 @@ config();
     BookmarkModule,
     CommentModule,
     ReplyModule,
+    FollowModule,
   ],
 })
 export class AppModule implements NestModule {

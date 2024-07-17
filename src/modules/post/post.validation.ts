@@ -79,4 +79,13 @@ export class PostValidation extends BaseValidation {
       }),
       data,
     );
+
+  public validateGetPostQuery = async (data: any) =>
+    await this.validate<{ page: number; limit: number }>(
+      yup.object().shape({
+        page: yup.number().default(1).optional(),
+        limit: yup.number().default(15).optional(),
+      }),
+      data,
+    );
 }

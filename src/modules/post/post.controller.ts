@@ -38,7 +38,6 @@ import { CommentService } from '../comment/comment.service';
 import { ReplyService } from '../reply/reply.service';
 import { CreateTagsDto } from './dto/createTags.dto';
 import { PaginationPipe } from 'src/utils/pipes/pagination.pipe';
-import { QueryParamsDto } from 'src/utils/dto/pagination.dto';
 
 @Controller('post')
 export class PostController extends BaseController {
@@ -217,9 +216,18 @@ export class PostController extends BaseController {
   @UsePipes(PaginationPipe)
   public async getPosts(
     @Query()
-    { page = 1, limit = 10 }: QueryParamsDto,
+    query: any,
     @UserMe('id') userId: string,
   ) {
+    /**
+     * TODO
+     * - add get by user/friend
+     * - add get by tag/trend
+     * - add get by community
+     */
+    const { page, limit } =
+      await this.postValidation.validateGetPostQuery(query);
+
     const [{ datas, totalData }] = await this.postService.getPublicContent(
       {
         page,
