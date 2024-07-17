@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Community, type CommunityAttributes } from 'src/models/community';
 import { CreateCommunityDto } from './dto/create.dto';
-import { type CreateOptions } from 'sequelize';
+import { DestroyOptions, type CreateOptions } from 'sequelize';
 
 @Injectable()
 export class CommunityService {
@@ -20,5 +20,16 @@ export class CommunityService {
     opts?: CreateOptions<CommunityAttributes>,
   ) {
     return await this.communityModel.create(payload, opts);
+  }
+
+  public async findById(id: number) {
+    return await this.communityModel.findByPk(id);
+  }
+
+  public async deleteOne(
+    id: number,
+    opts?: DestroyOptions<CommunityAttributes>,
+  ) {
+    return await this.communityModel.destroy({ ...opts, where: { id } });
   }
 }

@@ -2,7 +2,11 @@ import {
   Body,
   ConflictException,
   Controller,
+  Delete,
+  ForbiddenException,
   HttpCode,
+  NotFoundException,
+  Param,
   Post,
   UploadedFile,
   UseGuards,
@@ -20,6 +24,8 @@ import { Sequelize } from 'sequelize-typescript';
 import { CommunityMemberService } from '../communityMember/communityMember.service';
 import { CreateCommunityMemberDto } from '../communityMember/dto/create.dto';
 import { RateLimitGuard } from 'src/middlewares/global/rateLimit.middleware';
+import { CommunityFindByIdPipe } from './pipes/findById.pipe';
+import { type CommunityAttributes } from 'src/models/community';
 
 @Controller('community')
 export class CommunityController extends BaseController {
@@ -106,6 +112,38 @@ export class CommunityController extends BaseController {
     } catch (err) {
       if (communityPayload.imageId)
         this.imagekitService.bulkDelete([communityPayload.imageId]);
+      await transaction.rollback();
+      throw err;
+    }
+  }
+
+  @Delete(':id')
+  @HttpCode(200)
+  public async deleteCommunity(
+    @Param('id', CommunityFindByIdPipe) community: CommunityAttributes | null,
+    @UserMe('id') userId: string,
+  ) {
+    if (!community) throw new NotFoundException('community not found');
+
+    if (community.owner !== userId)
+      throw new ForbiddenException('only owner can delete community');
+
+    const transaction = await this.sequelize.transaction();
+    try {
+      if (community.imageId)
+        await this.imagekitService.bulkDelete([community.imageId]);
+
+      await this.communityMemberService.deleteAllCommunityMember(community.id, {
+        transaction,
+      });
+      await this.communityService.deleteOne(community.id, { transaction });
+
+      await transaction.commit();
+      return this.sendResponseBody({
+        message: 'successfully deleted',
+        code: 200,
+      });
+    } catch (err) {
       await transaction.rollback();
       throw err;
     }

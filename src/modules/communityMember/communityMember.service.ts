@@ -4,7 +4,7 @@ import {
   CommunityMembers,
   type CommunityMembersAttributes,
 } from 'src/models/communitymember';
-import { type CreateOptions } from 'sequelize';
+import { DestroyOptions, type CreateOptions } from 'sequelize';
 import { CreateCommunityMemberDto } from './dto/create.dto';
 
 @Injectable()
@@ -19,5 +19,15 @@ export class CommunityMemberService {
     opts?: CreateOptions<CommunityMembersAttributes>,
   ) {
     return await this.communityMemberModel.create(payload, opts);
+  }
+
+  public async deleteAllCommunityMember(
+    communityId: number,
+    opts?: DestroyOptions<CommunityMembersAttributes>,
+  ) {
+    return await this.communityMemberModel.destroy({
+      ...opts,
+      where: { communityId },
+    });
   }
 }
