@@ -1,11 +1,18 @@
 import {
   BadGatewayException,
+  BadRequestException,
   Body,
   ConflictException,
   Controller,
   HttpCode,
+  NotFoundException,
+  Param,
+  ParseUUIDPipe,
+  Patch,
   Post,
+  UnauthorizedException,
   UploadedFile,
+  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { RoomChatService } from './roomChat.service';
@@ -19,6 +26,10 @@ import { ROOM_CHAT_IMAGE_FOLDER } from './roomChat.constant';
 import { RoomMemberService } from '../roomMember/roomMember.service';
 import { CreateRoomMemberDto } from '../roomMember/dto/create.dto';
 import { BaseController } from 'src/base/controller.base';
+import { RateLimitGuard } from 'src/middlewares/global/rateLimit.middleware';
+import { ChatContext } from './decorators/context.decorator';
+import { type RoomMemberAttributes } from 'src/models/roommember';
+import { type RoomChatAttributes } from 'src/models/roomchat';
 
 @Controller('room-chat')
 export class RoomChatController extends BaseController {
@@ -34,6 +45,13 @@ export class RoomChatController extends BaseController {
 
   @Post()
   @HttpCode(201)
+  @UseGuards(
+    new RateLimitGuard({
+      windowMs: 1 * 60 * 1000,
+      max: 10,
+      message: 'Too many requests from this IP, please try again in 1 minute.',
+    }),
+  )
   @UseInterceptors(
     FileInterceptor('file', {
       limits: {
@@ -119,5 +137,37 @@ export class RoomChatController extends BaseController {
       await transaction.rollback();
       throw err;
     }
+  }
+
+  @Patch('/:id/remove/:targetId')
+  public async deleteUser(
+    @ChatContext()
+    {
+      roomChat,
+      roomMember,
+    }: { roomChat: RoomChatAttributes; roomMember: RoomMemberAttributes },
+    @Param('targetId', ParseUUIDPipe) targetId: string,
+  ) {
+    if (roomChat.type === 'private')
+      throw new BadRequestException('cannot remove user from private room');
+
+    if (roomMember.role === 'member')
+      throw new UnauthorizedException('only owner/admin can remove user');
+
+    const member = await this.roomMemberService.findOneByUserIdAndRoomId(
+      roomChat.id,
+      targetId,
+    );
+    if (!member) throw new NotFoundException('user not found');
+
+    if (['owner', 'admin'].includes(member.role))
+      throw new UnauthorizedException('cannot remove owner/admin');
+
+    await this.roomMemberService.removeMember(roomChat.id, targetId);
+
+    return this.sendResponseBody({
+      message: 'successfully removed',
+      code: 200,
+    });
   }
 }

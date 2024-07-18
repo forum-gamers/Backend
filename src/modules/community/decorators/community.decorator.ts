@@ -5,8 +5,10 @@ import {
 } from '@nestjs/common';
 import type { Request } from 'express';
 
+export type CommunityContextKey = 'community' | 'communityMember';
+
 export const CommunityContext = createParamDecorator(
-  (key: 'community' | 'communityMember', ctx: ExecutionContext) => {
+  (key: CommunityContextKey, ctx: ExecutionContext) => {
     const { community, communityMember } = ctx
       .switchToHttp()
       .getRequest<Request>();
@@ -16,7 +18,7 @@ export const CommunityContext = createParamDecorator(
         'you must use this decorator on authenticated community endpoint',
       );
 
-    let result: Record<'community' | 'communityMember', any> = {
+    let result: Record<CommunityContextKey, any> = {
       community,
       communityMember,
     };
