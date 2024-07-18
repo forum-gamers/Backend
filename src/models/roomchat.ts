@@ -1,6 +1,7 @@
 import { DataTypes } from 'sequelize';
-import { Column, Model, Table } from 'sequelize-typescript';
+import { Column, HasMany, Model, Table } from 'sequelize-typescript';
 import type { RoomChatType } from 'src/interfaces/model.interface';
+import { RoomMember } from './roommember';
 
 export interface RoomChatAttributes {
   id: number;
@@ -89,4 +90,7 @@ export class RoomChat
     type: DataTypes.DATE,
   })
   public updatedAt: Date;
+
+  @HasMany(() => RoomMember, 'roomId')
+  public members: RoomMember[];
 }

@@ -42,6 +42,8 @@ import { CommunityMemberModule } from './modules/communityMember/communityMember
 import { RoomChat } from './models/roomchat';
 import { RoomMember } from './models/roommember';
 import { Chat } from './models/chat';
+import { RoomChatModule } from './modules/chatRoom/roomChat.module';
+import { RoomMemberModule } from './modules/roomMember/roomMember.module';
 const conf = require('../config/config.json');
 const environment = process.env.NODE_ENV ?? 'development';
 
@@ -122,6 +124,8 @@ config();
     FollowModule,
     CommunityModule,
     CommunityMemberModule,
+    RoomChatModule,
+    RoomMemberModule,
   ],
 })
 export class AppModule implements NestModule {
@@ -145,6 +149,7 @@ export class AppModule implements NestModule {
         { path: 'user/login', method: RequestMethod.POST },
         { path: 'user/resend-email', method: RequestMethod.POST },
         { path: 'user/verify', method: RequestMethod.PATCH },
+        { path: 'post', method: RequestMethod.POST },
       )
       .forRoutes('*');
   }

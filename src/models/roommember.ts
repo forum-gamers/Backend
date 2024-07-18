@@ -1,6 +1,7 @@
 import { DataTypes } from 'sequelize';
-import { Column, Model, Table } from 'sequelize-typescript';
+import { BelongsTo, Column, Model, Table } from 'sequelize-typescript';
 import type { RoomMemberType } from 'src/interfaces/model.interface';
+import { RoomChat } from './roomchat';
 
 export interface RoomMemberAttributes {
   id: number;
@@ -73,4 +74,7 @@ export class RoomMember
     type: DataTypes.DATE,
   })
   public updatedAt: Date;
+
+  @BelongsTo(() => RoomChat, 'roomId')
+  public roomChat: RoomChat;
 }
