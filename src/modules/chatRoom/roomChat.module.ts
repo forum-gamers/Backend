@@ -12,12 +12,14 @@ import { RoomChatValidation } from './roomChat.validation';
 import { ThirdPartyModule } from 'src/third-party/third-party.module';
 import { RoomMemberModule } from '../roomMember/roomMember.module';
 import { ChatAccessMiddleware } from 'src/middlewares/roomChat/access.middleware';
+import { WsModule } from '../ws/ws.module';
 
 @Module({
   imports: [
     SequelizeModule.forFeature([RoomChat]),
     ThirdPartyModule,
     RoomMemberModule,
+    WsModule,
   ],
   providers: [RoomChatService, RoomChatValidation],
   controllers: [RoomChatController],

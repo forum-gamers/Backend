@@ -44,6 +44,8 @@ import { RoomMember } from './models/roommember';
 import { Chat } from './models/chat';
 import { RoomChatModule } from './modules/chatRoom/roomChat.module';
 import { RoomMemberModule } from './modules/roomMember/roomMember.module';
+import { ChatModule } from './modules/chat/chat.module';
+import { WsModule } from './modules/ws/ws.module';
 const conf = require('../config/config.json');
 const environment = process.env.NODE_ENV ?? 'development';
 
@@ -126,6 +128,8 @@ config();
     CommunityMemberModule,
     RoomChatModule,
     RoomMemberModule,
+    ChatModule,
+    WsModule,
   ],
 })
 export class AppModule implements NestModule {

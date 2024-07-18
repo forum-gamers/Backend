@@ -30,6 +30,7 @@ import { RateLimitGuard } from 'src/middlewares/global/rateLimit.middleware';
 import { ChatContext } from './decorators/context.decorator';
 import { type RoomMemberAttributes } from 'src/models/roommember';
 import { type RoomChatAttributes } from 'src/models/roomchat';
+import { ChatGateway } from '../ws/chat.gateway';
 
 @Controller('room-chat')
 export class RoomChatController extends BaseController {
@@ -39,6 +40,7 @@ export class RoomChatController extends BaseController {
     private readonly imagekitService: ImageKitService,
     private readonly sequelize: Sequelize,
     private readonly roomMemberService: RoomMemberService,
+    private readonly chatGateway: ChatGateway,
   ) {
     super();
   }
@@ -110,8 +112,8 @@ export class RoomChatController extends BaseController {
       const room = await this.roomChatService.create(roomPayload, {
         transaction,
       });
-      console.log({ users });
-      await Promise.all(
+
+      const members = await Promise.all(
         users.map(
           async (el) =>
             await this.roomMemberService.create(
@@ -123,6 +125,13 @@ export class RoomChatController extends BaseController {
               { transaction },
             ),
         ),
+      );
+
+      this.chatGateway.sendNewRoom(
+        room,
+        members
+          .map(({ dataValues: { userId: id } }) => id)
+          .filter((el) => el !== userId),
       );
 
       await transaction.commit();

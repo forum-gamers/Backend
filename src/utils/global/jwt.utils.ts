@@ -1,4 +1,10 @@
-import { type JwtPayload, sign, verify, type SignOptions } from 'jsonwebtoken';
+import {
+  type JwtPayload,
+  sign,
+  verify,
+  type SignOptions,
+  decode,
+} from 'jsonwebtoken';
 import { config } from 'dotenv';
 import { UnauthorizedException } from '@nestjs/common';
 
@@ -24,6 +30,10 @@ class Jwt {
 
   public createToken(payload: TokenValue, opts?: SignOptions) {
     return sign(payload, this.secret, opts);
+  }
+
+  public decodeToken(token: string) {
+    return decode(token) as TokenPayload;
   }
 }
 
