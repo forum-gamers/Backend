@@ -7,6 +7,7 @@ import { Sequelize } from 'sequelize-typescript';
 import { RoomMember } from 'src/models/roommember';
 import { GetChatRoomsQuery } from './dto/query.dto';
 import { RoomChatRespDto } from './dto/roomChatResp.dto';
+import { QueryParamsDto } from 'src/utils/dto/pagination.dto';
 
 @Injectable()
 export class RoomChatService {
@@ -133,6 +134,89 @@ export class RoomChatService {
       {
         type: QueryTypes.SELECT,
         bind: [userId, limit, (page - 1) * limit],
+      },
+    );
+  }
+
+  public async getChatByRoom(
+    roomId: number,
+    { page = 1, limit = 20 }: QueryParamsDto,
+  ) {
+    return await this.sequelize.query(
+      `
+       WITH room_info AS (
+            SELECT 
+                r."id" AS "roomId",
+                r."owner",
+                r."name",
+                r."image",
+                r."imageId",
+                r."description",
+                r."type"
+            FROM "RoomChats" r
+            WHERE r."id" = $1
+            ),
+            chat_info AS (
+            SELECT 
+                c."id" AS "chatId",
+                c."roomId",
+                c."senderId",
+                c."message",
+                c."file",
+                c."fileId",
+                c."fileType",
+                c."isRead",
+                c."status",
+                c."createdAt" AS "chatCreatedAt",
+                c."updatedAt" AS "chatUpdatedAt",
+                u."username",
+                u."imageUrl" AS "userImageUrl",
+                u."backgroundImageUrl" AS "userBackgroundImageUrl"
+            FROM "Chats" c
+            JOIN "Users" u ON c."senderId" = u."id"
+            WHERE c."roomId" = $1
+            ORDER BY c."updatedAt" DESC
+            LIMIT $2 OFFSET $3
+            )
+        SELECT 
+        r."roomId",
+        r."owner",
+        r."name",
+        r."image",
+        r."imageId",
+        r."description",
+        r."type",
+        COALESCE(json_agg(
+            json_build_object(
+            'id', ch."chatId",
+            'senderId', ch."senderId",
+            'message', ch."message",
+            'file', ch."file",
+            'fileId', ch."fileId",
+            'fileType', ch."fileType",
+            'isRead', ch."isRead",
+            'status', ch."status",
+            'createdAt', ch."chatCreatedAt",
+            'updatedAt', ch."chatUpdatedAt",
+            'username', ch."username",
+            'imageUrl', ch."userImageUrl",
+            'backgroundImageUrl', ch."userBackgroundImageUrl"
+            )
+        ), '[]') AS "chats"
+        FROM room_info r
+        LEFT JOIN chat_info ch ON r."roomId" = ch."roomId"
+        GROUP BY 
+        r."roomId",
+        r."owner",
+        r."name",
+        r."image",
+        r."imageId",
+        r."description",
+        r."type";
+        `,
+      {
+        type: QueryTypes.SELECT,
+        bind: [roomId, limit, (page - 1) * limit],
       },
     );
   }

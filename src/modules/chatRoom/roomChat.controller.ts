@@ -203,4 +203,31 @@ export class RoomChatController extends BaseController {
       data: await this.roomChatService.findMyRoomChats(userId, { page, limit }),
     });
   }
+
+  @Get(':id')
+  @HttpCode(200)
+  @UseGuards(
+    new RateLimitGuard({
+      windowMs: 1 * 60 * 1000,
+      max: 50,
+      message: 'Too many requests from this IP, please try again in 1 minute.',
+    }),
+  )
+  @UsePipes(PaginationPipe)
+  public async getChatByRoom(
+    @RoomChatContext('roomChat') roomChat: RoomChatAttributes,
+    @Query() query: any,
+  ) {
+    const { page, limit } =
+      await this.roomChatValidation.validateGetMyRoomChat(query);
+
+    return this.sendResponseBody({
+      code: 200,
+      message: 'success',
+      data: await this.roomChatService.getChatByRoom(roomChat.id, {
+        page,
+        limit,
+      }),
+    });
+  }
 }
