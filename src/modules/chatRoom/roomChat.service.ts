@@ -57,4 +57,14 @@ export class RoomChatService {
       ],
     });
   }
+
+  public async findByIdAndPreloadAllMember(id: number) {
+    return await this.roomChatModel.findByPk(id, {
+      include: [
+        {
+          model: RoomMember,
+        },
+      ],
+    });
+  }
 }

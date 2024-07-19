@@ -1,8 +1,8 @@
 import {
-  forwardRef,
   type MiddlewareConsumer,
   Module,
   type NestModule,
+  RequestMethod,
 } from '@nestjs/common';
 import { SequelizeModule } from '@nestjs/sequelize';
 import { Chat } from 'src/models/chat';
@@ -12,14 +12,15 @@ import { ThirdPartyModule } from 'src/third-party/third-party.module';
 import { WsModule } from '../ws/ws.module';
 import { RoomChatModule } from '../chatRoom/roomChat.module';
 import { ChatValidation } from './chat.validation';
-import { ChatAccessMiddleware } from 'src/middlewares/roomChat/access.middleware';
+import { RoomChatAccessMiddleware } from 'src/middlewares/roomChat/access.middleware';
+import { ChatAccessMiddleware } from 'src/middlewares/chat/access.middleware';
 
 @Module({
   imports: [
     SequelizeModule.forFeature([Chat]),
     ThirdPartyModule,
-    forwardRef(() => RoomChatModule),
-    forwardRef(() => WsModule),
+    RoomChatModule,
+    WsModule,
   ],
   providers: [ChatService, ChatValidation],
   exports: [ChatService],
@@ -27,6 +28,11 @@ import { ChatAccessMiddleware } from 'src/middlewares/roomChat/access.middleware
 })
 export class ChatModule implements NestModule {
   public configure(consumer: MiddlewareConsumer) {
-    consumer.apply(ChatAccessMiddleware).forRoutes(ChatController);
+    consumer
+      .apply(RoomChatAccessMiddleware)
+      .forRoutes({ path: 'chat/:id', method: RequestMethod.POST })
+      .apply(ChatAccessMiddleware)
+      .exclude({ path: 'chat/:id', method: RequestMethod.POST })
+      .forRoutes(ChatController);
   }
 }

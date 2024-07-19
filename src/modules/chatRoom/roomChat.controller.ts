@@ -27,7 +27,7 @@ import { RoomMemberService } from '../roomMember/roomMember.service';
 import { CreateRoomMemberDto } from '../roomMember/dto/create.dto';
 import { BaseController } from 'src/base/controller.base';
 import { RateLimitGuard } from 'src/middlewares/global/rateLimit.middleware';
-import { ChatContext } from './decorators/context.decorator';
+import { RoomChatContext } from './decorators/context.decorator';
 import { type RoomMemberAttributes } from 'src/models/roommember';
 import { type RoomChatAttributes } from 'src/models/roomchat';
 import { ChatGateway } from '../ws/chat.gateway';
@@ -150,7 +150,7 @@ export class RoomChatController extends BaseController {
 
   @Patch('/:id/remove/:targetId')
   public async deleteUser(
-    @ChatContext()
+    @RoomChatContext()
     {
       roomChat,
       roomMember,

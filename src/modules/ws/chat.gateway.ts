@@ -9,10 +9,11 @@ import {
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { Server, Socket } from 'socket.io';
 import { Logger } from 'winston';
-import { ChatService } from '../chat/chat.service';
 import jwt from 'src/utils/global/jwt.utils';
 import { type RoomChatAttributes } from 'src/models/roomchat';
-import { NEW_ROOM } from './ws.constant';
+import { DELETE_CHAT, NEW_CHAT, NEW_ROOM } from './ws.constant';
+import { ChatAttributes } from 'src/models/chat';
+import { RoomChatService } from '../chatRoom/roomChat.service';
 
 @WebSocketGateway({ namespace: 'chat' })
 export class ChatGateway
@@ -25,7 +26,7 @@ export class ChatGateway
   constructor(
     @Inject(WINSTON_MODULE_PROVIDER)
     private readonly logger: Logger,
-    private readonly chatService: ChatService,
+    private readonly roomChatService: RoomChatService,
   ) {}
 
   public afterInit(server: Server) {
@@ -58,5 +59,23 @@ export class ChatGateway
     for (const userId of userIds)
       if (this.clients.has(userId))
         this.clients.get(userId).emit(NEW_ROOM, roomChat);
+  }
+
+  public async sendNewChat(chat: ChatAttributes) {
+    const room = await this.roomChatService.findByIdAndPreloadAllMember(
+      chat.roomId,
+    );
+    if (!room) return;
+    for (const member of room.members)
+      if (this.clients.has(member.userId))
+        this.clients.get(member.userId).emit(NEW_CHAT, chat);
+  }
+
+  public async deletedChat(chatId: number, roomId: number) {
+    const room = await this.roomChatService.findByIdAndPreloadAllMember(roomId);
+    if (!room) return;
+    for (const member of room.members)
+      if (this.clients.has(member.userId))
+        this.clients.get(member.userId).emit(DELETE_CHAT, chatId);
   }
 }

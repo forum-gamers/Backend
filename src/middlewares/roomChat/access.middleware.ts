@@ -14,7 +14,7 @@ import { RoomChatService } from 'src/modules/chatRoom/roomChat.service';
  * always bring chatRoom 'id' on request params except create
  */
 @Injectable()
-export class ChatAccessMiddleware implements NestMiddleware {
+export class RoomChatAccessMiddleware implements NestMiddleware {
   public async use(req: Request, res: Response, next: NextFunction) {
     const { id } = req.params;
     const value = parseInt(id);

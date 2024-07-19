@@ -7,7 +7,7 @@ import type { Request } from 'express';
 
 export type ChatContextKey = 'roomChat' | 'roomMember';
 
-export const ChatContext = createParamDecorator(
+export const RoomChatContext = createParamDecorator(
   (key: ChatContextKey, ctx: ExecutionContext) => {
     const { roomChat, roomMember } = ctx.switchToHttp().getRequest<Request>();
 

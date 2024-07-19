@@ -3,8 +3,10 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   HttpCode,
   Post,
+  UnauthorizedException,
   UploadedFile,
   UseGuards,
   UseInterceptors,
@@ -16,12 +18,13 @@ import { ImageKitService } from 'src/third-party/imagekit/imagekit.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { RateLimitGuard } from 'src/middlewares/global/rateLimit.middleware';
 import { UserMe } from '../user/decorators/me.decorator';
-import { RoomChatService } from '../chatRoom/roomChat.service';
-import { ChatContext } from '../chatRoom/decorators/context.decorator';
+import { RoomChatContext } from '../chatRoom/decorators/context.decorator';
 import { type RoomChatAttributes } from 'src/models/roomchat';
 import { ChatValidation } from './chat.validation';
 import { CHAT_FILE_FOLDER } from './chat.constant';
 import { CreateChatDto } from './dto/create.dto';
+import { ChatContext } from './decorators/ctx.decorator';
+import { ChatCtxDto } from './dto/chatCtx.dto';
 
 @Controller('chat')
 export class ChatController extends BaseController {
@@ -29,7 +32,6 @@ export class ChatController extends BaseController {
     private readonly chatService: ChatService,
     private readonly chatGateway: ChatGateway,
     private readonly imagekitService: ImageKitService,
-    private readonly roomChatService: RoomChatService,
     private readonly chatValidation: ChatValidation,
   ) {
     super();
@@ -55,7 +57,7 @@ export class ChatController extends BaseController {
     @UploadedFile() rawFile: Express.Multer.File | null,
     @UserMe('id') userId: string,
     @Body() payload: any,
-    @ChatContext('roomChat') roomChat: RoomChatAttributes,
+    @RoomChatContext('roomChat') roomChat: RoomChatAttributes,
   ) {
     const { message } = await this.chatValidation.createChatValidation(payload);
     const chat = new CreateChatDto({
@@ -82,11 +84,36 @@ export class ChatController extends BaseController {
 
       chat.updateImage(upload.url, upload.fileId);
     }
+    const data = await this.chatService.create(chat);
+    this.chatGateway.sendNewChat(data);
 
     return this.sendResponseBody({
       code: 201,
       message: 'success',
-      data: await this.chatService.create(chat),
+      data,
+    });
+  }
+
+  @Delete(':chatId')
+  @HttpCode(200)
+  public async deleteChat(
+    @ChatContext() chat: ChatCtxDto,
+    @UserMe('id') userId: string,
+  ) {
+    if (
+      chat.userId !== userId &&
+      chat.role !== 'admin' &&
+      chat.roomOwner !== userId
+    )
+      throw new UnauthorizedException(
+        'you are not authorized to delete this chat',
+      );
+
+    await this.chatService.setDelete(chat.id);
+    this.chatGateway.deletedChat(chat.id, chat.roomId);
+    return this.sendResponseBody({
+      code: 200,
+      message: 'success',
     });
   }
 }

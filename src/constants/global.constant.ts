@@ -1,3 +1,5 @@
+import { RoomMemberType } from 'src/interfaces/model.interface';
+
 export const ERROR_NAME = {
   100: 'Continue',
   101: 'Switching Protocols',
@@ -121,3 +123,5 @@ export const SUPPORTED_AUDIO_EXT = [
   '.flac',
   '.midi',
 ];
+
+export const ROOM_CHAT_MEMBER: RoomMemberType[] = ['admin', 'member', 'owner'];
