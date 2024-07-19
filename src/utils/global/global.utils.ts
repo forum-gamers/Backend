@@ -1,9 +1,11 @@
 import { extname } from 'path';
 import {
+  SUPPORTED_AUDIO_EXT,
+  SUPPORTED_DOCUMENT_EXT,
   SUPPORTED_IMAGE_EXT,
   SUPPORTED_VIDEO_EXT,
 } from 'src/constants/global.constant';
-import type { FileType } from 'src/interfaces/model.interface';
+import type { ChatFileType } from 'src/interfaces/model.interface';
 
 class GlobalUtils {
   public isValidUUID(id: string) {
@@ -12,13 +14,19 @@ class GlobalUtils {
     );
   }
 
-  public getFileExtFromUrl(url: string): FileType | 'unsupported file type' {
+  public getFileExtFromUrl(
+    url: string,
+  ): ChatFileType | 'unsupported file type' {
     const { pathname } = new URL(url);
     switch (true) {
       case SUPPORTED_IMAGE_EXT.includes(extname(pathname).toLowerCase()):
         return 'image';
       case SUPPORTED_VIDEO_EXT.includes(extname(pathname).toLowerCase()):
         return 'video';
+      case SUPPORTED_AUDIO_EXT.includes(extname(pathname).toLowerCase()):
+        return 'audio';
+      case SUPPORTED_DOCUMENT_EXT.includes(extname(pathname).toLowerCase()):
+        return 'document';
       default:
         return 'unsupported file type';
     }

@@ -127,6 +127,7 @@ export class RoomChatController extends BaseController {
         ),
       );
 
+      await transaction.commit();
       this.chatGateway.sendNewRoom(
         room,
         members
@@ -134,7 +135,6 @@ export class RoomChatController extends BaseController {
           .filter((el) => el !== userId),
       );
 
-      await transaction.commit();
       return this.sendResponseBody({
         message: 'successfully created',
         data: room,

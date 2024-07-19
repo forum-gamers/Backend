@@ -9,8 +9,10 @@ export declare global {
       IMAGEKIT_PRIVATE_KEY: string;
       IMAGEKIT_PUBLIC_KEY: string;
       IMAGEKIT_URL: string;
-      ENCRYPTION_KEY: string;
+      CHAT_ENCRYPTION_KEY: string;
       PUBLIC_APP_URL: string;
+      CHAT_HMAC_KEY: string;
+      ENCRYPTION_KEY: string;
     }
   }
 }

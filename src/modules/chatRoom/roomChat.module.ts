@@ -23,6 +23,7 @@ import { WsModule } from '../ws/ws.module';
   ],
   providers: [RoomChatService, RoomChatValidation],
   controllers: [RoomChatController],
+  exports: [RoomChatService],
 })
 export class RoomChatModule implements NestModule {
   public configure(consumer: MiddlewareConsumer) {
