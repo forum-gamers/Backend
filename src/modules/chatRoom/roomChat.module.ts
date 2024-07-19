@@ -29,7 +29,10 @@ export class RoomChatModule implements NestModule {
   public configure(consumer: MiddlewareConsumer) {
     consumer
       .apply(RoomChatAccessMiddleware)
-      .exclude({ path: 'room-chat', method: RequestMethod.POST })
+      .exclude(
+        { path: 'room-chat', method: RequestMethod.POST },
+        { path: 'room-chat/me', method: RequestMethod.GET },
+      )
       .forRoutes(RoomChatController);
   }
 }

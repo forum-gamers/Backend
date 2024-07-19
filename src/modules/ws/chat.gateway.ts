@@ -4,7 +4,6 @@ import {
   type OnGatewayDisconnect,
   type OnGatewayInit,
   WebSocketGateway,
-  WebSocketServer,
 } from '@nestjs/websockets';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { Server, Socket } from 'socket.io';
@@ -19,8 +18,6 @@ import { RoomChatService } from '../chatRoom/roomChat.service';
 export class ChatGateway
   implements OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit
 {
-  @WebSocketServer()
-  private readonly server: Server;
   private clients = new Map<string, Socket>();
 
   constructor(

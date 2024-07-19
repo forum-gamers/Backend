@@ -4,16 +4,19 @@ import {
   Body,
   ConflictException,
   Controller,
+  Get,
   HttpCode,
   NotFoundException,
   Param,
   ParseUUIDPipe,
   Patch,
   Post,
+  Query,
   UnauthorizedException,
   UploadedFile,
   UseGuards,
   UseInterceptors,
+  UsePipes,
 } from '@nestjs/common';
 import { RoomChatService } from './roomChat.service';
 import { RoomChatValidation } from './roomChat.validation';
@@ -31,6 +34,7 @@ import { RoomChatContext } from './decorators/context.decorator';
 import { type RoomMemberAttributes } from 'src/models/roommember';
 import { type RoomChatAttributes } from 'src/models/roomchat';
 import { ChatGateway } from '../ws/chat.gateway';
+import { PaginationPipe } from 'src/utils/pipes/pagination.pipe';
 
 @Controller('room-chat')
 export class RoomChatController extends BaseController {
@@ -177,6 +181,26 @@ export class RoomChatController extends BaseController {
     return this.sendResponseBody({
       message: 'successfully removed',
       code: 200,
+    });
+  }
+
+  @Get('me')
+  @HttpCode(200)
+  @UseGuards(
+    new RateLimitGuard({
+      windowMs: 1 * 60 * 1000,
+      max: 50,
+      message: 'Too many requests from this IP, please try again in 1 minute.',
+    }),
+  )
+  @UsePipes(PaginationPipe)
+  public async getMyRooms(@UserMe('id') userId: string, @Query() query: any) {
+    const { page, limit } =
+      await this.roomChatValidation.validateGetMyRoomChat(query);
+    return this.sendResponseBody({
+      message: 'success',
+      code: 200,
+      data: await this.roomChatService.findMyRoomChats(userId, { page, limit }),
     });
   }
 }
