@@ -1,4 +1,5 @@
 import {
+  forwardRef,
   type MiddlewareConsumer,
   Module,
   type NestModule,
@@ -19,8 +20,8 @@ import { ChatAccessMiddleware } from 'src/middlewares/chat/access.middleware';
   imports: [
     SequelizeModule.forFeature([Chat]),
     ThirdPartyModule,
-    RoomChatModule,
-    WsModule,
+    forwardRef(() => RoomChatModule),
+    forwardRef(() => WsModule),
   ],
   providers: [ChatService, ChatValidation],
   exports: [ChatService],

@@ -2,7 +2,12 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Chat, type ChatAttributes } from 'src/models/chat';
 import { CreateChatDto } from './dto/create.dto';
-import { QueryTypes, type UpdateOptions, type CreateOptions } from 'sequelize';
+import {
+  QueryTypes,
+  type UpdateOptions,
+  type CreateOptions,
+  Op,
+} from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
 import { ChatCtxDto } from './dto/chatCtx.dto';
 
@@ -45,5 +50,15 @@ export class ChatService {
       { status: 'deleted' },
       { ...opts, where: { id } },
     );
+  }
+
+  public async findByMultipleIds(ids: number[]) {
+    return await this.chatModel.findAll({
+      where: {
+        id: {
+          [Op.in]: ids,
+        },
+      },
+    });
   }
 }

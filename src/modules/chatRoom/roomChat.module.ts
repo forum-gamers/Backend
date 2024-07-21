@@ -1,4 +1,5 @@
 import {
+  forwardRef,
   type MiddlewareConsumer,
   Module,
   type NestModule,
@@ -19,7 +20,7 @@ import { WsModule } from '../ws/ws.module';
     SequelizeModule.forFeature([RoomChat]),
     ThirdPartyModule,
     RoomMemberModule,
-    WsModule,
+    forwardRef(() => WsModule),
   ],
   providers: [RoomChatService, RoomChatValidation],
   controllers: [RoomChatController],

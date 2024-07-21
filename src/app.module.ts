@@ -46,6 +46,8 @@ import { RoomChatModule } from './modules/chatRoom/roomChat.module';
 import { RoomMemberModule } from './modules/roomMember/roomMember.module';
 import { ChatModule } from './modules/chat/chat.module';
 import { WsModule } from './modules/ws/ws.module';
+import { ChatRead } from './models/chatread';
+import { ChatReadModule } from './modules/chatRead/chatRead.module';
 const conf = require('../config/config.json');
 const environment = process.env.NODE_ENV ?? 'development';
 
@@ -111,6 +113,7 @@ config();
         RoomChat,
         RoomMember,
         Chat,
+        ChatRead,
       ],
       synchronize: environment !== 'production',
     }),
@@ -130,6 +133,7 @@ config();
     RoomMemberModule,
     ChatModule,
     WsModule,
+    ChatReadModule,
   ],
 })
 export class AppModule implements NestModule {
