@@ -39,6 +39,8 @@ import { ReplyService } from '../reply/reply.service';
 import { CreateTagsDto } from './dto/createTags.dto';
 import { PaginationPipe } from 'src/utils/pipes/pagination.pipe';
 import { PostLockedFindByIdPipe } from './pipes/findById.locked.pipe';
+import { UserPreferenceService } from '../userPreference/userPreference.service';
+import { CreateUserPreferenceDto } from '../userPreference/dto/create.dto';
 
 @Controller('post')
 export class PostController extends BaseController {
@@ -52,6 +54,7 @@ export class PostController extends BaseController {
     private readonly likeService: LikeService,
     private readonly commentService: CommentService,
     private readonly replyService: ReplyService,
+    private readonly userPreferenceService: UserPreferenceService,
   ) {
     super();
   }
@@ -97,6 +100,12 @@ export class PostController extends BaseController {
           transaction,
         },
       );
+
+      if (text)
+        await this.userPreferenceService.create(
+          new CreateUserPreferenceDto({ text, userId }),
+          { transaction },
+        );
 
       if (rawFiles.length) {
         const { files } = await this.postValidation.validatePostUploadFiles({

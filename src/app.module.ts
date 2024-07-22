@@ -51,6 +51,7 @@ import { ChatReadModule } from './modules/chatRead/chatRead.module';
 import { UserPreferences } from './models/userpreference';
 import { PostShare } from './models/postshare';
 import { PostShareModule } from './modules/postShare/postShare.module';
+import { UserPreferenceModule } from './modules/userPreference/userPreference.module';
 const conf = require('../config/config.json');
 const environment = process.env.NODE_ENV ?? 'development';
 
@@ -140,6 +141,7 @@ config();
     WsModule,
     ChatReadModule,
     PostShareModule,
+    UserPreferenceModule,
   ],
 })
 export class AppModule implements NestModule {

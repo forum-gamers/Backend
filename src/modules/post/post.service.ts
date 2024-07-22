@@ -108,24 +108,31 @@ export class PostService {
             LIMIT 1
           ) AS top_tag
         ),
+        user_preferences AS (
+          SELECT
+            "tags" AS "userTags"
+          FROM "UserPreferences"
+          WHERE "userId" = $2
+        ),
         filtered_posts AS (
           SELECT 
-            "id",
-            "userId",
-            "text",
-            "allowComment",
-            "createdAt",
-            "updatedAt",
-            "tags",
-            "privacy",
-            "communityId",
-            "totalLike",
-            "countComment",
-            "countShare"
-          FROM "Posts"
-          WHERE "createdAt" >= $1
-            AND "privacy" = 'public'
-            OR "Posts"."userId" IN (
+            p."id",
+            p."userId",
+            p."text",
+            p."allowComment",
+            p."createdAt",
+            p."updatedAt",
+            p."tags",
+            p."privacy",
+            p."communityId",
+            p."totalLike",
+            p."countComment",
+            p."countShare"
+          FROM "Posts" p
+          LEFT JOIN "UserPreferences" up ON p."userId" = up."userId"
+          WHERE p."createdAt" >= $1
+            AND p."privacy" = 'public'
+            OR p."userId" IN (
               SELECT "Follows"."followedId"
               FROM "Follows"
               WHERE "Follows"."followerId" = $2
@@ -133,12 +140,17 @@ export class PostService {
             OR EXISTS (
               SELECT 1
               FROM top_tags
-              WHERE "tags" && ARRAY[top_tags.tags]::varchar[]
+              WHERE p."tags" && ARRAY[top_tags.tags]::varchar[]
             )
-            OR "communityId" IN (
+            OR p."communityId" IN (
               SELECT "communityId"
               FROM "CommunityMembers"
               WHERE "userId" = $2
+            )
+            OR EXISTS (
+              SELECT 1
+              FROM user_preferences up
+              WHERE up."userTags" && p."tags"::varchar[]
             )
         ),  
         trending_data AS (

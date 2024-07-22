@@ -27,6 +27,8 @@ import { ReplyService } from '../reply/reply.service';
 import { QueryParamsDto } from 'src/utils/dto/pagination.dto';
 import { PostService } from '../post/post.service';
 import { PostLockedFindByIdPipe } from '../post/pipes/findById.locked.pipe';
+import { UserPreferenceService } from '../userPreference/userPreference.service';
+import { CreateUserPreferenceDto } from '../userPreference/dto/create.dto';
 
 @Controller('comment')
 export class CommentController extends BaseController {
@@ -36,6 +38,7 @@ export class CommentController extends BaseController {
     private readonly sequelize: Sequelize,
     private readonly replyService: ReplyService,
     private readonly postService: PostService,
+    private readonly userPreferenceService: UserPreferenceService,
   ) {
     super();
   }
@@ -74,6 +77,11 @@ export class CommentController extends BaseController {
         +post.countComment + 1,
         { transaction },
       );
+      if (post.text)
+        await this.userPreferenceService.create(
+          new CreateUserPreferenceDto({ userId, text: post.text }),
+          { transaction },
+        );
 
       await transaction.commit();
       return this.sendResponseBody({

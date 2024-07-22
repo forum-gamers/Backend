@@ -15,6 +15,8 @@ import { PostLockedFindByIdPipe } from '../post/pipes/findById.locked.pipe';
 import { PostAttributes } from 'src/models/post';
 import { CreateShareDto } from './dto/create.dto';
 import { BaseController } from 'src/base/controller.base';
+import { UserPreferenceService } from '../userPreference/userPreference.service';
+import { CreateUserPreferenceDto } from '../userPreference/dto/create.dto';
 
 @Controller('share')
 export class PostShareController extends BaseController {
@@ -22,6 +24,7 @@ export class PostShareController extends BaseController {
     private readonly postShareService: PostShareService,
     private readonly sequelize: Sequelize,
     private readonly postService: PostService,
+    private readonly userPreferenceService: UserPreferenceService,
   ) {
     super();
   }
@@ -39,7 +42,7 @@ export class PostShareController extends BaseController {
 
     const transaction = await this.sequelize.transaction();
     try {
-      await Promise.all([
+      const tasks: any[] = [
         this.postShareService.create(
           new CreateShareDto({ postId: post.id, userId }),
           { transaction },
@@ -47,7 +50,17 @@ export class PostShareController extends BaseController {
         this.postService.updateTotalShared(post.id, +post.countShare + 1, {
           transaction,
         }),
-      ]);
+      ];
+
+      if (post.text)
+        tasks.push(
+          this.userPreferenceService.create(
+            new CreateUserPreferenceDto({ userId, text: post.text }),
+            { transaction },
+          ),
+        );
+
+      await Promise.all(tasks);
 
       await transaction.commit();
       return this.sendResponseBody({

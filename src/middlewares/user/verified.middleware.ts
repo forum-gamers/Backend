@@ -3,15 +3,15 @@ import {
   UnauthorizedException,
   type NestMiddleware,
 } from '@nestjs/common';
-import type { Request, Response, NextFunction } from 'express';
+import type { RequestHandler } from 'express';
 
 @Injectable()
 export class VerifiedMiddleware implements NestMiddleware {
-  public use(req: Request, res: Response, next: NextFunction) {
+  public use: RequestHandler = (req, res, next) => {
     if (!req?.user?.isVerified)
       throw new UnauthorizedException(
         'you must be verified to access this endpoint',
       );
     next();
-  }
+  };
 }

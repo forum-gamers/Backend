@@ -6,7 +6,7 @@ import {
   UnauthorizedException,
   type NestMiddleware,
 } from '@nestjs/common';
-import type { Request, Response, NextFunction } from 'express';
+import type { RequestHandler } from 'express';
 import { CommunityService } from 'src/modules/community/community.service';
 
 /**
@@ -16,7 +16,7 @@ import { CommunityService } from 'src/modules/community/community.service';
  */
 @Injectable()
 export class CommunityAccessMiddleware implements NestMiddleware {
-  public async use(req: Request, res: Response, next: NextFunction) {
+  public use: RequestHandler = async (req, res, next) => {
     const { id } = req.params;
 
     const value = parseInt(id);
@@ -41,7 +41,7 @@ export class CommunityAccessMiddleware implements NestMiddleware {
     req.communityMember = community.members[0].dataValues;
 
     next();
-  }
+  };
 
   constructor(private readonly communityService: CommunityService) {}
 }

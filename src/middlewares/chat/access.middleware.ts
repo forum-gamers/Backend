@@ -4,7 +4,7 @@ import {
   NotFoundException,
   type NestMiddleware,
 } from '@nestjs/common';
-import type { Request, Response, NextFunction } from 'express';
+import type { RequestHandler } from 'express';
 import { ChatService } from 'src/modules/chat/chat.service';
 
 /**
@@ -14,7 +14,7 @@ import { ChatService } from 'src/modules/chat/chat.service';
  */
 @Injectable()
 export class ChatAccessMiddleware implements NestMiddleware {
-  public async use(req: Request, res: Response, next: NextFunction) {
+  public use: RequestHandler = async (req, res, next) => {
     const { chatId } = req.params;
 
     const value = parseInt(chatId);
@@ -26,7 +26,7 @@ export class ChatAccessMiddleware implements NestMiddleware {
     req.chatCtx = data;
 
     next();
-  }
+  };
 
   constructor(private readonly chatService: ChatService) {}
 }

@@ -10,6 +10,7 @@ import { LikeModule } from '../like/like.module';
 import { BookmarkModule } from '../bookmark/bookmark.module';
 import { CommentModule } from '../comment/comment.module';
 import { ReplyModule } from '../reply/reply.module';
+import { UserPreferenceModule } from '../userPreference/userPreference.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { ReplyModule } from '../reply/reply.module';
     forwardRef(() => BookmarkModule),
     forwardRef(() => CommentModule),
     ReplyModule,
+    UserPreferenceModule,
   ],
   providers: [PostService, PostValidation],
   controllers: [PostController],

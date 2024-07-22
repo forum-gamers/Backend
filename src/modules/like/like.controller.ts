@@ -15,6 +15,8 @@ import { CreateLikeDto } from './dto/create.dto';
 import { PostService } from '../post/post.service';
 import { Sequelize } from 'sequelize-typescript';
 import { PostLockedFindByIdPipe } from '../post/pipes/findById.locked.pipe';
+import { UserPreferenceService } from '../userPreference/userPreference.service';
+import { CreateUserPreferenceDto } from '../userPreference/dto/create.dto';
 
 @Controller('like')
 export class LikeController extends BaseController {
@@ -22,6 +24,7 @@ export class LikeController extends BaseController {
     private readonly likeService: LikeService,
     private readonly postService: PostService,
     private readonly sequelize: Sequelize,
+    private readonly userPreferenceService: UserPreferenceService,
   ) {
     super();
   }
@@ -39,7 +42,7 @@ export class LikeController extends BaseController {
 
     const transaction = await this.sequelize.transaction();
     try {
-      await Promise.all([
+      const tasks: any[] = [
         this.likeService.create(
           new CreateLikeDto({ postId: post.id, userId }),
           { transaction },
@@ -47,7 +50,16 @@ export class LikeController extends BaseController {
         this.postService.updateTotalLike(post.id, +post.totalLike + 1, {
           transaction,
         }),
-      ]);
+      ];
+      if (post.text)
+        tasks.push(
+          this.userPreferenceService.create(
+            new CreateUserPreferenceDto({ userId, text: post.text }),
+            { transaction },
+          ),
+        );
+
+      await Promise.all(tasks);
 
       await transaction.commit();
       return this.sendResponseBody({
