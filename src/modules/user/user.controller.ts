@@ -36,6 +36,8 @@ import { UserMe } from './decorators/me.decorator';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { USER_BACKGROUND_FOLDER, USER_PROFILE_FOLDER } from './user.constant';
 import { UserFindByIdPipe } from './pipes/findById.pipe';
+import { ProfileViewerService } from '../profileViewer/profileViewer.service';
+import { CreateProfileViewerDto } from '../profileViewer/dto/create.dto';
 
 @Controller('user')
 export class UserController extends BaseController {
@@ -46,6 +48,7 @@ export class UserController extends BaseController {
     private readonly mailService: MailService,
     private readonly userValidation: UserValidation,
     private readonly walletService: WalletService,
+    private readonly profileViewerService: ProfileViewerService,
   ) {
     super();
   }
@@ -268,8 +271,26 @@ export class UserController extends BaseController {
 
   @Get(':id')
   @HttpCode(200)
-  public getById(@Param('id', UserFindByIdPipe) user: UserAttributes | null) {
+  public getById(
+    @Param('id', UserFindByIdPipe) user: UserAttributes | null,
+    @UserMe('id') userId: string,
+  ) {
     if (!user) throw new NotFoundException('user not found');
+
+    (async () => {
+      if (user.id !== userId) {
+        const exists =
+          await this.profileViewerService.findOneByIdIntervalThreeDays(
+            user.id,
+            userId,
+          );
+        if (!exists)
+          await this.profileViewerService.create(
+            new CreateProfileViewerDto({ targetId: user.id, viewerId: userId }),
+          );
+      }
+    })();
+
     return this.sendResponseBody({
       message: 'user found',
       code: 200,
