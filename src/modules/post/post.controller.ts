@@ -8,6 +8,7 @@ import {
   HttpCode,
   NotFoundException,
   Param,
+  ParseIntPipe,
   Patch,
   Post,
   Query,
@@ -235,7 +236,7 @@ export class PostController extends BaseController {
     const { page, limit } =
       await this.postValidation.validateGetPostQuery(query);
 
-    const [{ datas, totalData }] = await this.postService.getPublicContent(
+    const { datas, totalData } = await this.postService.getPublicContent(
       {
         page,
         limit,
@@ -255,5 +256,17 @@ export class PostController extends BaseController {
         limit,
       },
     );
+  }
+
+  @Get(':id')
+  @HttpCode(200)
+  public async findOneById(
+    @Param('id', ParseIntPipe) id: number,
+    @UserMe('id') userId: string,
+  ) {
+    const post = await this.postService.findOneById(id, userId);
+    if (!post) throw new NotFoundException('post not found');
+
+    return this.sendResponseBody({ message: 'OK', code: 200, data: post });
   }
 }

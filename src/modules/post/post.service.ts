@@ -12,6 +12,8 @@ import {
 import { Sequelize } from 'sequelize-typescript';
 import { PostResponseQuery } from './dto/postResponseQuery.dto';
 import { PostResponseQueryDB } from './post.interface';
+import { plainToInstance } from 'class-transformer';
+import { PostResponse } from './dto/postResponse.dto';
 
 @Injectable()
 export class PostService {
@@ -91,8 +93,9 @@ export class PostService {
     const now = new Date();
     const aWeekAgo = new Date(now.setDate(now.getDate() - 7)).toISOString();
 
-    return await this.sequelize.query<PostResponseQueryDB>(
-      `WITH 
+    const [{ datas, totalData }] =
+      await this.sequelize.query<PostResponseQueryDB>(
+        `WITH 
         top_tags AS (
           SELECT
             "tags"
@@ -246,10 +249,77 @@ export class PostService {
       )), '[]'::json) as "datas",
       MAX(pd."totalData") as "totalData"
       FROM post_data pd;`,
+        {
+          type: QueryTypes.SELECT,
+          bind: [aWeekAgo, userId, limit, (page - 1) * limit],
+        },
+      );
+
+    return {
+      datas: plainToInstance(PostResponse, datas),
+      totalData: Number(totalData),
+    };
+  }
+
+  public async findOneById(id: number, userId: string) {
+    const [data] = await this.sequelize.query<PostResponse>(
+      `
+      SELECT 
+            p."id",
+            p."userId",
+            p."text",
+            p."allowComment",
+            p."createdAt",
+            p."updatedAt",
+            p."privacy",
+            p."communityId",
+            COALESCE(json_agg(
+            json_build_object(
+              'fileId', pm."fileId",
+              'url', pm."url",
+              'type', pm."type"
+              )
+            ) FILTER (WHERE pm."fileId" IS NOT NULL), '[]'::json) AS "medias",
+            p."totalLike" AS "countLike",
+            p."countComment",
+            p."countShare",
+            EXISTS (SELECT 1 FROM "PostLikes" l2 WHERE l2."postId" = p."id" AND l2."userId" = $2) AS "isLiked",
+            EXISTS (SELECT 1 FROM "PostShares" l2 WHERE l2."postId" = p."id" AND l2."userId" = $2) AS "isShared",
+            CASE
+              WHEN p."communityId" IS NOT NULL THEN json_build_object(
+                'id', c."id",
+                'name', c."name",
+                'description', c."description",
+                'imageUrl', c."imageUrl",
+                'imageId', c."imageId",
+                'owner', c."owner",
+                'createdAt', c."createdAt",
+                'updatedAt', c."updatedAt"
+              )
+              ELSE NULL
+            END AS "community"
+          FROM "Posts" p
+          LEFT JOIN "PostMedia" pm ON pm."postId" = p."id"
+          LEFT JOIN "Communities" c ON c."id" = p."communityId"
+          WHERE p."id" = $1
+          GROUP BY 
+            p."id",
+            p."userId",
+            p."text",
+            p."allowComment",
+            p."createdAt",
+            p."updatedAt",
+            p."privacy",
+            p."communityId",
+            p."totalLike",
+            p."countComment",
+            p."countShare",
+            c."id"`,
       {
         type: QueryTypes.SELECT,
-        bind: [aWeekAgo, userId, limit, (page - 1) * limit],
+        bind: [id, userId],
       },
     );
+    return plainToInstance(PostResponse, data);
   }
 }
