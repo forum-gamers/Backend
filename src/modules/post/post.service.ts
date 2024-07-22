@@ -7,6 +7,7 @@ import {
   type CreateOptions,
   type UpdateOptions,
   QueryTypes,
+  type FindOptions,
 } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
 import { PostResponseQuery } from './dto/postResponseQuery.dto';
@@ -27,8 +28,11 @@ export class PostService {
     return await this.postModel.create(payload, opts);
   }
 
-  public async findById(id: number) {
-    return await this.postModel.findByPk(id);
+  public async findById(
+    id: number,
+    opts?: Omit<FindOptions<PostAttributes>, 'where'>,
+  ) {
+    return await this.postModel.findByPk(id, opts);
   }
 
   public async deleteOne(id: number, opts?: DestroyOptions<PostAttributes>) {
@@ -54,6 +58,17 @@ export class PostService {
   ) {
     return await this.postModel.update(
       { totalLike },
+      { ...opts, where: { id } },
+    );
+  }
+
+  public async updateTotalComment(
+    id: number,
+    countComment: number,
+    opts?: Partial<UpdateOptions<PostAttributes>>,
+  ) {
+    return await this.postModel.update(
+      { countComment },
       { ...opts, where: { id } },
     );
   }
@@ -92,7 +107,10 @@ export class PostService {
             "updatedAt",
             "tags",
             "privacy",
-            "communityId"
+            "communityId",
+            "totalLike",
+            "countComment",
+            "countShare"
           FROM "Posts"
           WHERE "createdAt" >= $1
             AND "privacy" = 'public'
@@ -129,9 +147,11 @@ export class PostService {
               'type', pm."type"
               )
             ) FILTER (WHERE pm."fileId" IS NOT NULL), '[]'::json) AS "medias",
-            (SELECT COUNT(*) FROM "PostLikes" l WHERE l."postId" = p."id") AS "countLike",
-            (SELECT COUNT(*) FROM "PostComments" c WHERE c."postId" = p."id") AS "countComment",
+            p."totalLike" AS "countLike",
+            p."countComment",
+            p."countShare",
             EXISTS (SELECT 1 FROM "PostLikes" l2 WHERE l2."postId" = p."id" AND l2."userId" = $2) AS "isLiked",
+            EXISTS (SELECT 1 FROM "PostShares" l2 WHERE l2."postId" = p."id" AND l2."userId" = $2) AS "isShared",
             CASE
               WHEN p."communityId" IS NOT NULL THEN json_build_object(
                 'id', c."id",
@@ -157,6 +177,9 @@ export class PostService {
             p."updatedAt",
             p."privacy",
             p."communityId",
+            p."totalLike",
+            p."countComment",
+            p."countShare",
             c."id"
         ),
         post_data AS (
@@ -172,29 +195,33 @@ export class PostService {
             p."medias",
             p."countLike",
             p."countComment",
+            p."countShare",
             p."isLiked",
+            p."isShared",
             p."community",
             COUNT(*) OVER() AS "totalData"
           FROM trending_data p
-          ORDER BY "createdAt" DESC
+          ORDER BY p."createdAt" DESC
           LIMIT $3 OFFSET $4
         )
       SELECT 
-        json_agg(json_build_object(
-          'id', pd."id",
-          'userId', pd."userId",
-          'text', pd."text",
-          'allowComment', pd."allowComment",
-          'createdAt', pd."createdAt",
-          'updatedAt', pd."updatedAt",
-          'privacy', pd."privacy",
-          'medias', pd."medias",
-          'countLike', pd."countLike",
-          'countComment', pd."countComment",
-          'isLiked', pd."isLiked",
-          'community', pd."community"
-        )) as "datas",
-        MAX(pd."totalData") as "totalData"
+      COALESCE(json_agg(json_build_object(
+        'id', pd."id",
+        'userId', pd."userId",
+        'text', pd."text",
+        'allowComment', pd."allowComment",
+        'createdAt', pd."createdAt",
+        'updatedAt', pd."updatedAt",
+        'privacy', pd."privacy",
+        'medias', pd."medias",
+        'countLike', pd."countLike",
+        'countComment', pd."countComment",
+        'countShare', pd."countShare",
+        'isLiked', pd."isLiked",
+        'isShared', pd."isShared",
+        'community', pd."community"
+      )), '[]'::json) as "datas",
+      MAX(pd."totalData") as "totalData"
       FROM post_data pd;`,
       {
         type: QueryTypes.SELECT,

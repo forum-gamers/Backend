@@ -17,7 +17,6 @@ import { BaseController } from 'src/base/controller.base';
 import { CommentService } from './comment.service';
 import { CommentValidation } from './comment.validation';
 import { UserMe } from '../user/decorators/me.decorator';
-import { PostFindByIdPipe } from '../post/pipes/findById.pipe';
 import { type PostAttributes } from 'src/models/post';
 import { CreateCommentDto } from './dto/create.dto';
 import { RateLimitGuard } from 'src/middlewares/global/rateLimit.middleware';
@@ -26,6 +25,9 @@ import { type PostCommentAttributes } from 'src/models/postcomment';
 import { Sequelize } from 'sequelize-typescript';
 import { ReplyService } from '../reply/reply.service';
 import { QueryParamsDto } from 'src/utils/dto/pagination.dto';
+import { PostService } from '../post/post.service';
+import { Transaction } from 'sequelize';
+import { PostLockedFindByIdPipe } from '../post/pipes/findById.locked.pipe';
 
 @Controller('comment')
 export class CommentController extends BaseController {
@@ -34,6 +36,7 @@ export class CommentController extends BaseController {
     private readonly commentValidation: CommentValidation,
     private readonly sequelize: Sequelize,
     private readonly replyService: ReplyService,
+    private readonly postService: PostService,
   ) {
     super();
   }
@@ -49,7 +52,8 @@ export class CommentController extends BaseController {
   @HttpCode(201)
   public async create(
     @UserMe('id') userId: string,
-    @Param('id', PostFindByIdPipe) post: PostAttributes | null,
+    @Param('id', PostLockedFindByIdPipe)
+    post: PostAttributes | null,
     @Body() payload: any,
   ) {
     if (!post) throw new NotFoundException('post not found');
@@ -60,13 +64,28 @@ export class CommentController extends BaseController {
     const { text } =
       await this.commentValidation.validateCreateComment(payload);
 
-    return this.sendResponseBody({
-      message: 'comment created',
-      code: 201,
-      data: await this.commentService.create(
+    const transaction = await this.sequelize.transaction();
+    try {
+      const data = await this.commentService.create(
         new CreateCommentDto({ userId, text, postId: post.id }),
-      ),
-    });
+        { transaction },
+      );
+      await this.postService.updateTotalComment(
+        post.id,
+        +post.countComment + 1,
+        { transaction },
+      );
+
+      await transaction.commit();
+      return this.sendResponseBody({
+        message: 'comment created',
+        code: 201,
+        data,
+      });
+    } catch (err) {
+      await transaction.rollback();
+      throw err;
+    }
   }
 
   @Delete(':id')

@@ -10,11 +10,11 @@ import {
 import { BaseController } from 'src/base/controller.base';
 import { LikeService } from './like.service';
 import { UserMe } from '../user/decorators/me.decorator';
-import { PostFindByIdPipe } from '../post/pipes/findById.pipe';
 import { type PostAttributes } from 'src/models/post';
 import { CreateLikeDto } from './dto/create.dto';
 import { PostService } from '../post/post.service';
 import { Sequelize } from 'sequelize-typescript';
+import { PostLockedFindByIdPipe } from '../post/pipes/findById.locked.pipe';
 
 @Controller('like')
 export class LikeController extends BaseController {
@@ -30,7 +30,7 @@ export class LikeController extends BaseController {
   @HttpCode(201)
   public async likeAPost(
     @UserMe('id') userId: string,
-    @Param('id', PostFindByIdPipe) post: PostAttributes | null,
+    @Param('id', PostLockedFindByIdPipe) post: PostAttributes | null,
   ) {
     if (!post) throw new NotFoundException('post not found');
 
@@ -44,7 +44,7 @@ export class LikeController extends BaseController {
           new CreateLikeDto({ postId: post.id, userId }),
           { transaction },
         ),
-        this.postService.updateTotalLike(post.id, post.totalLike + 1, {
+        this.postService.updateTotalLike(post.id, +post.totalLike + 1, {
           transaction,
         }),
       ]);
@@ -64,7 +64,7 @@ export class LikeController extends BaseController {
   @HttpCode(200)
   public async unlikeAPost(
     @UserMe('id') userId: string,
-    @Param('id', PostFindByIdPipe) post: PostAttributes | null,
+    @Param('id', PostLockedFindByIdPipe) post: PostAttributes | null,
   ) {
     if (!post) throw new NotFoundException('post not found');
 

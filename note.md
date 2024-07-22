@@ -1,0 +1,1 @@
+- always explicit transform value to number for field number on database schema (sometime sequelize parse it to string)

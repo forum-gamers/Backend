@@ -38,6 +38,7 @@ import { CommentService } from '../comment/comment.service';
 import { ReplyService } from '../reply/reply.service';
 import { CreateTagsDto } from './dto/createTags.dto';
 import { PaginationPipe } from 'src/utils/pipes/pagination.pipe';
+import { PostLockedFindByIdPipe } from './pipes/findById.locked.pipe';
 
 @Controller('post')
 export class PostController extends BaseController {
@@ -151,7 +152,7 @@ export class PostController extends BaseController {
   @HttpCode(200)
   public async deletePost(
     @UserMe('id') id: string,
-    @Param('id', PostFindByIdPipe) post: PostAttributes | null,
+    @Param('id', PostLockedFindByIdPipe) post: PostAttributes | null,
   ) {
     if (!post) throw new NotFoundException('post not found');
     if (post.userId !== id) throw new ForbiddenException('forbidden access');

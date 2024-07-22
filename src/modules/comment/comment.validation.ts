@@ -10,9 +10,9 @@ export class CommentValidation extends BaseValidation {
       yup.object().shape({
         text: yup
           .string()
-          .min(1, 'comment is too short')
-          .max(160, 'comment is too long')
-          .required('comment is required'),
+          .min(1, 'text is too short')
+          .max(160, 'text is too long')
+          .required('text is required'),
       }),
       data,
     );
