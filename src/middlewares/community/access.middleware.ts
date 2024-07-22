@@ -17,6 +17,8 @@ import { CommunityService } from 'src/modules/community/community.service';
 @Injectable()
 export class CommunityAccessMiddleware implements NestMiddleware {
   public use: RequestHandler = async (req, res, next) => {
+    if (req.method === 'GET') return next();
+
     const { id } = req.params;
 
     const value = parseInt(id);

@@ -4,12 +4,15 @@ import {
   Controller,
   Delete,
   ForbiddenException,
+  Get,
   HttpCode,
   NotFoundException,
   Post,
+  Query,
   UploadedFile,
   UseGuards,
   UseInterceptors,
+  UsePipes,
 } from '@nestjs/common';
 import { BaseController } from 'src/base/controller.base';
 import { CommunityService } from './community.service';
@@ -25,6 +28,7 @@ import { CreateCommunityMemberDto } from '../communityMember/dto/create.dto';
 import { RateLimitGuard } from 'src/middlewares/global/rateLimit.middleware';
 import { type CommunityAttributes } from 'src/models/community';
 import { CommunityContext } from './decorators/community.decorator';
+import { PaginationPipe } from 'src/utils/pipes/pagination.pipe';
 
 @Controller('community')
 export class CommunityController extends BaseController {
@@ -146,5 +150,39 @@ export class CommunityController extends BaseController {
       await transaction.rollback();
       throw err;
     }
+  }
+
+  @Get()
+  @UsePipes(PaginationPipe)
+  @HttpCode(200)
+  @UseGuards(
+    new RateLimitGuard({
+      windowMs: 1 * 60 * 1000,
+      max: 100,
+      message: 'Too many requests from this IP, please try again in 1 minute.',
+    }),
+  )
+  public async findAll(@Query() query: any) {
+    const { page, limit } =
+      await this.communityValidation.validatePaginationQuery(query);
+
+    const { rows, count } = await this.communityService.findAndCountAll({
+      page,
+      limit,
+    });
+
+    return this.sendResponseBody(
+      {
+        message: 'OK',
+        code: 200,
+        data: rows,
+      },
+      {
+        totalData: count,
+        totalPage: Math.ceil(count / limit),
+        page,
+        limit,
+      },
+    );
   }
 }

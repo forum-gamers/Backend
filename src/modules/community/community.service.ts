@@ -5,6 +5,7 @@ import { CreateCommunityDto } from './dto/create.dto';
 import { DestroyOptions, type CreateOptions } from 'sequelize';
 import { CommunityMembers } from 'src/models/communitymember';
 import { User } from 'src/models/user';
+import { QueryParamsDto } from 'src/utils/dto/pagination.dto';
 
 @Injectable()
 export class CommunityService {
@@ -53,5 +54,18 @@ export class CommunityService {
     opts?: DestroyOptions<CommunityAttributes>,
   ) {
     return await this.communityModel.destroy({ ...opts, where: { id } });
+  }
+
+  public async findAndCountAll({
+    page = 1,
+    limit = 10,
+    sortDirection = 'DESC',
+    sortby = 'createdAt',
+  }: QueryParamsDto) {
+    return await this.communityModel.findAndCountAll({
+      limit,
+      offset: (page - 1) * limit,
+      order: [[sortby, sortDirection]],
+    });
   }
 }

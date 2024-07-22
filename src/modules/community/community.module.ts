@@ -26,7 +26,6 @@ export class CommunityModule implements NestModule {
   public configure(consumer: MiddlewareConsumer) {
     consumer
       .apply(CommunityAccessMiddleware)
-      .exclude({ path: '/community', method: RequestMethod.POST })
-      .forRoutes(CommunityController);
+      .forRoutes({ path: '/community/:id', method: RequestMethod.DELETE });
   }
 }

@@ -268,9 +268,7 @@ export class UserController extends BaseController {
 
   @Get(':id')
   @HttpCode(200)
-  public async getById(
-    @Param('id', UserFindByIdPipe) user: UserAttributes | null,
-  ) {
+  public getById(@Param('id', UserFindByIdPipe) user: UserAttributes | null) {
     if (!user) throw new NotFoundException('user not found');
     return this.sendResponseBody({
       message: 'user found',
