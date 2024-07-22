@@ -73,6 +73,17 @@ export class PostService {
     );
   }
 
+  public async updateTotalShared(
+    id: number,
+    countShare: number,
+    opts?: Partial<UpdateOptions<PostAttributes>>,
+  ) {
+    return await this.postModel.update(
+      { countShare },
+      { ...opts, where: { id } },
+    );
+  }
+
   public async getPublicContent(
     { page, limit }: PostResponseQuery,
     userId: string,

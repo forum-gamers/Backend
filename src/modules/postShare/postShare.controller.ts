@@ -7,51 +7,51 @@ import {
   Param,
   Post,
 } from '@nestjs/common';
-import { BaseController } from 'src/base/controller.base';
-import { LikeService } from './like.service';
-import { UserMe } from '../user/decorators/me.decorator';
-import { type PostAttributes } from 'src/models/post';
-import { CreateLikeDto } from './dto/create.dto';
-import { PostService } from '../post/post.service';
+import { PostShareService } from './postShare.service';
 import { Sequelize } from 'sequelize-typescript';
+import { PostService } from '../post/post.service';
+import { UserMe } from '../user/decorators/me.decorator';
 import { PostLockedFindByIdPipe } from '../post/pipes/findById.locked.pipe';
+import { PostAttributes } from 'src/models/post';
+import { CreateShareDto } from './dto/create.dto';
+import { BaseController } from 'src/base/controller.base';
 
-@Controller('like')
-export class LikeController extends BaseController {
+@Controller('share')
+export class PostShareController extends BaseController {
   constructor(
-    private readonly likeService: LikeService,
-    private readonly postService: PostService,
+    private readonly postShareService: PostShareService,
     private readonly sequelize: Sequelize,
+    private readonly postService: PostService,
   ) {
     super();
   }
 
   @Post(':id')
   @HttpCode(201)
-  public async likeAPost(
+  public async shareAPost(
     @UserMe('id') userId: string,
     @Param('id', PostLockedFindByIdPipe) post: PostAttributes | null,
   ) {
     if (!post) throw new NotFoundException('post not found');
 
-    if (await this.likeService.findOneByPostIdAndUserId(post.id, userId))
-      throw new ConflictException('post already liked');
+    if (await this.postShareService.findOneByPostIdAndUserId(post.id, userId))
+      throw new ConflictException('post already shared');
 
     const transaction = await this.sequelize.transaction();
     try {
       await Promise.all([
-        this.likeService.create(
-          new CreateLikeDto({ postId: post.id, userId }),
+        this.postShareService.create(
+          new CreateShareDto({ postId: post.id, userId }),
           { transaction },
         ),
-        this.postService.updateTotalLike(post.id, +post.totalLike + 1, {
+        this.postService.updateTotalShared(post.id, +post.countShare + 1, {
           transaction,
         }),
       ]);
 
       await transaction.commit();
       return this.sendResponseBody({
-        message: 'post liked',
+        message: 'post shared',
         code: 201,
       });
     } catch (err) {
@@ -62,22 +62,24 @@ export class LikeController extends BaseController {
 
   @Delete(':id')
   @HttpCode(200)
-  public async unlikeAPost(
+  public async unshareAPost(
     @UserMe('id') userId: string,
     @Param('id', PostLockedFindByIdPipe) post: PostAttributes | null,
   ) {
     if (!post) throw new NotFoundException('post not found');
 
-    if (!(await this.likeService.findOneByPostIdAndUserId(post.id, userId)))
+    if (
+      !(await this.postShareService.findOneByPostIdAndUserId(post.id, userId))
+    )
       throw new NotFoundException('post not liked');
 
     const transaction = await this.sequelize.transaction();
     try {
       await Promise.all([
-        this.likeService.deleteByPostIdAndUserId(post.id, userId, {
+        this.postShareService.deleteByPostIdAndUserId(post.id, userId, {
           transaction,
         }),
-        this.postService.updateTotalLike(post.id, +post.totalLike - 1, {
+        this.postService.updateTotalShared(post.id, +post.countShare - 1, {
           transaction,
         }),
       ]);

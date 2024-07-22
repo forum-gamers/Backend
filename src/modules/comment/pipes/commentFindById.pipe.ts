@@ -12,7 +12,7 @@ export class CommentFindByIdPipe implements PipeTransform {
     let id = parseInt(value);
     if (isNaN(id)) throw new BadRequestException('id must be a number');
 
-    return await this.commentService.findById(id);
+    return await this.commentService.findByIdAndPreloadPostId(id);
   }
 
   constructor(private readonly commentService: CommentService) {}

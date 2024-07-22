@@ -26,7 +26,6 @@ import { Sequelize } from 'sequelize-typescript';
 import { ReplyService } from '../reply/reply.service';
 import { QueryParamsDto } from 'src/utils/dto/pagination.dto';
 import { PostService } from '../post/post.service';
-import { Transaction } from 'sequelize';
 import { PostLockedFindByIdPipe } from '../post/pipes/findById.locked.pipe';
 
 @Controller('comment')
@@ -92,7 +91,8 @@ export class CommentController extends BaseController {
   @HttpCode(200)
   public async delete(
     @UserMe('id') userId: string,
-    @Param('id', CommentFindByIdPipe) comment: PostCommentAttributes | null,
+    @Param('id', CommentFindByIdPipe)
+    comment: (PostCommentAttributes & { post: PostAttributes }) | null,
   ) {
     if (!comment) throw new NotFoundException('comment not found');
     if (comment.userId !== userId)
@@ -102,12 +102,21 @@ export class CommentController extends BaseController {
 
     const transaction = await this.sequelize.transaction();
     try {
-      await this.replyService.deleteAllByCommentId(comment.id, {
+      const affectedReply = await this.replyService.deleteAllByCommentId(
+        comment.id,
+        {
+          transaction,
+        },
+      );
+      const affectedComment = await this.commentService.deleteById(comment.id, {
         transaction,
       });
-      await this.commentService.deleteAllByPostId(comment.postId, {
-        transaction,
-      });
+
+      await this.postService.updateTotalComment(
+        +comment.post.id,
+        +comment.post.countComment - +affectedComment - +affectedReply,
+        { transaction },
+      );
 
       await transaction.commit();
       return this.sendResponseBody({

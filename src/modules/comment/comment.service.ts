@@ -5,8 +5,9 @@ import {
   type PostCommentAttributes,
 } from 'src/models/postcomment';
 import { CreateCommentDto } from './dto/create.dto';
-import { type UpdateOptions, type CreateOptions } from 'sequelize';
+import { type CreateOptions, type DestroyOptions } from 'sequelize';
 import { QueryParamsDto } from 'src/utils/dto/pagination.dto';
+import { Post } from 'src/models/post';
 
 @Injectable()
 export class CommentService {
@@ -24,9 +25,16 @@ export class CommentService {
 
   public async deleteAllByPostId(
     postId: number,
-    opts?: Partial<UpdateOptions<PostCommentAttributes>>,
+    opts?: Partial<DestroyOptions<PostCommentAttributes>>,
   ) {
     return await this.commentModel.destroy({ ...opts, where: { postId } });
+  }
+
+  public async deleteById(
+    id: number,
+    opts?: Partial<DestroyOptions<PostCommentAttributes>>,
+  ) {
+    return await this.commentModel.destroy({ ...opts, where: { id } });
   }
 
   public async findAllByPostId(postId: number) {
@@ -35,6 +43,17 @@ export class CommentService {
 
   public async findById(id: number) {
     return await this.commentModel.findByPk(id);
+  }
+
+  public async findByIdAndPreloadPostId(id: number) {
+    return await this.commentModel.findByPk(id, {
+      include: [
+        {
+          model: Post,
+          required: true,
+        },
+      ],
+    });
   }
 
   public async getPostComment(
