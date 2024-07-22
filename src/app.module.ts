@@ -52,6 +52,7 @@ import { UserPreferences } from './models/userpreference';
 import { PostShare } from './models/postshare';
 import { PostShareModule } from './modules/postShare/postShare.module';
 import { UserPreferenceModule } from './modules/userPreference/userPreference.module';
+import { ProfileViewers } from './models/profileviewer';
 const conf = require('../config/config.json');
 const environment = process.env.NODE_ENV ?? 'development';
 
@@ -120,6 +121,7 @@ config();
         ChatRead,
         UserPreferences,
         PostShare,
+        ProfileViewers,
       ],
       synchronize: environment !== 'production',
     }),
