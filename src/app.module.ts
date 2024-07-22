@@ -48,6 +48,8 @@ import { ChatModule } from './modules/chat/chat.module';
 import { WsModule } from './modules/ws/ws.module';
 import { ChatRead } from './models/chatread';
 import { ChatReadModule } from './modules/chatRead/chatRead.module';
+import { UserPreferences } from './models/userpreference';
+import { PostShare } from './models/postshare';
 const conf = require('../config/config.json');
 const environment = process.env.NODE_ENV ?? 'development';
 
@@ -114,6 +116,8 @@ config();
         RoomMember,
         Chat,
         ChatRead,
+        UserPreferences,
+        PostShare,
       ],
       synchronize: environment !== 'production',
     }),

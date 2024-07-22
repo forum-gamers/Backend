@@ -13,6 +13,8 @@ export interface PostAttributes {
   createdAt: Date;
   updatedAt: Date;
   editedText: boolean;
+  countComment: number;
+  countShare: number;
   tags: string[];
 }
 
@@ -82,6 +84,18 @@ export class Post
     defaultValue: 0,
   })
   public totalLike: number;
+
+  @Column({
+    type: DataTypes.BIGINT,
+    defaultValue: 0,
+  })
+  public countComment: number;
+
+  @Column({
+    type: DataTypes.BIGINT,
+    defaultValue: 0,
+  })
+  public countShare: number;
 
   @Column({
     allowNull: false,
