@@ -149,28 +149,12 @@ config();
   ],
 })
 export class AppModule implements NestModule {
-  public configure(consumer: MiddlewareConsumer) {
-    consumer
-      .apply(LoggerMiddleware)
-      .forRoutes('*')
-      .apply(XssMiddleware)
-      .forRoutes('*')
-      .apply(UserAuthentication)
-      .exclude(
-        { path: 'user/register', method: RequestMethod.POST },
-        { path: 'user/login', method: RequestMethod.POST },
-        { path: 'user/resend-email', method: RequestMethod.POST },
-        { path: 'user/verify', method: RequestMethod.PATCH },
-      )
-      .forRoutes('*')
-      .apply(VerifiedMiddleware)
-      .exclude(
-        { path: 'user/register', method: RequestMethod.POST },
-        { path: 'user/login', method: RequestMethod.POST },
-        { path: 'user/resend-email', method: RequestMethod.POST },
-        { path: 'user/verify', method: RequestMethod.PATCH },
-        { path: 'post', method: RequestMethod.POST },
-      )
-      .forRoutes('*');
+  configure(consumer: MiddlewareConsumer) {
+    /**
+     * TODO
+     * fix
+     * @description i dont know what shit happer but excluded routes still affected by middleware
+     */
+    consumer.apply(LoggerMiddleware, XssMiddleware).forRoutes('*');
   }
 }

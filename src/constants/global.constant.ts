@@ -1,4 +1,6 @@
 import { RoomMemberType } from 'src/interfaces/model.interface';
+import { UserAuthentication } from 'src/middlewares/user/authentication.middleware';
+import { VerifiedMiddleware } from 'src/middlewares/user/verified.middleware';
 
 export const ERROR_NAME = {
   100: 'Continue',
@@ -125,3 +127,8 @@ export const SUPPORTED_AUDIO_EXT = [
 ];
 
 export const ROOM_CHAT_MEMBER: RoomMemberType[] = ['admin', 'member', 'owner'];
+
+export const USER_VERIFIED_MIDDLEWARE = [
+  UserAuthentication,
+  VerifiedMiddleware,
+];

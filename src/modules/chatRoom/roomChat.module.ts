@@ -14,6 +14,7 @@ import { ThirdPartyModule } from 'src/third-party/third-party.module';
 import { RoomMemberModule } from '../roomMember/roomMember.module';
 import { RoomChatAccessMiddleware } from 'src/middlewares/roomChat/access.middleware';
 import { WsModule } from '../ws/ws.module';
+import { USER_VERIFIED_MIDDLEWARE } from 'src/constants/global.constant';
 
 @Module({
   imports: [
@@ -29,11 +30,12 @@ import { WsModule } from '../ws/ws.module';
 export class RoomChatModule implements NestModule {
   public configure(consumer: MiddlewareConsumer) {
     consumer
+      .apply(...USER_VERIFIED_MIDDLEWARE)
+      .forRoutes(RoomChatController)
       .apply(RoomChatAccessMiddleware)
-      .exclude(
-        { path: 'room-chat', method: RequestMethod.POST },
-        { path: 'room-chat/me', method: RequestMethod.GET },
-      )
-      .forRoutes(RoomChatController);
+      .forRoutes(
+        { path: 'room-chat/:id', method: RequestMethod.GET },
+        { path: 'room-chat/:id/remove/:targetId', method: RequestMethod.PATCH },
+      );
   }
 }

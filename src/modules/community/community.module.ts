@@ -12,6 +12,7 @@ import { CommunityController } from './community.controller';
 import { ThirdPartyModule } from 'src/third-party/third-party.module';
 import { CommunityMemberModule } from '../communityMember/communityMember.module';
 import { CommunityAccessMiddleware } from 'src/middlewares/community/access.middleware';
+import { USER_VERIFIED_MIDDLEWARE } from 'src/constants/global.constant';
 
 @Module({
   imports: [
@@ -25,6 +26,8 @@ import { CommunityAccessMiddleware } from 'src/middlewares/community/access.midd
 export class CommunityModule implements NestModule {
   public configure(consumer: MiddlewareConsumer) {
     consumer
+      .apply(...USER_VERIFIED_MIDDLEWARE)
+      .forRoutes(CommunityController)
       .apply(CommunityAccessMiddleware)
       .forRoutes({ path: '/community/:id', method: RequestMethod.DELETE });
   }

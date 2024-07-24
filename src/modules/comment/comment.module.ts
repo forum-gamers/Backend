@@ -1,4 +1,9 @@
-import { forwardRef, Module } from '@nestjs/common';
+import {
+  forwardRef,
+  type MiddlewareConsumer,
+  Module,
+  type NestModule,
+} from '@nestjs/common';
 import { SequelizeModule } from '@nestjs/sequelize';
 import { PostComment } from 'src/models/postcomment';
 import { PostModule } from '../post/post.module';
@@ -7,6 +12,7 @@ import { CommentValidation } from './comment.validation';
 import { CommentController } from './comment.controller';
 import { ReplyModule } from '../reply/reply.module';
 import { UserPreferenceModule } from '../userPreference/userPreference.module';
+import { USER_VERIFIED_MIDDLEWARE } from 'src/constants/global.constant';
 
 @Module({
   imports: [
@@ -19,4 +25,8 @@ import { UserPreferenceModule } from '../userPreference/userPreference.module';
   controllers: [CommentController],
   exports: [CommentService],
 })
-export class CommentModule {}
+export class CommentModule implements NestModule {
+  public configure(consumer: MiddlewareConsumer) {
+    consumer.apply(...USER_VERIFIED_MIDDLEWARE).forRoutes(CommentController);
+  }
+}

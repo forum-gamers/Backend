@@ -271,6 +271,13 @@ export class UserController extends BaseController {
 
   @Get(':id')
   @HttpCode(200)
+  @UseGuards(
+    new RateLimitGuard({
+      windowMs: 1 * 60 * 1000,
+      max: 100,
+      message: 'Too many requests from this IP, please try again in 1 minute.',
+    }),
+  )
   public getById(
     @Param('id', UserFindByIdPipe) user: UserAttributes | null,
     @UserMe('id') userId: string,

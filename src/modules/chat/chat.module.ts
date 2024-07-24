@@ -15,6 +15,7 @@ import { RoomChatModule } from '../chatRoom/roomChat.module';
 import { ChatValidation } from './chat.validation';
 import { RoomChatAccessMiddleware } from 'src/middlewares/roomChat/access.middleware';
 import { ChatAccessMiddleware } from 'src/middlewares/chat/access.middleware';
+import { USER_VERIFIED_MIDDLEWARE } from 'src/constants/global.constant';
 
 @Module({
   imports: [
@@ -30,10 +31,11 @@ import { ChatAccessMiddleware } from 'src/middlewares/chat/access.middleware';
 export class ChatModule implements NestModule {
   public configure(consumer: MiddlewareConsumer) {
     consumer
+      .apply(...USER_VERIFIED_MIDDLEWARE)
+      .forRoutes(ChatController)
       .apply(RoomChatAccessMiddleware)
       .forRoutes({ path: 'chat/:id', method: RequestMethod.POST })
       .apply(ChatAccessMiddleware)
-      .exclude({ path: 'chat/:id', method: RequestMethod.POST })
-      .forRoutes(ChatController);
+      .forRoutes({ path: 'chat/:chatId', method: RequestMethod.DELETE });
   }
 }
