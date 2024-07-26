@@ -5,6 +5,7 @@ import {
   ConflictException,
   Controller,
   Get,
+  Headers,
   HttpCode,
   NotFoundException,
   Param,
@@ -302,6 +303,71 @@ export class UserController extends BaseController {
       message: 'user found',
       code: 200,
       data: user,
+    });
+  }
+
+  @Post('forget-password')
+  @HttpCode(200)
+  public async forgetPassword(
+    @Body() payload: any,
+    @Query() query: any,
+    @Headers('authorization') authorization: string | undefined,
+  ) {
+    const { lang } = await this.userValidation.validateLangQuery(query);
+    let email: string | null = null;
+    let user: UserAttributes | null = null;
+
+    if (authorization) {
+      if (!authorization.startsWith('Bearer '))
+        throw new UnauthorizedException('missing or invalid authorization');
+
+      const [, token] = authorization.split(' ');
+      const { id } = jwt.verifyToken(token);
+
+      const data = await this.userService.findOneById(id);
+      if (!data)
+        throw new UnauthorizedException('missing or invalid authorization');
+
+      email = encryption.decrypt(user.email);
+      user = user;
+    } else {
+      email = (await this.userValidation.validateResendEmail(payload)).email;
+
+      const data = await this.userService.findByEmail(email);
+      if (!data) throw new NotFoundException('user not found');
+
+      user = data;
+    }
+
+    this.mailService.sendForgotPasswordMail(
+      email,
+      lang,
+      jwt.createToken(
+        { id: user.id, isVerified: user.isVerified },
+        {
+          expiresIn: '30m',
+        },
+      ),
+    );
+
+    return this.sendResponseBody({
+      message: 'mail sent',
+      code: 200,
+    });
+  }
+
+  @Patch('change-password')
+  @HttpCode(200)
+  public async changePassword(@UserMe('id') id: string, @Body() payload: any) {
+    console.log(id);
+    const { password } =
+      await this.userValidation.validateChangePassword(payload);
+
+    await this.userService.changePassword(password, id);
+
+    return this.sendResponseBody({
+      message: 'password changed successfully',
+      code: 200,
     });
   }
 }

@@ -2,11 +2,13 @@ import { Injectable } from '@nestjs/common';
 import { BaseValidation } from '../../base/validation.base';
 import * as yup from 'yup';
 import type {
+  ChangePasswordProps,
   EditBioProps,
   IChangeImage,
   IChangeImageQuery,
   ILoginProps,
   IResendEmailProps,
+  LangQueryAccept,
   RegisterInputProps,
 } from './user.interface';
 import { SUPPORTED_IMAGE_TYPE } from '../../constants/global.constant';
@@ -110,6 +112,38 @@ export class UserValidation extends BaseValidation {
           )
           .required('bio is required'),
       }),
+      data,
+    );
+
+  public validateLangQuery = async (data: any) =>
+    await this.validate<LangQueryAccept>(
+      yup.object().shape({
+        lang: yup
+          .string()
+          .oneOf(['en', 'id'], 'lang must be en or id')
+          .default('en')
+          .nullable()
+          .optional(),
+      }),
+      data,
+    );
+
+  public validateChangePassword = async (data: any) =>
+    await this.validate<ChangePasswordProps>(
+      yup
+        .object()
+        .shape({
+          password: yup
+            .string()
+            .required('password is required')
+            .test((val) => this.passwordValidation(val)),
+          confirmPassword: yup.string().required('confirmPassword is required'),
+        })
+        .test(
+          'is same',
+          'password and confirm password must equal',
+          ({ password, confirmPassword }) => confirmPassword === password,
+        ),
       data,
     );
 }

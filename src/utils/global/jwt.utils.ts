@@ -20,12 +20,8 @@ export type TokenPayload = TokenValue & JwtPayload;
 class Jwt {
   private readonly secret: string = process.env.SECRET;
 
-  public verifyToken(token: string, message = 'missing or invalid token') {
-    try {
-      return verify(token, process.env.SECRET) as TokenPayload;
-    } catch (err) {
-      throw new UnauthorizedException(message);
-    }
+  public verifyToken(token: string) {
+    return verify(token, this.secret) as TokenPayload;
   }
 
   public createToken(payload: TokenValue, opts?: SignOptions) {

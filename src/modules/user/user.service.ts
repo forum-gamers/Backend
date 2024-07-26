@@ -34,6 +34,17 @@ export class UserService {
     );
   }
 
+  public async changePassword(
+    password: string,
+    id: string,
+    opts?: UpdateOptions<UserAttributes>,
+  ) {
+    return await this.userModel.update(
+      { password: encryption.hashData(password) },
+      { ...opts, where: { id } },
+    );
+  }
+
   public async findByEmail(email: string) {
     return await this.userModel.findOne({
       where: { email: encryption.encrypt(email) },

@@ -37,6 +37,7 @@ export class UserModule implements NestModule {
         { path: '/user/bio', method: RequestMethod.PATCH },
         { path: '/user/image', method: RequestMethod.PATCH },
         { path: '/user/:id', method: RequestMethod.GET },
+        { path: '/user/change-password', method: RequestMethod.PATCH },
       )
       .apply(VerifiedMiddleware)
       .forRoutes(

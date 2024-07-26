@@ -52,3 +52,12 @@ export interface IChangeImage {
 export interface EditBioProps {
   bio: string;
 }
+
+export interface LangQueryAccept {
+  lang: 'en' | 'id';
+}
+
+export interface ChangePasswordProps {
+  password: string;
+  confirmPassword: string;
+}

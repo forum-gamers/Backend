@@ -22,12 +22,14 @@ export class AllExceptionsFilter
     let status =
       exception instanceof HttpException ? exception.getStatus() : 500;
 
-    if (
-      exception instanceof JsonWebTokenError ||
-      exception instanceof TokenExpiredError
-    ) {
+    if (exception instanceof JsonWebTokenError) {
       status = 401;
       message = 'missing or invalid authorization';
+    }
+
+    if (exception instanceof TokenExpiredError) {
+      status = 401;
+      message = 'token expired';
     }
 
     if (status === HttpStatus.INTERNAL_SERVER_ERROR) console.log(exception);

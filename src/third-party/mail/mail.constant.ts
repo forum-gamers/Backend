@@ -5,3 +5,5 @@ const loadFile = (filename: string) =>
   readFileSync(join(__dirname, 'assets', filename), 'utf-8');
 
 export const CONFIRM_MAIL = loadFile('confirm-email.html');
+
+export const FORGET_PASSWORD_EMAIL = loadFile('forget-password.html');
