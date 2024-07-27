@@ -6,7 +6,6 @@ import {
   decode,
 } from 'jsonwebtoken';
 import { config } from 'dotenv';
-import { UnauthorizedException } from '@nestjs/common';
 
 config();
 

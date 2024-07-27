@@ -29,7 +29,6 @@ export interface ChangeProfileInput {
 export interface ICheckExisting {
   email: string;
   phoneNumber: string;
-  username: string;
 }
 
 export interface ILoginProps {

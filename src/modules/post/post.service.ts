@@ -166,6 +166,9 @@ export class PostService {
             p."updatedAt",
             p."privacy",
             p."communityId",
+            u."username",
+            u."imageUrl" AS "userImageUrl",
+            u."bio" AS "userBio",
             COALESCE(json_agg(
             json_build_object(
               'fileId', pm."fileId",
@@ -193,6 +196,7 @@ export class PostService {
             END AS "community"
           FROM filtered_posts p
           LEFT JOIN "PostMedia" pm ON pm."postId" = p."id"
+          LEFT JOIN "Users" u ON u."id" = p."userId"
           LEFT JOIN "Communities" c ON c."id" = p."communityId"
           GROUP BY 
             p."id",
@@ -206,6 +210,9 @@ export class PostService {
             p."totalLike",
             p."countComment",
             p."countShare",
+            u."username",
+            u."imageUrl",
+            u."bio",
             c."id"
         ),
         post_data AS (
@@ -218,6 +225,9 @@ export class PostService {
             p."updatedAt",
             p."privacy",
             p."communityId",
+            p."username",
+            p."userImageUrl",
+            p."userBio",
             p."medias",
             p."countLike",
             p."countComment",
@@ -234,6 +244,9 @@ export class PostService {
       COALESCE(json_agg(json_build_object(
         'id', pd."id",
         'userId', pd."userId",
+        'username', pd."username",
+        'userImageUrl', pd."userImageUrl",
+        'userBio', pd."userBio",
         'text', pd."text",
         'allowComment', pd."allowComment",
         'createdAt', pd."createdAt",
@@ -267,6 +280,9 @@ export class PostService {
       SELECT 
             p."id",
             p."userId",
+            u."username",
+            u."imageUrl" AS "userImageUrl",
+            u."bio" AS "userBio",
             p."text",
             p."allowComment",
             p."createdAt",
@@ -274,11 +290,11 @@ export class PostService {
             p."privacy",
             p."communityId",
             COALESCE(json_agg(
-            json_build_object(
-              'fileId', pm."fileId",
-              'url', pm."url",
-              'type', pm."type"
-              )
+                json_build_object(
+                    'fileId', pm."fileId",
+                    'url', pm."url",
+                    'type', pm."type"
+                )
             ) FILTER (WHERE pm."fileId" IS NOT NULL), '[]'::json) AS "medias",
             p."totalLike" AS "countLike",
             p."countComment",
@@ -301,10 +317,14 @@ export class PostService {
           FROM "Posts" p
           LEFT JOIN "PostMedia" pm ON pm."postId" = p."id"
           LEFT JOIN "Communities" c ON c."id" = p."communityId"
+          LEFT JOIN "Users" u ON u."id" = p."userId"
           WHERE p."id" = $1
           GROUP BY 
             p."id",
             p."userId",
+            u."username",
+            u."imageUrl",
+            u."bio",
             p."text",
             p."allowComment",
             p."createdAt",
@@ -314,7 +334,7 @@ export class PostService {
             p."totalLike",
             p."countComment",
             p."countShare",
-            c."id"`,
+            c."id";`,
       {
         type: QueryTypes.SELECT,
         bind: [id, userId],

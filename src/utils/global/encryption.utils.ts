@@ -6,15 +6,14 @@ import { createHmac } from 'crypto';
 config();
 
 class Encryption {
-  private readonly key: string = process.env.ENCRYPTION_KEY;
-  private readonly chatKey: string = process.env.CHAT_ENCRYPTION_KEY;
-  private readonly hmacKey: string = process.env.CHAT_HMAC_KEY;
-
   public encrypt = (data: string): string =>
-    AES.encrypt(data.replace(/\s/g, '_'), enc.Utf8.parse(this.key)).toString();
+    AES.encrypt(
+      data.replace(/\s/g, '_'),
+      process.env.ENCRYPTION_KEY,
+    ).toString();
 
   public decrypt = (data: string): string =>
-    AES.decrypt(data, enc.Utf8.parse(this.key))
+    AES.decrypt(data, process.env.ENCRYPTION_KEY)
       .toString(enc.Utf8)
       .replace(/_/g, ' ');
 
@@ -26,19 +25,19 @@ class Encryption {
   public createChatEncryption = (data: string): string => {
     const encrypted = AES.encrypt(
       data,
-      enc.Utf8.parse(this.chatKey),
+      enc.Utf8.parse(process.env.CHAT_ENCRYPTION_KEY),
     ).toString();
     return `${encrypted}:${this.createHmac(encrypted)}`;
   };
 
   public decryptChatEncyption = (chipertext: string) =>
-    AES.decrypt(chipertext, this.chatKey).toString(enc.Utf8);
+    AES.decrypt(chipertext, process.env.CHAT_ENCRYPTION_KEY).toString(enc.Utf8);
 
   public isValidEncryption = (chipertext: string, hmac: string) =>
     this.createHmac(chipertext) === hmac;
 
   private createHmac = (data: string) =>
-    createHmac('sha256', this.hmacKey).update(data).digest('hex');
+    createHmac('sha256', process.env.CHAT_HMAC_KEY).update(data).digest('hex');
 }
 
 const encryption = new Encryption();

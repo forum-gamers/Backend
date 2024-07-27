@@ -14,7 +14,7 @@ export class CreateUser implements CreateUserProps {
 
     this.email = encryption.encrypt(email);
     this.phoneNumber = encryption.encrypt(phoneNumber);
-    this.username = encryption.encrypt(username);
+    this.username = username;
     this.password = encryption.hashData(password);
   }
 }

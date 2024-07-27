@@ -2,8 +2,8 @@ import {
   type MiddlewareConsumer,
   Module,
   type NestModule,
-  RequestMethod,
 } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { WinstonModule } from 'nest-winston';
 import { transports, format } from 'winston';
 import { config } from 'dotenv';
@@ -29,8 +29,6 @@ import { Community } from './models/community';
 import { PostModule } from './modules/post/post.module';
 import { PostMediaModule } from './modules/postMedia/postMedia.module';
 import { LikeModule } from './modules/like/like.module';
-import { UserAuthentication } from './middlewares/user/authentication.middleware';
-import { VerifiedMiddleware } from './middlewares/user/verified.middleware';
 import { BookmarkModule } from './modules/bookmark/bookmark.module';
 import { CommentModule } from './modules/comment/comment.module';
 import { ReplyModule } from './modules/reply/reply.module';
@@ -88,6 +86,9 @@ config();
           pass: process.env.MAILER_PASSWORD,
         },
       },
+    }),
+    ConfigModule.forRoot({
+      isGlobal: true,
     }),
     SequelizeModule.forRoot({
       username: conf[environment].username,

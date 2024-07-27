@@ -24,6 +24,7 @@ export class UserValidation extends BaseValidation {
             .string()
             .transform((val: string) => val.trim().replace(' ', '-'))
             .min(3, 'minimum username character is 3')
+            .max(20, 'maximum username character is 20')
             .required('username is required'),
           email: yup
             .string()

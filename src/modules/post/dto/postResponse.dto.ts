@@ -60,4 +60,15 @@ export class PostResponse {
   @ValidateNested()
   @Type(() => CommunityResponse)
   community: CommunityResponse | null;
+
+  @IsString()
+  username: string;
+
+  @IsOptional()
+  @IsString()
+  userImageUrl: string;
+
+  @IsOptional()
+  @IsString()
+  userBio: string;
 }

@@ -39,6 +39,9 @@ import { USER_BACKGROUND_FOLDER, USER_PROFILE_FOLDER } from './user.constant';
 import { UserFindByIdPipe } from './pipes/findById.pipe';
 import { ProfileViewerService } from '../profileViewer/profileViewer.service';
 import { CreateProfileViewerDto } from '../profileViewer/dto/create.dto';
+import { plainToInstance } from 'class-transformer';
+import { UserDecryptedDto } from './dto/userDecrypted.dto';
+import { User } from 'src/models/user';
 
 @Controller('user')
 export class UserController extends BaseController {
@@ -62,16 +65,18 @@ export class UserController extends BaseController {
 
     const encrypted = new GetByQueryPayload<ICheckExisting>({
       email,
-      username,
       phoneNumber,
     }) as ICheckExisting;
-    const existing = await this.userService.getByQuery(encrypted);
+    const existing = await this.userService.getByQuery({
+      ...encrypted,
+      username,
+    });
     if (existing.length)
       for (const data of existing)
         switch (true) {
           case data.email === encrypted.email:
             throw new ConflictException(`email ${email} is already use`);
-          case data.username === encrypted.username:
+          case data.username === username:
             throw new ConflictException(`username ${username} is already use`);
           case data.phoneNumber === encrypted.phoneNumber:
             throw new ConflictException(
@@ -280,7 +285,7 @@ export class UserController extends BaseController {
     }),
   )
   public getById(
-    @Param('id', UserFindByIdPipe) user: UserAttributes | null,
+    @Param('id', UserFindByIdPipe) user: User | null,
     @UserMe('id') userId: string,
   ) {
     if (!user) throw new NotFoundException('user not found');
@@ -302,7 +307,7 @@ export class UserController extends BaseController {
     return this.sendResponseBody({
       message: 'user found',
       code: 200,
-      data: user,
+      data: plainToInstance(UserDecryptedDto, user.dataValues),
     });
   }
 
@@ -359,7 +364,6 @@ export class UserController extends BaseController {
   @Patch('change-password')
   @HttpCode(200)
   public async changePassword(@UserMe('id') id: string, @Body() payload: any) {
-    console.log(id);
     const { password } =
       await this.userValidation.validateChangePassword(payload);
 
