@@ -5,7 +5,6 @@ import { Op, type UpdateOptions, type CreateOptions } from 'sequelize';
 import { v4 } from 'uuid';
 import { CreateUser } from './dto/create.dto';
 import encryption from '../../utils/global/encryption.utils';
-import { GetByQueryPayload } from './dto/getByQueryPayload.dto';
 
 @Injectable()
 export class UserService {
@@ -47,7 +46,7 @@ export class UserService {
 
   public async findByEmail(email: string) {
     return await this.userModel.findOne({
-      where: { email: encryption.encrypt(email) },
+      where: { email },
     });
   }
 
@@ -87,7 +86,7 @@ export class UserService {
     return await this.userModel.update({ isVerified: true }, { where: { id } });
   }
 
-  public async getByQuery(obj: GetByQueryPayload) {
+  public async getByQuery(obj: Partial<UserAttributes>) {
     return await this.userModel.findAll({
       where: {
         [Op.or]: Object.keys(obj).map((el) => ({ [el]: obj[el] })),

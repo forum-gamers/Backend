@@ -7,7 +7,6 @@ import {
   IsOptional,
 } from 'class-validator';
 import { Exclude, Transform } from 'class-transformer';
-import encryption from 'src/utils/global/encryption.utils';
 
 export class UserDecryptedDto {
   @IsUUID()
@@ -17,7 +16,6 @@ export class UserDecryptedDto {
   username: string;
 
   @IsEmail()
-  @Transform(({ value }) => encryption.decrypt(value))
   email: string;
 
   @IsString()
@@ -58,6 +56,5 @@ export class UserDecryptedDto {
   updatedAt: Date;
 
   @IsString()
-  @Transform(({ value }) => encryption.decrypt(value))
   phoneNumber: string;
 }

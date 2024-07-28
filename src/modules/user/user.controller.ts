@@ -23,7 +23,6 @@ import { UserService } from './user.service';
 import { ImageKitService } from '../../third-party/imagekit/imagekit.service';
 import { MailService } from '../../third-party/mail/mail.service';
 import { UserValidation } from './user.validation';
-import { GetByQueryPayload } from './dto/getByQueryPayload.dto';
 import type { ICheckExisting } from './user.interface';
 import jwt from '../../utils/global/jwt.utils';
 import { WalletService } from '../wallet/wallet.service';
@@ -63,22 +62,19 @@ export class UserController extends BaseController {
     const { email, username, password, phoneNumber } =
       await this.userValidation.validateRegister(payload);
 
-    const encrypted = new GetByQueryPayload<ICheckExisting>({
+    const existing = await this.userService.getByQuery({
       email,
       phoneNumber,
-    }) as ICheckExisting;
-    const existing = await this.userService.getByQuery({
-      ...encrypted,
       username,
     });
     if (existing.length)
       for (const data of existing)
         switch (true) {
-          case data.email === encrypted.email:
+          case data.email === email:
             throw new ConflictException(`email ${email} is already use`);
           case data.username === username:
             throw new ConflictException(`username ${username} is already use`);
-          case data.phoneNumber === encrypted.phoneNumber:
+          case data.phoneNumber === phoneNumber:
             throw new ConflictException(
               `phoneNumber ${phoneNumber} is already use`,
             );
@@ -333,7 +329,7 @@ export class UserController extends BaseController {
       if (!data)
         throw new UnauthorizedException('missing or invalid authorization');
 
-      email = encryption.decrypt(user.email);
+      email = user.email;
       user = user;
     } else {
       email = (await this.userValidation.validateResendEmail(payload)).email;

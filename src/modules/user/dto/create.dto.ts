@@ -12,8 +12,8 @@ export class CreateUser implements CreateUserProps {
     if (!email || !password || !phoneNumber || !username)
       throw new InternalServerErrorException('parameter no supplied');
 
-    this.email = encryption.encrypt(email);
-    this.phoneNumber = encryption.encrypt(phoneNumber);
+    this.email = email;
+    this.phoneNumber = phoneNumber;
     this.username = username;
     this.password = encryption.hashData(password);
   }

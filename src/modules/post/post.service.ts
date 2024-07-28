@@ -169,13 +169,18 @@ export class PostService {
             u."username",
             u."imageUrl" AS "userImageUrl",
             u."bio" AS "userBio",
-            COALESCE(json_agg(
-            json_build_object(
-              'fileId', pm."fileId",
-              'url', pm."url",
-              'type', pm."type"
-              )
-            ) FILTER (WHERE pm."fileId" IS NOT NULL), '[]'::json) AS "medias",
+            COALESCE(
+              (SELECT json_agg(
+                json_build_object(
+                  'fileId', pm."fileId",
+                  'url', pm."url",
+                  'type', pm."type"
+                )
+              ) 
+              FROM "PostMedia" pm 
+              WHERE pm."postId" = p."id"),
+              '[]'::json
+            ) AS "medias",
             p."totalLike" AS "countLike",
             p."countComment",
             p."countShare",
@@ -194,8 +199,7 @@ export class PostService {
               )
               ELSE NULL
             END AS "community"
-          FROM filtered_posts p
-          LEFT JOIN "PostMedia" pm ON pm."postId" = p."id"
+          FROM filtered_posts p 
           LEFT JOIN "Users" u ON u."id" = p."userId"
           LEFT JOIN "Communities" c ON c."id" = p."communityId"
           GROUP BY 
@@ -269,7 +273,7 @@ export class PostService {
       );
 
     return {
-      datas: plainToInstance(PostResponse, datas),
+      datas: datas.map((el) => plainToInstance(PostResponse, el)),
       totalData: Number(totalData),
     };
   }
@@ -289,13 +293,18 @@ export class PostService {
             p."updatedAt",
             p."privacy",
             p."communityId",
-            COALESCE(json_agg(
+            COALESCE(
+              (SELECT json_agg(
                 json_build_object(
-                    'fileId', pm."fileId",
-                    'url', pm."url",
-                    'type', pm."type"
+                  'fileId', pm."fileId",
+                  'url', pm."url",
+                  'type', pm."type"
                 )
-            ) FILTER (WHERE pm."fileId" IS NOT NULL), '[]'::json) AS "medias",
+              ) 
+              FROM "PostMedia" pm 
+              WHERE pm."postId" = p."id"),
+              '[]'::json
+            ) AS "medias",
             p."totalLike" AS "countLike",
             p."countComment",
             p."countShare",
@@ -315,7 +324,6 @@ export class PostService {
               ELSE NULL
             END AS "community"
           FROM "Posts" p
-          LEFT JOIN "PostMedia" pm ON pm."postId" = p."id"
           LEFT JOIN "Communities" c ON c."id" = p."communityId"
           LEFT JOIN "Users" u ON u."id" = p."userId"
           WHERE p."id" = $1

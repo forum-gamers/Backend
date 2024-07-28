@@ -6,17 +6,6 @@ import { createHmac } from 'crypto';
 config();
 
 class Encryption {
-  public encrypt = (data: string): string =>
-    AES.encrypt(
-      data.replace(/\s/g, '_'),
-      process.env.ENCRYPTION_KEY,
-    ).toString();
-
-  public decrypt = (data: string): string =>
-    AES.decrypt(data, process.env.ENCRYPTION_KEY)
-      .toString(enc.Utf8)
-      .replace(/_/g, ' ');
-
   public hashData = (data: string) => hashSync(data, 10);
 
   public compareEncryption = async (data: string, hashData: string) =>
