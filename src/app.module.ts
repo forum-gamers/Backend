@@ -52,7 +52,7 @@ import { PostShareModule } from './modules/postShare/postShare.module';
 import { UserPreferenceModule } from './modules/userPreference/userPreference.module';
 import { ProfileViewers } from './models/profileviewer';
 import { ProfileViewerModule } from './modules/profileViewer/profileViewer.module';
-const conf = require('../config/config.json');
+const conf = require('../config/config.js');
 const environment = process.env.NODE_ENV ?? 'development';
 
 config();
@@ -95,10 +95,7 @@ config();
       password: conf[environment].password,
       database: conf[environment].database,
       dialect: conf[environment].dialect,
-      uri:
-        environment === 'production'
-          ? conf.production.use_env_variable
-          : undefined,
+      uri: conf[environment].uri,
       logging: environment !== 'production',
       pool: {
         idle: 5,

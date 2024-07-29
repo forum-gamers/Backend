@@ -1,5 +1,5 @@
 import { DataTypes } from 'sequelize';
-import { Table, Model, Column, HasOne } from 'sequelize-typescript';
+import { Table, Model, Column } from 'sequelize-typescript';
 
 export interface UserAttributes {
   id: string;
@@ -17,8 +17,6 @@ export interface UserAttributes {
   updatedAt: Date;
   phoneNumber: string;
 }
-
-export type TableType = Model & UserAttributes;
 
 @Table<Model<UserAttributes, UserAttributes>>({
   tableName: 'Users',

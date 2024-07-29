@@ -13,6 +13,7 @@ export declare global {
       PUBLIC_APP_URL: string;
       CHAT_HMAC_KEY: string;
       DATABASE_ENCRYPTION_KEY: string;
+      DATABASE_URL: string;
     }
   }
 }
