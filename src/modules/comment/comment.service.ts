@@ -5,7 +5,13 @@ import {
   type PostCommentAttributes,
 } from 'src/models/postcomment';
 import { CreateCommentDto } from './dto/create.dto';
-import { QueryTypes, type CreateOptions, type DestroyOptions } from 'sequelize';
+import {
+  type Attributes,
+  type FindOptions,
+  QueryTypes,
+  type CreateOptions,
+  type DestroyOptions,
+} from 'sequelize';
 import { QueryParamsDto } from 'src/utils/dto/pagination.dto';
 import { Post } from 'src/models/post';
 import { Sequelize } from 'sequelize-typescript';
@@ -46,12 +52,19 @@ export class CommentService {
     return await this.commentModel.findAll({ where: { postId } });
   }
 
-  public async findById(id: number) {
-    return await this.commentModel.findByPk(id);
+  public async findById(
+    id: number,
+    opts?: Omit<FindOptions<Attributes<PostComment>>, 'where'>,
+  ) {
+    return await this.commentModel.findByPk(id, opts);
   }
 
-  public async findByIdAndPreloadPostId(id: number) {
+  public async findByIdAndPreloadPostId(
+    id: number,
+    opts?: Omit<FindOptions<Attributes<PostComment>>, 'where'>,
+  ) {
     return await this.commentModel.findByPk(id, {
+      ...opts,
       include: [
         {
           model: Post,

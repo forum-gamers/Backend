@@ -1,10 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
-import { DestroyOptions } from 'sequelize';
+import { type CreateOptions, type DestroyOptions } from 'sequelize';
 import {
   ReplyComment,
   type ReplyCommentAttributes,
 } from 'src/models/replycomment';
+import { CreateReplyDto } from './dto/create.dto';
 
 @Injectable()
 export class ReplyService {
@@ -31,5 +32,12 @@ export class ReplyService {
       ...opts,
       where: { postId },
     });
+  }
+
+  public async create(
+    payload: CreateReplyDto,
+    opts?: CreateOptions<ReplyCommentAttributes>,
+  ) {
+    return await this.replyCommentModel.create(payload, opts);
   }
 }

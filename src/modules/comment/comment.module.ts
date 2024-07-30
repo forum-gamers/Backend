@@ -18,7 +18,7 @@ import { USER_VERIFIED_MIDDLEWARE } from 'src/constants/global.constant';
   imports: [
     SequelizeModule.forFeature([PostComment]),
     forwardRef(() => PostModule),
-    ReplyModule,
+    forwardRef(() => ReplyModule),
     UserPreferenceModule,
   ],
   providers: [CommentService, CommentValidation],
