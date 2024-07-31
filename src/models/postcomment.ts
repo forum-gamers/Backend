@@ -1,6 +1,7 @@
 import { DataTypes } from 'sequelize';
-import { BelongsTo, Column, Model, Table } from 'sequelize-typescript';
+import { BelongsTo, Column, HasMany, Model, Table } from 'sequelize-typescript';
 import { Post } from './post';
+import { ReplyComment } from './replycomment';
 
 export interface PostCommentAttributes {
   id: number;
@@ -83,4 +84,7 @@ export class PostComment
 
   @BelongsTo(() => Post, 'postId')
   public post: Post;
+
+  @HasMany(() => ReplyComment, 'commentId')
+  public replies: ReplyComment[];
 }

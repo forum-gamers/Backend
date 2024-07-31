@@ -18,6 +18,7 @@ import { Sequelize } from 'sequelize-typescript';
 import { CommentResponseQueryResult } from './comment.interface';
 import { CommentResponseDto } from './dto/commentResponse.dto';
 import { plainToInstance } from 'class-transformer';
+import { ReplyComment } from 'src/models/replycomment';
 
 @Injectable()
 export class CommentService {

@@ -19,7 +19,7 @@ import { CreateReplyDto } from './dto/create.dto';
 import { PostService } from '../post/post.service';
 import { UserPreferenceService } from '../userPreference/userPreference.service';
 import { CreateUserPreferenceDto } from '../userPreference/dto/create.dto';
-import { UserAttributes } from 'src/models/user';
+import { type UserAttributes } from 'src/models/user';
 
 @Controller('reply')
 export class ReplyController extends BaseController {
@@ -49,6 +49,9 @@ export class ReplyController extends BaseController {
     );
     if (!comment) throw new NotFoundException('comment not found');
     if (!comment?.post) throw new NotFoundException('post not found');
+
+    if ((await this.replyService.countByCommentId(comment.id)) >= 150)
+      throw new ConflictException('reply limit reached');
 
     if (!comment.post.allowComment)
       throw new ConflictException('post is not allow comment');

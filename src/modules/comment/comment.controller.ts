@@ -29,6 +29,7 @@ import { PostService } from '../post/post.service';
 import { PostLockedFindByIdPipe } from '../post/pipes/findById.locked.pipe';
 import { UserPreferenceService } from '../userPreference/userPreference.service';
 import { CreateUserPreferenceDto } from '../userPreference/dto/create.dto';
+import { type UserAttributes } from 'src/models/user';
 
 @Controller('comment')
 export class CommentController extends BaseController {
@@ -53,7 +54,7 @@ export class CommentController extends BaseController {
   )
   @HttpCode(201)
   public async create(
-    @UserMe('id') userId: string,
+    @UserMe() user: UserAttributes,
     @Param('id', PostLockedFindByIdPipe)
     post: PostAttributes | null,
     @Body() payload: any,
@@ -68,26 +69,34 @@ export class CommentController extends BaseController {
 
     const transaction = await this.sequelize.transaction();
     try {
-      const data = await this.commentService.create(
-        new CreateCommentDto({ userId, text, postId: post.id }),
-        { transaction },
-      );
-      await this.postService.updateTotalComment(
-        post.id,
-        +post.countComment + 1,
-        { transaction },
-      );
-      if (post.text)
-        await this.userPreferenceService.create(
-          new CreateUserPreferenceDto({ userId, text: post.text }),
+      const tasks: any[] = [
+        this.commentService.create(
+          new CreateCommentDto({ userId: user.id, text, postId: +post.id }),
           { transaction },
+        ),
+        this.postService.updateTotalComment(post.id, +post.countComment + 1, {
+          transaction,
+        }),
+      ];
+      if (post.text)
+        tasks.push(
+          this.userPreferenceService.create(
+            new CreateUserPreferenceDto({ userId: user.id, text: post.text }),
+            { transaction },
+          ),
         );
+      const [data] = await Promise.all(tasks);
 
       await transaction.commit();
       return this.sendResponseBody({
         message: 'comment created',
         code: 201,
-        data,
+        data: {
+          ...data.dataValues,
+          username: user.username,
+          imageUrl: user.imageUrl,
+          bio: user.bio,
+        },
       });
     } catch (err) {
       await transaction.rollback();

@@ -40,4 +40,8 @@ export class ReplyService {
   ) {
     return await this.replyCommentModel.create(payload, opts);
   }
+
+  public async countByCommentId(commentId: number) {
+    return await this.replyCommentModel.count({ where: { commentId } });
+  }
 }
