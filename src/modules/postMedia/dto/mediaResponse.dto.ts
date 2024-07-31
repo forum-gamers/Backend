@@ -1,12 +1,6 @@
-import { IsInt, IsString, IsUrl, IsEnum, IsDate } from 'class-validator';
+import { IsString, IsUrl, IsEnum } from 'class-validator';
 
 export class PostMediaResponse {
-  @IsInt()
-  id: number;
-
-  @IsInt()
-  postId: number;
-
   @IsUrl()
   url: string;
 
@@ -15,10 +9,4 @@ export class PostMediaResponse {
 
   @IsEnum(['image', 'video'])
   type: 'image' | 'video';
-
-  @IsDate()
-  createdAt: Date;
-
-  @IsDate()
-  updatedAt: Date;
 }

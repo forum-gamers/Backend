@@ -24,7 +24,7 @@ export class PostResponse {
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => PostMediaResponse)
-  media: PostMediaResponse[];
+  medias: PostMediaResponse[];
 
   @IsBoolean()
   allowComment: boolean;

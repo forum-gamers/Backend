@@ -42,6 +42,9 @@ import { PaginationPipe } from 'src/utils/pipes/pagination.pipe';
 import { PostLockedFindByIdPipe } from './pipes/findById.locked.pipe';
 import { UserPreferenceService } from '../userPreference/userPreference.service';
 import { CreateUserPreferenceDto } from '../userPreference/dto/create.dto';
+import { plainToInstance } from 'class-transformer';
+import { PostResponse } from './dto/postResponse.dto';
+import { type UserAttributes } from 'src/models/user';
 
 @Controller('post')
 export class PostController extends BaseController {
@@ -79,7 +82,7 @@ export class PostController extends BaseController {
   public async create(
     @Body() payload: any,
     @UploadedFiles() rawFiles: Express.Multer.File[] = [],
-    @UserMe('id') userId: string,
+    @UserMe() user: UserAttributes,
   ) {
     const { text, allowComment, communityId, privacy } =
       await this.postValidation.validateCreatePost(payload, !!rawFiles?.length);
@@ -93,7 +96,7 @@ export class PostController extends BaseController {
           allowComment,
           communityId,
           privacy,
-          userId,
+          userId: user.id,
           text,
           tags,
         }),
@@ -104,7 +107,7 @@ export class PostController extends BaseController {
 
       if (text)
         await this.userPreferenceService.create(
-          new CreateUserPreferenceDto({ text, userId }),
+          new CreateUserPreferenceDto({ text, userId: user.id }),
           { transaction },
         );
 
@@ -145,10 +148,18 @@ export class PostController extends BaseController {
       return this.sendResponseBody({
         message: 'post created',
         code: 201,
-        data: {
+        data: plainToInstance(PostResponse, {
           ...post.dataValues,
-          media: postMedias,
-        },
+          medias: postMedias.map((el) => el.dataValues),
+          countLike: 0,
+          countComment: 0,
+          countShare: 0,
+          isLiked: false,
+          isShared: false,
+          username: user.username,
+          userImageUrl: user.imageUrl,
+          bio: user.bio,
+        }),
       });
     } catch (err) {
       if (postMedias.length)
