@@ -56,6 +56,9 @@ export class PostResponse {
   @IsBoolean()
   isShared: boolean;
 
+  @IsBoolean()
+  editedText: boolean;
+
   @IsOptional()
   @ValidateNested()
   @Type(() => CommunityResponse)

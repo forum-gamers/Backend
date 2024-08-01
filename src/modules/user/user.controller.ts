@@ -23,7 +23,6 @@ import { UserService } from './user.service';
 import { ImageKitService } from '../../third-party/imagekit/imagekit.service';
 import { MailService } from '../../third-party/mail/mail.service';
 import { UserValidation } from './user.validation';
-import type { ICheckExisting } from './user.interface';
 import jwt from '../../utils/global/jwt.utils';
 import { WalletService } from '../wallet/wallet.service';
 import { CreateWallet } from '../wallet/dto/createWallet.dto';
