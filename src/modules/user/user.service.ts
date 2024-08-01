@@ -70,6 +70,17 @@ export class UserService {
     );
   }
 
+  public async findByIdentifier(identifier: string) {
+    return await this.userModel.findOne({
+      where: {
+        [Op.or]: {
+          username: identifier,
+          email: identifier,
+        },
+      },
+    });
+  }
+
   public async changeBackground(
     id: string,
     backgroundImageUrl: string,

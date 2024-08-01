@@ -81,8 +81,8 @@ export class PostController extends BaseController {
   )
   public async create(
     @Body() payload: any,
-    @UploadedFiles() rawFiles: Express.Multer.File[] = [],
     @UserMe() user: UserAttributes,
+    @UploadedFiles() rawFiles: Express.Multer.File[] = [],
   ) {
     const { text, allowComment, communityId, privacy } =
       await this.postValidation.validateCreatePost(payload, !!rawFiles?.length);

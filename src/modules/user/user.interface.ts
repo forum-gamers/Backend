@@ -12,11 +12,6 @@ export interface CreateUserProps {
   phoneNumber: string;
 }
 
-export interface LoginInputProps {
-  email: string;
-  password: string;
-}
-
 export interface Message {
   message: string;
 }
@@ -32,7 +27,7 @@ export interface ICheckExisting {
 }
 
 export interface ILoginProps {
-  email: string;
+  identifier: string;
   password: string;
 }
 

@@ -122,10 +122,10 @@ export class UserController extends BaseController {
   )
   @HttpCode(200)
   public async login(@Body() payload: any) {
-    const { email, password } =
+    const { identifier, password } =
       await this.userValidation.validateLogin(payload);
 
-    const user = await this.userService.findByEmail(email);
+    const user = await this.userService.findByIdentifier(identifier);
     if (!user || !(await encryption.compareEncryption(password, user.password)))
       throw new UnauthorizedException('invalid credentials');
 

@@ -60,7 +60,10 @@ export class PostValidation extends BaseValidation {
           .test(
             'is empty',
             'text is required if media is not provided',
-            (value) => !!value || (!value && mediaExists),
+            (value) =>
+              (!!value &&
+                /^(?=.*\S)[a-zA-Z0-9.,!?'"()\-\n ]{1,2000}$/.test(value)) ||
+              (!value && mediaExists),
           ),
         allowComment: yup.boolean().default(true),
         privacy: yup
@@ -75,7 +78,18 @@ export class PostValidation extends BaseValidation {
   public validateEditText = async (data: any, defaultValue: string | null) =>
     await this.validate<IEditTextProps>(
       yup.object().shape({
-        text: yup.string().nullable().default(defaultValue).optional(),
+        text: yup
+          .string()
+          .test(
+            'is valid',
+            'text is required',
+            (value) =>
+              !!value &&
+              /^(?=.*\S)[a-zA-Z0-9.,!?'"()\-\n ]{1,2000}$/.test(value),
+          )
+          .nullable()
+          .default(defaultValue)
+          .optional(),
       }),
       data,
     );
