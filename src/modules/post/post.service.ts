@@ -75,6 +75,17 @@ export class PostService {
     );
   }
 
+  public async updateTotalBookmark(
+    id: number,
+    countBookmark: number,
+    opts?: Partial<UpdateOptions<PostAttributes>>,
+  ) {
+    return await this.postModel.update(
+      { countBookmark },
+      { ...opts, where: { id } },
+    );
+  }
+
   public async updateTotalShared(
     id: number,
     countShare: number,
@@ -130,6 +141,7 @@ export class PostService {
             p."communityId",
             p."editedText",
             p."totalLike",
+            p."countBookmark",
             p."countComment",
             p."countShare"
           FROM "Posts" p
@@ -168,6 +180,7 @@ export class PostService {
             p."privacy",
             p."communityId",
             p."editedText",
+            p."countBookmark",
             u."username",
             u."imageUrl" AS "userImageUrl",
             u."bio" AS "userBio",
@@ -211,6 +224,7 @@ export class PostService {
             p."updatedAt",
             p."privacy",
             p."editedText",
+            p."countBookmark",
             p."communityId",
             p."totalLike",
             p."countComment",
@@ -238,6 +252,8 @@ export class PostService {
             p."countLike",
             p."countComment",
             p."countShare",
+            p."countBookmark",
+            EXISTS (SELECT 1 FROM "PostBookmarks" l2 WHERE l2."postId" = p."id" AND l2."userId" = $2) AS "isBookmarked",
             EXISTS (
               SELECT 1 
               FROM "PostLikes" l 
@@ -254,12 +270,7 @@ export class PostService {
               FROM "PostLikes" l 
               WHERE l."postId" = p."id" 
                 AND l."userId" = $2
-            ) THEN 1 ELSE 0 END ASC,
-            p."countLike" DESC,
-            p."countComment" DESC,
-            p."countShare" DESC,
-            p."updatedAt" DESC,
-            p."createdAt" DESC
+            ) THEN 1 ELSE 0 END ASC
           LIMIT $3 OFFSET $4
         )
     SELECT 
@@ -279,8 +290,10 @@ export class PostService {
         'countLike', pd."countLike",
         'countComment', pd."countComment",
         'countShare', pd."countShare",
+        'countBookmark', pd."countBookmark",
         'isLiked', pd."isLiked",
         'isShared', pd."isShared",
+        'isBookmarked', pd."isBookmarked",
         'community', pd."community"
       )), '[]'::json) as "datas",
       MAX(pd."totalData") as "totalData"
@@ -329,6 +342,8 @@ export class PostService {
             p."totalLike" AS "countLike",
             p."countComment",
             p."countShare",
+            p."countBookmark",
+            EXISTS (SELECT 1 FROM "PostBookmarks" l2 WHERE l2."postId" = p."id" AND l2."userId" = $2) AS "isBookmarked",
             EXISTS (SELECT 1 FROM "PostLikes" l2 WHERE l2."postId" = p."id" AND l2."userId" = $2) AS "isLiked",
             EXISTS (SELECT 1 FROM "PostShares" l2 WHERE l2."postId" = p."id" AND l2."userId" = $2) AS "isShared",
             CASE

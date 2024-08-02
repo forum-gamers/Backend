@@ -50,11 +50,18 @@ export class PostResponse {
   @Transform(({ value }) => parseInt(value, 10))
   countShare: number;
 
+  @IsInt()
+  @Transform(({ value }) => parseInt(value, 10))
+  countBookmark: number;
+
   @IsBoolean()
   isLiked: boolean;
 
   @IsBoolean()
   isShared: boolean;
+
+  @IsBoolean()
+  isBookmarked: boolean;
 
   @IsBoolean()
   editedText: boolean;

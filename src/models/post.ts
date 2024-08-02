@@ -9,6 +9,7 @@ export interface PostAttributes {
   allowComment: boolean;
   privacy: PostPrivacy;
   totalLike: number;
+  countBookmark: number;
   communityId: number;
   createdAt: Date;
   updatedAt: Date;
@@ -90,6 +91,12 @@ export class Post
     defaultValue: 0,
   })
   public countComment: number;
+
+  @Column({
+    type: DataTypes.BIGINT,
+    defaultValue: 0,
+  })
+  public countBookmark: number;
 
   @Column({
     type: DataTypes.BIGINT,
