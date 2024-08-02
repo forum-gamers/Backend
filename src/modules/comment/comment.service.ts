@@ -77,12 +77,7 @@ export class CommentService {
 
   public async getPostComment(
     postId: number,
-    {
-      page = 1,
-      limit = 10,
-      sortDirection = 'DESC',
-      sortby = 'createdAt',
-    }: QueryParamsDto,
+    { page = 1, limit = 10 }: QueryParamsDto,
   ) {
     const [{ rows, count }] =
       await this.sequelize.query<CommentResponseQueryResult>(
@@ -120,7 +115,7 @@ export class CommentService {
             FROM "PostComments" c
             JOIN "Users" u ON c."userId" = u.id
             WHERE c."postId" = $1
-            ORDER BY c."${sortby}" ${sortDirection}
+            ORDER BY c."createdAt" DESC
             LIMIT $2 OFFSET $3
           )
           SELECT

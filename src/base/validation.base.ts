@@ -64,24 +64,9 @@ export abstract class BaseValidation {
     .email('invalid email format')
     .required('email is required');
 
-  protected baseQuery = ({
-    page = 1,
-    limit = 10,
-    sortBy = ['createdAt'],
-    sortDirection = 'DESC',
-  }: BaseQuery) => ({
+  protected baseQuery = ({ page = 1, limit = 10 }: BaseQuery) => ({
     page: yup.number().default(page).optional(),
     limit: yup.number().default(limit).optional(),
-    sortBy: yup
-      .string()
-      .oneOf(sortBy, 'invalid sort by')
-      .default(sortBy[0])
-      .optional(),
-    sortDirection: yup
-      .string()
-      .oneOf(['ASC', 'DESC'], 'invalid sort direction')
-      .default(sortDirection)
-      .optional(),
   });
 
   protected validateFiles = ({

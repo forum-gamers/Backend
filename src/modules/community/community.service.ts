@@ -56,16 +56,10 @@ export class CommunityService {
     return await this.communityModel.destroy({ ...opts, where: { id } });
   }
 
-  public async findAndCountAll({
-    page = 1,
-    limit = 10,
-    sortDirection = 'DESC',
-    sortby = 'createdAt',
-  }: QueryParamsDto) {
+  public async findAndCountAll({ page = 1, limit = 10 }: QueryParamsDto) {
     return await this.communityModel.findAndCountAll({
       limit,
       offset: (page - 1) * limit,
-      order: [[sortby, sortDirection]],
     });
   }
 }

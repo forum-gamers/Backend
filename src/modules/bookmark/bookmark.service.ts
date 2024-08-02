@@ -40,18 +40,13 @@ export class BookmarkService {
 
   public async getBookmarkByUserId(
     userId: string,
-    {
-      page = 1,
-      limit = 10,
-      sortDirection = 'DESC',
-      sortby = 'createdAt',
-    }: QueryParamsDto,
+    { page = 1, limit = 10 }: QueryParamsDto,
   ) {
     return await this.bookmarkModel.findAndCountAll({
       where: { userId },
       limit,
       offset: (page - 1) * limit,
-      order: [[sortby, sortDirection]],
+
       include: [{ model: Post }],
     });
   }

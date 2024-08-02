@@ -151,20 +151,13 @@ export class CommentController extends BaseController {
   public async getPostComment(
     @Param('id', ParseIntPipe) id: number,
     @Query()
-    {
-      page = 1,
-      limit = 10,
-      sortDirection = 'DESC',
-      sortby = 'createdAt',
-    }: QueryParamsDto,
+    { page = 1, limit = 10 }: QueryParamsDto,
   ) {
     if (isNaN(id)) throw new BadRequestException('postId must be a number');
 
     const { rows, count } = await this.commentService.getPostComment(id, {
       page,
       limit,
-      sortDirection,
-      sortby,
     });
 
     return this.sendResponseBody(

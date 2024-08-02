@@ -7,11 +7,7 @@ import * as yup from 'yup';
 export class FollowValidation extends BaseValidation {
   public validatePagination = async (data: any) =>
     await this.validate<QueryParamsDto>(
-      yup.object().shape(
-        this.baseQuery({
-          sortBy: ['createdAt', 'followerId', 'followedId'],
-        }),
-      ),
+      yup.object().shape(this.baseQuery({})),
       data,
     );
 }

@@ -69,12 +69,8 @@ export class FollowController extends BaseController {
     @UserMe('id') userId: string,
     @Query() query: QueryParamsDto,
   ) {
-    const {
-      page = 1,
-      limit = 15,
-      sortDirection = 'DESC',
-      sortby = 'createdAt',
-    } = await this.followValidation.validatePagination(query);
+    const { page = 1, limit = 15 } =
+      await this.followValidation.validatePagination(query);
 
     return this.sendResponseBody({
       message: 'get followers success',
@@ -82,8 +78,6 @@ export class FollowController extends BaseController {
       data: await this.followService.getFollowers(userId, {
         page,
         limit,
-        sortDirection,
-        sortby,
       }),
     });
   }
@@ -94,12 +88,8 @@ export class FollowController extends BaseController {
     @UserMe('id') userId: string,
     @Query() query: QueryParamsDto,
   ) {
-    const {
-      page = 1,
-      limit = 15,
-      sortDirection = 'DESC',
-      sortby = 'createdAt',
-    } = await this.followValidation.validatePagination(query);
+    const { page = 1, limit = 15 } =
+      await this.followValidation.validatePagination(query);
 
     return this.sendResponseBody({
       message: 'get following success',
@@ -107,9 +97,22 @@ export class FollowController extends BaseController {
       data: await this.followService.getMyFollowings(userId, {
         page,
         limit,
-        sortDirection,
-        sortby,
       }),
+    });
+  }
+
+  @Get('recomendation')
+  @HttpCode(200)
+  public async getRecomendation(
+    @UserMe('id') userId: string,
+    @Query() query: QueryParamsDto,
+  ) {
+    const { page = 1, limit = 15 } =
+      await this.followValidation.validatePagination(query);
+    return this.sendResponseBody({
+      message: 'get recomendation success',
+      code: 200,
+      data: await this.followService.getRecomendation(userId, { page, limit }),
     });
   }
 }

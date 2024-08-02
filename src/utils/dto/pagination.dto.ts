@@ -13,13 +13,4 @@ export class QueryParamsDto {
   @Min(1)
   @Transform(({ value }) => parseInt(value, 10))
   limit?: number;
-
-  @IsOptional()
-  @IsString()
-  sortby?: string;
-
-  @IsOptional()
-  @IsString()
-  @IsIn(['ASC', 'DESC'])
-  sortDirection?: 'ASC' | 'DESC';
 }

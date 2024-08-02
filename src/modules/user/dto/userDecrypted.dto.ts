@@ -6,7 +6,7 @@ import {
   IsUUID,
   IsOptional,
 } from 'class-validator';
-import { Exclude, Transform } from 'class-transformer';
+import { Exclude } from 'class-transformer';
 import { ExcludedUserFieldDto } from './excludedField.dto';
 
 export class UserDecryptedDto extends ExcludedUserFieldDto {

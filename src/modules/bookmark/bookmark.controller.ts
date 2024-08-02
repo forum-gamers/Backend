@@ -70,20 +70,13 @@ export class BookmarkController extends BaseController {
   public async getMyBookmarks(
     @UserMe('id') userId: string,
     @Query()
-    {
-      page = 1,
-      limit = 10,
-      sortDirection = 'DESC',
-      sortby = 'createdAt',
-    }: QueryParamsDto,
+    { page = 1, limit = 10 }: QueryParamsDto,
   ) {
     const { rows, count } = await this.bookmarkService.getBookmarkByUserId(
       userId,
       {
         page,
         limit,
-        sortDirection,
-        sortby,
       },
     );
 
