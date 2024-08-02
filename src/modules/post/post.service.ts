@@ -156,7 +156,7 @@ export class PostService {
               FROM user_preferences up
               WHERE up."userTags" && p."tags"::varchar[]
             )
-        ),  
+        ),
         trending_data AS (
           SELECT 
             p."id",
@@ -186,8 +186,6 @@ export class PostService {
             p."totalLike" AS "countLike",
             p."countComment",
             p."countShare",
-            EXISTS (SELECT 1 FROM "PostLikes" l2 WHERE l2."postId" = p."id" AND l2."userId" = $2) AS "isLiked",
-            EXISTS (SELECT 1 FROM "PostShares" l2 WHERE l2."postId" = p."id" AND l2."userId" = $2) AS "isShared",
             CASE
               WHEN p."communityId" IS NOT NULL THEN json_build_object(
                 'id', c."id",
@@ -240,15 +238,31 @@ export class PostService {
             p."countLike",
             p."countComment",
             p."countShare",
-            p."isLiked",
-            p."isShared",
+            EXISTS (
+              SELECT 1 
+              FROM "PostLikes" l 
+              WHERE l."postId" = p."id" 
+                AND l."userId" = $2
+            ) AS "isLiked",
+            EXISTS (SELECT 1 FROM "PostShares" l2 WHERE l2."postId" = p."id" AND l2."userId" = $2) AS "isShared",
             p."community",
             COUNT(*) OVER() AS "totalData"
           FROM trending_data p
-          ORDER BY p."createdAt" DESC
+          ORDER BY
+            CASE WHEN EXISTS (
+              SELECT 1 
+              FROM "PostLikes" l 
+              WHERE l."postId" = p."id" 
+                AND l."userId" = $2
+            ) THEN 1 ELSE 0 END ASC,
+            p."countLike" DESC,
+            p."countComment" DESC,
+            p."countShare" DESC,
+            p."updatedAt" DESC,
+            p."createdAt" DESC
           LIMIT $3 OFFSET $4
         )
-      SELECT 
+    SELECT 
       COALESCE(json_agg(json_build_object(
         'id', pd."id",
         'userId', pd."userId",
@@ -270,7 +284,8 @@ export class PostService {
         'community', pd."community"
       )), '[]'::json) as "datas",
       MAX(pd."totalData") as "totalData"
-      FROM post_data pd;`,
+    FROM post_data pd;
+    `,
         {
           type: QueryTypes.SELECT,
           bind: [aWeekAgo, userId, limit, (page - 1) * limit],
