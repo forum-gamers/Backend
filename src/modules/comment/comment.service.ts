@@ -125,19 +125,25 @@ export class CommentService {
           )
           SELECT
             (SELECT COUNT(*) FROM "PostComments" WHERE "postId" = $1) AS count,
-            json_agg(json_build_object(
-              'id', c.id,
-              'userId', c."userId", 
-              'postId', c."postId",
-              'text', c.text,
-              'createdAt', c."createdAt",
-              'updatedAt', c."updatedAt",
-              'username', c.username,
-              'imageUrl', c."imageUrl",
-              'bio', c.bio,
-              'replies', c.replies
-            )) AS rows
-          FROM comments_cte c;`,
+            COALESCE(
+              (
+                SELECT json_agg(
+                  json_build_object(
+                    'id', c.id,
+                    'userId', c."userId",
+                    'postId', c."postId",
+                    'text', c.text,
+                    'createdAt', c."createdAt",
+                    'updatedAt', c."updatedAt",
+                    'username', c.username,
+                    'imageUrl', c."imageUrl",
+                    'bio', c.bio,
+                    'replies', COALESCE(c.replies, '[]'::json)
+                  )
+                )
+                FROM comments_cte c
+              ), '[]'::json
+            ) AS rows;`,
         { type: QueryTypes.SELECT, bind: [postId, limit, (page - 1) * limit] },
       );
 
