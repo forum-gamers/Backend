@@ -302,6 +302,39 @@ export class PostController extends BaseController {
     );
   }
 
+  @Get('liked')
+  @HttpCode(200)
+  public async getMyLikedPost(
+    @UserMe('id') userId: string,
+    @Query()
+    query: any,
+  ) {
+    const { page, limit } =
+      await this.postValidation.validateGetPostQuery(query);
+
+    const { datas, totalData } = await this.postService.findUserLikedPost(
+      userId,
+      {
+        page,
+        limit,
+      },
+    );
+
+    return this.sendResponseBody(
+      {
+        message: 'OK',
+        code: 200,
+        data: datas,
+      },
+      {
+        totalData,
+        totalPage: Math.ceil(totalData / limit),
+        page,
+        limit,
+      },
+    );
+  }
+
   @Get('/user/:id')
   @HttpCode(200)
   public async getUserPost(
