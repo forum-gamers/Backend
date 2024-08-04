@@ -14,6 +14,7 @@ import { PostResponseQuery } from './dto/postResponseQuery.dto';
 import { PostResponseQueryDB } from './post.interface';
 import { plainToInstance } from 'class-transformer';
 import { PostResponse } from './dto/postResponse.dto';
+import { QueryParamsDto } from 'src/utils/dto/pagination.dto';
 
 @Injectable()
 export class PostService {
@@ -234,6 +235,12 @@ export class PostService {
             u."bio",
             c."id"
         ),
+        ranked_posts AS (
+          SELECT 
+            td.*,
+            RANK() OVER (ORDER BY (td."countLike" + td."countComment" + td."countShare") DESC) AS rank
+          FROM trending_data td
+        ),
         post_data AS (
           SELECT 
             p."id",
@@ -263,17 +270,18 @@ export class PostService {
             EXISTS (SELECT 1 FROM "PostShares" l2 WHERE l2."postId" = p."id" AND l2."userId" = $2) AS "isShared",
             p."community",
             COUNT(*) OVER() AS "totalData"
-          FROM trending_data p
+          FROM ranked_posts p
           ORDER BY
             CASE WHEN EXISTS (
               SELECT 1 
               FROM "PostLikes" l 
               WHERE l."postId" = p."id" 
                 AND l."userId" = $2
-            ) THEN 1 ELSE 0 END ASC
+            ) THEN 1 ELSE 0 END ASC,
+            rank ASC
           LIMIT $3 OFFSET $4
         )
-    SELECT 
+      SELECT 
       COALESCE(json_agg(json_build_object(
         'id', pd."id",
         'userId', pd."userId",
@@ -297,8 +305,7 @@ export class PostService {
         'community', pd."community"
       )), '[]'::json) as "datas",
       MAX(pd."totalData") as "totalData"
-    FROM post_data pd;
-    `,
+      FROM post_data pd;`,
         {
           type: QueryTypes.SELECT,
           bind: [aWeekAgo, userId, limit, (page - 1) * limit],
@@ -313,8 +320,7 @@ export class PostService {
 
   public async findOneById(id: number, userId: string) {
     const [data] = await this.sequelize.query<PostResponse>(
-      `
-      SELECT 
+      `SELECT 
             p."id",
             p."userId",
             u."username",
@@ -386,5 +392,106 @@ export class PostService {
       },
     );
     return plainToInstance(PostResponse, data);
+  }
+
+  public async findByUserId(
+    userId: string,
+    withMediaOnly: boolean,
+    { page = 1, limit = 10 }: QueryParamsDto,
+  ) {
+    const [{ datas, totalData }] =
+      await this.sequelize.query<PostResponseQueryDB>(
+        `WITH filtered_posts AS (
+        SELECT 
+          p."id",
+          p."userId",
+          u."username",
+          u."imageUrl" AS "userImageUrl",
+          u."bio" AS "userBio",
+          p."text",
+          p."allowComment",
+          p."createdAt",
+          p."updatedAt",
+          p."editedText",
+          p."privacy",
+          p."communityId",
+          COALESCE(
+            (SELECT json_agg(
+              json_build_object(
+                'fileId', pm."fileId",
+                'url', pm."url",
+                'type', pm."type"
+              )
+            ) 
+            FROM "PostMedia" pm 
+            WHERE pm."postId" = p."id"),
+            '[]'::json
+          ) AS "medias",
+          p."totalLike" AS "countLike",
+          p."countComment",
+          p."countShare",
+          p."countBookmark",
+          EXISTS (SELECT 1 FROM "PostBookmarks" l2 WHERE l2."postId" = p."id" AND l2."userId" = $1) AS "isBookmarked",
+          EXISTS (SELECT 1 FROM "PostLikes" l2 WHERE l2."postId" = p."id" AND l2."userId" = $1) AS "isLiked",
+          EXISTS (SELECT 1 FROM "PostShares" l2 WHERE l2."postId" = p."id" AND l2."userId" = $1) AS "isShared",
+          CASE
+            WHEN p."communityId" IS NOT NULL THEN json_build_object(
+              'id', c."id",
+              'name', c."name",
+              'description', c."description",
+              'imageUrl', c."imageUrl",
+              'imageId', c."imageId",
+              'owner', c."owner",
+              'createdAt', c."createdAt",
+              'updatedAt', c."updatedAt"
+            )
+            ELSE NULL
+          END AS "community"
+        FROM "Posts" p
+        LEFT JOIN "Communities" c ON c."id" = p."communityId"
+        LEFT JOIN "Users" u ON u."id" = p."userId"
+        WHERE p."userId" = $1
+        ${withMediaOnly ? 'AND p."id" IN (SELECT pm."postId" FROM "PostMedia" pm WHERE pm."postId" = p."id")' : ''}
+        ORDER BY p."createdAt" DESC
+        LIMIT $2 OFFSET $3
+      ),
+      count_posts AS (
+        SELECT COUNT(*) AS count
+        FROM filtered_posts
+      )
+      SELECT 
+        (SELECT count FROM count_posts) AS "totalData",
+        COALESCE(json_agg(json_build_object(
+        'id', "id",
+        'userId', "userId",
+        'username', "username",
+        'userImageUrl', "userImageUrl",
+        'userBio', "userBio",
+        'text', "text",
+        'allowComment', "allowComment",
+        'editedText', "editedText",
+        'createdAt', "createdAt",
+        'updatedAt', "updatedAt",
+        'privacy', "privacy",
+        'medias', "medias",
+        'countLike', "countLike",
+        'countComment', "countComment",
+        'countShare', "countShare",
+        'countBookmark', "countBookmark",
+        'isLiked', "isLiked",
+        'isShared', "isShared",
+        'isBookmarked', "isBookmarked",
+        'community', "community"
+      )), '[]'::json) as "datas"
+      FROM filtered_posts;`,
+        {
+          type: QueryTypes.SELECT,
+          bind: [userId, limit, (page - 1) * limit],
+        },
+      );
+    return {
+      datas: datas.map((el) => plainToInstance(PostResponse, el)),
+      totalData: Number(totalData),
+    };
   }
 }

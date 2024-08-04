@@ -102,4 +102,23 @@ export class PostValidation extends BaseValidation {
       }),
       data,
     );
+
+  public validateGetUserPostQuery = async (data: any) =>
+    await this.validate<{
+      page: number;
+      limit: number;
+      withMediaOnly: boolean;
+    }>(
+      yup.object().shape({
+        page: yup.number().default(1).optional(),
+        limit: yup.number().default(15).optional(),
+        withMediaOnly: yup
+          .boolean()
+          .transform((_, val: string) =>
+            ['true', 't'].includes(val.toLowerCase() ?? ''),
+          )
+          .optional(),
+      }),
+      data,
+    );
 }

@@ -158,7 +158,7 @@ export class FollowService {
         ru.username,
         ru."userImageUrl",
         ru."userBio",
-        ru.source AS o,
+        ru.source,
         CASE
           WHEN fbu."userId" IS NOT NULL THEN 'follower'
           ELSE 'non-follower'

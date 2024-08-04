@@ -1,4 +1,4 @@
-import { IsOptional, IsInt, Min, IsString, IsIn } from 'class-validator';
+import { IsOptional, IsInt, Min } from 'class-validator';
 import { Transform } from 'class-transformer';
 
 export class QueryParamsDto {

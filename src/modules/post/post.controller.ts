@@ -9,6 +9,7 @@ import {
   NotFoundException,
   Param,
   ParseIntPipe,
+  ParseUUIDPipe,
   Patch,
   Post,
   Query,
@@ -253,6 +254,69 @@ export class PostController extends BaseController {
         limit,
       },
       userId,
+    );
+    return this.sendResponseBody(
+      {
+        message: 'OK',
+        code: 200,
+        data: datas,
+      },
+      {
+        totalData,
+        totalPage: Math.ceil(totalData / limit),
+        page,
+        limit,
+      },
+    );
+  }
+
+  @Get('me')
+  @HttpCode(200)
+  public async getMyPost(
+    @UserMe('id') userId: string,
+    @Query()
+    query: any,
+  ) {
+    const { page, limit, withMediaOnly } =
+      await this.postValidation.validateGetUserPostQuery(query);
+    const { datas, totalData } = await this.postService.findByUserId(
+      userId,
+      withMediaOnly,
+      {
+        page,
+        limit,
+      },
+    );
+    return this.sendResponseBody(
+      {
+        message: 'OK',
+        code: 200,
+        data: datas,
+      },
+      {
+        totalData,
+        totalPage: Math.ceil(totalData / limit),
+        page,
+        limit,
+      },
+    );
+  }
+
+  @Get('/user/:id')
+  @HttpCode(200)
+  public async getUserPost(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query() query: any,
+  ) {
+    const { page, limit, withMediaOnly } =
+      await this.postValidation.validateGetUserPostQuery(query);
+    const { datas, totalData } = await this.postService.findByUserId(
+      id,
+      withMediaOnly,
+      {
+        page,
+        limit,
+      },
     );
     return this.sendResponseBody(
       {
