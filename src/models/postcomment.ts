@@ -10,6 +10,7 @@ export interface PostCommentAttributes {
   text: string;
   createdAt: Date;
   updatedAt: Date;
+  searchVector: any;
 }
 
 @Table<Model<PostCommentAttributes, PostCommentAttributes>>({
@@ -87,4 +88,9 @@ export class PostComment
 
   @HasMany(() => ReplyComment, 'commentId')
   public replies: ReplyComment[];
+
+  @Column({
+    type: DataTypes.TSVECTOR,
+  })
+  public searchVector: any;
 }

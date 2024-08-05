@@ -17,6 +17,7 @@ export interface ChatAttributes {
   status: ChatStatusType;
   createdAt: Date;
   updatedAt: Date;
+  searchVector: any;
 }
 
 @Table<Model<ChatAttributes, ChatAttributes>>({
@@ -112,4 +113,7 @@ export class Chat
     type: DataTypes.DATE,
   })
   public updatedAt: Date;
+
+  @Column({ type: DataTypes.TSVECTOR })
+  public searchVector: any;
 }

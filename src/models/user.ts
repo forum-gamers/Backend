@@ -16,6 +16,7 @@ export interface UserAttributes {
   createdAt: Date;
   updatedAt: Date;
   phoneNumber: string;
+  searchVector: any;
 }
 
 @Table<Model<UserAttributes, UserAttributes>>({
@@ -139,4 +140,9 @@ export class User
     },
   })
   public phoneNumber: string;
+
+  @Column({
+    type: DataTypes.TSVECTOR,
+  })
+  public searchVector: any;
 }

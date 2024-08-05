@@ -9,6 +9,7 @@ export interface ReplyCommentAttributes {
   postId: number;
   createdAt: Date;
   updatedAt: Date;
+  searchVector: any;
 }
 
 @Table<Model<ReplyCommentAttributes, ReplyCommentAttributes>>({
@@ -94,4 +95,7 @@ export class ReplyComment
     type: DataTypes.DATE,
   })
   public updatedAt: Date;
+
+  @Column({ type: DataTypes.TSVECTOR })
+  public searchVector: any;
 }

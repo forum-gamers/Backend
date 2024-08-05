@@ -17,6 +17,7 @@ export interface PostAttributes {
   countComment: number;
   countShare: number;
   tags: string[];
+  searchVector: any;
 }
 
 @Table<Model<PostAttributes, PostAttributes>>({
@@ -129,4 +130,9 @@ export class Post
     onUpdate: 'CASCADE',
   })
   public communityId: number;
+
+  @Column({
+    type: DataTypes.TSVECTOR,
+  })
+  public searchVector: any;
 }
