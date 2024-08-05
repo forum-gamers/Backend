@@ -17,6 +17,7 @@ export interface UserAttributes {
   updatedAt: Date;
   phoneNumber: string;
   searchVector: any;
+  trgmSimilarity: number;
 }
 
 @Table<Model<UserAttributes, UserAttributes>>({
@@ -145,4 +146,9 @@ export class User
     type: DataTypes.TSVECTOR,
   })
   public searchVector: any;
+
+  @Column({
+    type: DataTypes.FLOAT,
+  })
+  public trgmSimilarity: number;
 }

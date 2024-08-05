@@ -17,6 +17,7 @@ export interface PostAttributes {
   countComment: number;
   countShare: number;
   tags: string[];
+  trgmSimilarity: number;
   searchVector: any;
 }
 
@@ -135,4 +136,9 @@ export class Post
     type: DataTypes.TSVECTOR,
   })
   public searchVector: any;
+
+  @Column({
+    type: DataTypes.FLOAT,
+  })
+  public trgmSimilarity: number;
 }

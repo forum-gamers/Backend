@@ -11,6 +11,7 @@ export interface PostCommentAttributes {
   createdAt: Date;
   updatedAt: Date;
   searchVector: any;
+  trgmSimilarity: number;
 }
 
 @Table<Model<PostCommentAttributes, PostCommentAttributes>>({
@@ -93,4 +94,9 @@ export class PostComment
     type: DataTypes.TSVECTOR,
   })
   public searchVector: any;
+
+  @Column({
+    type: DataTypes.FLOAT,
+  })
+  public trgmSimilarity: number;
 }

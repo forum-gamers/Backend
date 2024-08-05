@@ -10,6 +10,7 @@ export interface ReplyCommentAttributes {
   createdAt: Date;
   updatedAt: Date;
   searchVector: any;
+  trgmSimilarity: number;
 }
 
 @Table<Model<ReplyCommentAttributes, ReplyCommentAttributes>>({
@@ -98,4 +99,9 @@ export class ReplyComment
 
   @Column({ type: DataTypes.TSVECTOR })
   public searchVector: any;
+
+  @Column({
+    type: DataTypes.FLOAT,
+  })
+  public trgmSimilarity: number;
 }
