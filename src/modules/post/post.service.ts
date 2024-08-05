@@ -618,4 +618,128 @@ export class PostService {
       totalData: Number(totalData),
     };
   }
+
+  public async findUserBookmarkedPost(
+    id: string,
+    { page = 1, limit = 15 }: QueryParamsDto,
+  ) {
+    const [{ datas, totalData }] =
+      await this.sequelize.query<PostResponseQueryDB>(
+        `WITH bookmarked_posts AS (
+          SELECT 
+              p."id",
+              p."userId",
+              u."username",
+              u."imageUrl" AS "userImageUrl",
+              u."bio" AS "userBio",
+              p."text",
+              p."allowComment",
+              p."createdAt",
+              p."updatedAt",
+              p."editedText",
+              p."privacy",
+              p."communityId",
+              COALESCE(
+                (SELECT json_agg(
+                  json_build_object(
+                    'fileId', pm."fileId",
+                    'url', pm."url",
+                    'type', pm."type"
+                  )
+                ) 
+                FROM "PostMedia" pm 
+                WHERE pm."postId" = p."id"),
+                '[]'::json
+              ) AS "medias",
+              p."totalLike" AS "countLike",
+              p."countComment",
+              p."countShare",
+              p."countBookmark",
+              true AS "isBookmarked",
+              EXISTS (SELECT 1 FROM "PostLikes" l2 WHERE l2."postId" = p."id" AND l2."userId" = $1)  AS "isLiked",
+              EXISTS (SELECT 1 FROM "PostShares" l2 WHERE l2."postId" = p."id" AND l2."userId" = $1) AS "isShared",
+              CASE
+                WHEN p."communityId" IS NOT NULL THEN json_build_object(
+                  'id', c."id",
+                  'name', c."name",
+                  'description', c."description",
+                  'imageUrl', c."imageUrl",
+                  'imageId', c."imageId",
+                  'owner', c."owner",
+                  'createdAt', c."createdAt",
+                  'updatedAt', c."updatedAt"
+                )
+                ELSE NULL
+              END AS "community"
+          FROM 
+              "Posts" p
+          LEFT JOIN 
+              "Communities" c ON c."id" = p."communityId"
+          LEFT JOIN 
+              "Users" u ON u."id" = p."userId"
+          INNER JOIN 
+              "PostBookmarks" pb ON pb."postId" = p."id"
+          WHERE 
+              pb."userId" = $1
+          GROUP BY 
+              p."id",
+              p."userId",
+              u."username",
+              u."imageUrl",
+              u."bio",
+              p."text",
+              p."allowComment",
+              p."editedText",
+              p."createdAt",
+              p."updatedAt",
+              p."privacy",
+              p."communityId",
+              p."totalLike",
+              p."countComment",
+              p."countShare",
+              c."id",
+              pb."createdAt"
+          ORDER BY 
+              pb."createdAt" DESC
+      ),
+      count_posts AS (
+          SELECT COUNT(*) AS count FROM bookmarked_posts
+      )
+      SELECT 
+          (SELECT count FROM count_posts) AS "totalData",
+          COALESCE(json_agg(json_build_object(
+              'id', "id",
+              'userId', "userId",
+              'username', "username",
+              'userImageUrl', "userImageUrl",
+              'userBio', "userBio",
+              'text', "text",
+              'allowComment', "allowComment",
+              'editedText', "editedText",
+              'createdAt', "createdAt",
+              'updatedAt', "updatedAt",
+              'privacy', "privacy",
+              'medias', "medias",
+              'countLike', "countLike",
+              'countComment', "countComment",
+              'countShare', "countShare",
+              'countBookmark', "countBookmark",
+              'isLiked', "isLiked",
+              'isShared', "isShared",
+              'isBookmarked', "isBookmarked",
+              'community', "community"
+          )), '[]'::json) AS "datas"
+      FROM 
+          bookmarked_posts
+      LIMIT $2 OFFSET $3;`,
+        {
+          type: QueryTypes.SELECT,
+          bind: [id, limit, (page - 1) * limit],
+        },
+      );
+    return {
+      datas: datas.map((el) => plainToInstance(PostResponse, el)),
+      totalData: Number(totalData),
+    };
+  }
 }
