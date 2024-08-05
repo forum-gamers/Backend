@@ -155,7 +155,8 @@ export class SearchService {
         )
         
         SELECT
-        (SELECT json_agg(json_build_object(
+        COALESCE(
+            (SELECT json_agg(json_build_object(
             'source', source,
             'id', "id",
             'text', text,
@@ -163,8 +164,9 @@ export class SearchService {
             'searchedField', searched_field,
             'rank', rank,
             'similarityScore', similarity_score
-        )) FROM all_search_results) AS datas,
-        (SELECT count FROM total_count) AS "totalData";`,
+            )) FROM all_search_results), '[]') AS datas,
+        COALESCE(
+            (SELECT count FROM total_count), 0) AS "totalData";`,
         {
           type: QueryTypes.SELECT,
           bind: [q],
