@@ -12,6 +12,7 @@ config();
 export interface TokenValue {
   id: string;
   isVerified: boolean;
+  isAdmin: boolean;
 }
 
 export type TokenPayload = TokenValue & JwtPayload;
@@ -29,6 +30,14 @@ class Jwt {
 
   public decodeToken(token: string) {
     return decode(token) as TokenPayload;
+  }
+
+  public createTokenAdmin(payload: TokenValue) {
+    return sign(payload, process.env.ADMIN_SECRET);
+  }
+
+  public verifyAdminToken(token: string) {
+    return verify(token, process.env.ADMIN_SECRET) as TokenPayload;
   }
 }
 

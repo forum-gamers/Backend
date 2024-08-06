@@ -19,6 +19,10 @@ export declare global {
       DATABASE_PORT: string;
       DATABASE_HOST: string;
       BACKUP_EMAIL: string;
+      FIRST_ADMIN_EMAIL: string;
+      FIRST_ADMIN_PASSWORD: string;
+      FIRST_ADMIN_NAME: string;
+      ADMIN_SECRET: string;
     }
   }
 }

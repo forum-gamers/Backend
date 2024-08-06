@@ -54,6 +54,7 @@ import { ProfileViewers } from './models/profileviewer';
 import { ProfileViewerModule } from './modules/profileViewer/profileViewer.module';
 import { SearchModule } from './modules/search/search.module';
 import { CronModule } from './cron/cron.module';
+import { AdminModule } from './modules/admin/admin.module';
 const conf = require('../config/config.js');
 const environment = process.env.NODE_ENV ?? 'development';
 
@@ -148,6 +149,7 @@ config();
     ProfileViewerModule,
     SearchModule,
     CronModule,
+    AdminModule,
   ],
 })
 export class AppModule implements NestModule {

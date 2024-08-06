@@ -96,7 +96,11 @@ export class UserController extends BaseController {
         transaction,
       });
 
-      const token = jwt.createToken({ id: user.id, isVerified: false });
+      const token = jwt.createToken({
+        id: user.id,
+        isVerified: false,
+        isAdmin: false,
+      });
       this.mailService.sendConfirmMail(email, token);
 
       await transaction.commit();
@@ -131,7 +135,11 @@ export class UserController extends BaseController {
     return this.sendResponseBody({
       code: 200,
       message: 'Login successful',
-      data: jwt.createToken({ id: user.id, isVerified: user.isVerified }),
+      data: jwt.createToken({
+        id: user.id,
+        isVerified: user.isVerified,
+        isAdmin: false,
+      }),
     });
   }
 
@@ -177,7 +185,7 @@ export class UserController extends BaseController {
 
     this.mailService.sendConfirmMail(
       email,
-      jwt.createToken({ id: user.id, isVerified: false }),
+      jwt.createToken({ id: user.id, isVerified: false, isAdmin: false }),
     );
 
     return this.sendResponseBody({
@@ -343,7 +351,7 @@ export class UserController extends BaseController {
       email,
       lang,
       jwt.createToken(
-        { id: user.id, isVerified: user.isVerified },
+        { id: user.id, isVerified: user.isVerified, isAdmin: false },
         {
           expiresIn: '30m',
         },
