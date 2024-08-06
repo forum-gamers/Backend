@@ -23,14 +23,15 @@ export class SearchService {
             ) AS text,
             u."imageUrl" AS "imageUrl",
             'username' AS searched_field,
-            ts_rank(u."searchVectorUsername", plainto_tsquery('english', $1) || plainto_tsquery('indonesian', $1)) AS rank,
-            similarity(u.username, $1) AS similarity_score
+            ROUND(GREATEST(1, (ts_rank(u."searchVectorUsername", plainto_tsquery('english', $1) || plainto_tsquery('indonesian', $1)) + 0.5) * 100)) AS rank,
+            ROUND(GREATEST(1, similarity(u.username, $1) * 100)) AS similarity_score
             FROM "Users" u
             WHERE (plainto_tsquery('english', $1) || plainto_tsquery('indonesian', $1)) @@ u."searchVectorUsername"
             OR u.username % $1
+            OR u.username ILIKE '%' || $1 || '%'
+            AND similarity(u.username, $1) > 0.5
         ),
-        
-       user_search_bio AS (
+        user_search_bio AS (
             SELECT 
                 'user' AS source,
                 u.id::text AS "id",
@@ -40,13 +41,13 @@ export class SearchService {
                 ) AS text,
                 u."imageUrl" AS "imageUrl",
                 'bio' AS searched_field,
-                ts_rank(u."searchVectorBio", plainto_tsquery('english', $1) || plainto_tsquery('indonesian', $1)) AS rank,
-                similarity(u.bio, $1) AS similarity_score
+                ROUND(GREATEST(1, ts_rank(u."searchVectorBio", plainto_tsquery('english', $1) || plainto_tsquery('indonesian', $1)) * 100)) AS rank,
+                ROUND(GREATEST(1, similarity(u.bio, $1) * 100)) AS similarity_score
             FROM "Users" u
             WHERE (plainto_tsquery('english', $1) || plainto_tsquery('indonesian', $1)) @@ u."searchVectorBio"
-            OR u.bio ILIKE $1
+            OR u.bio ILIKE '%' || $1 || '%'
+            AND similarity(u.bio, $1) > 0.3
         ),  
-        
         post_search AS (
             SELECT
             'post' AS source,
@@ -57,13 +58,14 @@ export class SearchService {
             ) AS text,
             NULL AS "imageUrl",
             'text' AS searched_field,
-            ts_rank(p."searchVector", plainto_tsquery('english', $1) || plainto_tsquery('indonesian', $1)) AS rank,
-            similarity(p.text, $1) AS similarity_score
+            ROUND(GREATEST(1, ts_rank(p."searchVector", plainto_tsquery('english', $1) || plainto_tsquery('indonesian', $1)) * 100)) AS rank,
+            ROUND(GREATEST(1, similarity(p.text, $1) * 100)) AS similarity_score
             FROM "Posts" p
             WHERE (plainto_tsquery('english', $1) || plainto_tsquery('indonesian', $1)) @@ p."searchVector"
             OR p.text % $1
+            OR p.text ILIKE '%' || $1 || '%'
+            AND similarity(p.text, $1) > 0.3
         ),
-        
         post_comment_search AS (
             SELECT
             'comment' AS source,
@@ -74,13 +76,14 @@ export class SearchService {
             ) AS text,
             NULL AS "imageUrl",
             'text' AS searched_field,
-            ts_rank(pc."searchVector", plainto_tsquery('english', $1) || plainto_tsquery('indonesian', $1)) AS rank,
-            similarity(pc.text, $1) AS similarity_score
+            ROUND(GREATEST(1, ts_rank(pc."searchVector", plainto_tsquery('english', $1) || plainto_tsquery('indonesian', $1)) * 100)) AS rank,
+            ROUND(GREATEST(1, similarity(pc.text, $1) * 100)) AS similarity_score
             FROM "PostComments" pc
             WHERE (plainto_tsquery('english', $1) || plainto_tsquery('indonesian', $1)) @@ pc."searchVector"
             OR pc.text % $1
+            OR pc.text ILIKE '%' || $1 || '%'
+            AND similarity(pc.text, $1) > 0.3
         ),
-        
         reply_comment_search AS (
             SELECT
             'reply' AS source,
@@ -91,13 +94,14 @@ export class SearchService {
             ) AS text,
             NULL AS "imageUrl",
             'text' AS searched_field,
-            ts_rank(rc."searchVector", plainto_tsquery('english', $1) || plainto_tsquery('indonesian', $1)) AS rank,
-            similarity(rc.text, $1) AS similarity_score
+            ROUND(GREATEST(1, ts_rank(rc."searchVector", plainto_tsquery('english', $1) || plainto_tsquery('indonesian', $1)) * 100)) AS rank,
+            ROUND(GREATEST(1, similarity(rc.text, $1) * 100)) AS similarity_score
             FROM "ReplyComments" rc
             WHERE (plainto_tsquery('english', $1) || plainto_tsquery('indonesian', $1)) @@ rc."searchVector"
             OR rc.text % $1
+            OR rc.text ILIKE '%' || $1 || '%'
+            AND similarity(rc.text, $1) > 0.3
         ),
-
         community_name_search AS (
             SELECT
             'community' AS source,
@@ -108,13 +112,14 @@ export class SearchService {
             ) AS text,
             c."imageUrl" AS "imageUrl",
             'name' AS searched_field,
-            ts_rank(c."searchVectorName", plainto_tsquery('english', $1) || plainto_tsquery('indonesian', $1)) AS rank,
-            similarity(c.name, $1) AS similarity_score
+            ROUND(GREATEST(1, (ts_rank(c."searchVectorName", plainto_tsquery('english', $1) || plainto_tsquery('indonesian', $1)) + 0.5) * 100)) AS rank,
+            ROUND(GREATEST(1, similarity(c.name, $1) * 100)) AS similarity_score
             FROM "Communities" c
             WHERE (plainto_tsquery('english', $1) || plainto_tsquery('indonesian', $1)) @@ c."searchVectorName"
             OR c.name % $1
+            OR c.name ILIKE '%' || $1 || '%'
+            AND similarity(c.name, $1) > 0.5
         ),
-
         community_description_search AS (
             SELECT
             'community' AS source,
@@ -125,11 +130,13 @@ export class SearchService {
             ) AS text,
             c."imageUrl" AS "imageUrl",
             'description' AS searched_field,
-            ts_rank(c."searchVectorDescription", plainto_tsquery('english', $1) || plainto_tsquery('indonesian', $1)) AS rank,
-            similarity(c.description, $1) AS similarity_score
+            ROUND(GREATEST(1, ts_rank(c."searchVectorDescription", plainto_tsquery('english', $1) || plainto_tsquery('indonesian', $1)) * 100)) AS rank,
+            ROUND(GREATEST(1, similarity(c.description, $1) * 100)) AS similarity_score
             FROM "Communities" c
             WHERE (plainto_tsquery('english', $1) || plainto_tsquery('indonesian', $1)) @@ c."searchVectorDescription"
             OR c.description % $1
+            OR c.description ILIKE '%' || $1 || '%'
+            AND similarity(c.description, $1) > 0.3
         ),
         all_search_results AS (
             SELECT * FROM user_search_username
@@ -147,13 +154,13 @@ export class SearchService {
             SELECT * FROM community_description_search
             ),
             total_count AS (
-            SELECT COUNT(*) AS count FROM all_search_results
+                SELECT COUNT(*) AS count FROM all_search_results
             ),
             sorted_results AS (
-            SELECT *
-            FROM all_search_results
-            ORDER BY rank DESC, similarity_score DESC
-            LIMIT $2 OFFSET $3
+                SELECT *
+                FROM all_search_results
+                ORDER BY rank DESC, similarity_score DESC
+                LIMIT $2 OFFSET $3
             )
 
             SELECT 
