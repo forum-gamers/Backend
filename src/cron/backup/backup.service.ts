@@ -6,7 +6,7 @@ import { Logger } from 'winston';
 import { resolve } from 'path';
 import { promisify } from 'util';
 import { exec } from 'child_process';
-import { readFile } from 'fs';
+import { readFile, unlink } from 'fs';
 import 'dotenv/config';
 
 @Injectable()
@@ -21,7 +21,7 @@ export class BackupService {
   }
 
   private backup() {
-    schedule('0 12,0 * * *', async () => {
+    schedule('37 14,0 * * *', async () => {
       try {
         this.logger.info(`backup started...`);
 
@@ -34,6 +34,9 @@ export class BackupService {
           await this.mailerService.sendBackup(data);
         });
 
+        unlink(this.backupPath, (err) => {
+          if (err) throw err;
+        });
         this.logger.info(`backup completed...`);
       } catch (err) {
         this.logger.error(err?.message ?? err ?? 'unknown error');
