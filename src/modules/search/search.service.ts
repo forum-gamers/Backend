@@ -132,97 +132,47 @@ export class SearchService {
             OR c.description % $1
         ),
         all_search_results AS (
-            SELECT DISTINCT
-                source,
-                "id",
-                text,
-                "imageUrl",
-                searched_field,
-                rank,
-                similarity_score
-            FROM user_search_username
+            SELECT * FROM user_search_username
             UNION ALL
-            SELECT DISTINCT
-                source,
-                "id",
-                text,
-                "imageUrl",
-                searched_field,
-                rank,
-                similarity_score
-            FROM user_search_bio
+            SELECT * FROM user_search_bio
             UNION ALL
-            SELECT DISTINCT
-                source,
-                "id",
-                text,
-                "imageUrl",
-                searched_field,
-                rank,
-                similarity_score
-            FROM post_search
+            SELECT * FROM post_search
             UNION ALL
-            SELECT DISTINCT
-                source,
-                "id",
-                text,
-                "imageUrl",
-                searched_field,
-                rank,
-                similarity_score
-            FROM post_comment_search
+            SELECT * FROM post_comment_search
             UNION ALL
-            SELECT DISTINCT
-                source,
-                "id",
-                text,
-                "imageUrl",
-                searched_field,
-                rank,
-                similarity_score
-            FROM reply_comment_search
-            UNION ALL
-            SELECT DISTINCT
-                source,
-                "id",
-                text,
-                "imageUrl",
-                searched_field,
-                rank,
-                similarity_score
-            FROM community_name_search
-            UNION ALL
-            SELECT DISTINCT
-                source,
-                "id",
-                text,
-                "imageUrl",
-                searched_field,
-                rank,
-                similarity_score
-            FROM community_description_search
-        ),
-        
-        total_count AS (
+            SELECT * FROM reply_comment_search
+            ),
+            total_count AS (
             SELECT COUNT(*) AS count FROM all_search_results
-        )
-        
-        SELECT
-        COALESCE(
-            (SELECT json_agg(json_build_object(
-            'source', source,
-            'id', "id",
-            'text', text,
-            'imageUrl', "imageUrl",
-            'searchedField', searched_field,
-            'rank', rank,
-            'similarityScore', similarity_score
-            )) FROM all_search_results), '[]') AS datas,
-        COALESCE(
-            (SELECT count FROM total_count), 0) AS "totalData";`,
+            ),
+            sorted_results AS (
+            SELECT *
+            FROM all_search_results
+            ORDER BY rank DESC, similarity_score DESC
+            LIMIT $2 OFFSET $3
+            )
+
+            SELECT 
+            COALESCE(
+                (
+                SELECT json_agg(json_build_object(
+                    'source', source,
+                    'id', "id",
+                    'text', text,
+                    'imageUrl', "imageUrl",
+                    'searchedField', searched_field,
+                    'rank', rank,
+                    'similarityScore', similarity_score
+                ))
+                FROM sorted_results
+                ), '[]'
+            ) AS datas,
+            COALESCE(
+                (SELECT count FROM total_count), 0
+            ) AS "totalData";`,
         {
           type: QueryTypes.SELECT,
-          bind: [q],
+          bind: [q, 15, 0],
         },
       );
     return {
