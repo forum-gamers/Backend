@@ -141,6 +141,10 @@ export class SearchService {
             SELECT * FROM post_comment_search
             UNION ALL
             SELECT * FROM reply_comment_search
+            UNION ALL
+            SELECT * FROM community_name_search
+            UNION ALL
+            SELECT * FROM community_description_search
             ),
             total_count AS (
             SELECT COUNT(*) AS count FROM all_search_results
