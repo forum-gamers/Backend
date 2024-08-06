@@ -11,6 +11,10 @@ export interface CommunityAttributes {
   owner: string;
   createdAt: Date;
   updatedAt: Date;
+  searchVectorName: any;
+  searchVectorDescription: any;
+  nameTrgmSimilarity: number;
+  descriptionTrgmSimilarity: number;
 }
 
 @Table<Model<CommunityAttributes, CommunityAttributes>>({
@@ -92,4 +96,24 @@ export class Community
 
   @HasMany(() => CommunityMembers, 'communityId')
   public members: CommunityMembers[];
+
+  @Column({
+    type: DataTypes.TSVECTOR,
+  })
+  public searchVectorName: any;
+
+  @Column({
+    type: DataTypes.TSVECTOR,
+  })
+  public searchVectorDescription: any;
+
+  @Column({
+    type: DataTypes.FLOAT,
+  })
+  public nameTrgmSimilarity: number;
+
+  @Column({
+    type: DataTypes.FLOAT,
+  })
+  public descriptionTrgmSimilarity: number;
 }
