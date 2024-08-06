@@ -46,7 +46,6 @@ export class BookmarkService {
       where: { userId },
       limit,
       offset: (page - 1) * limit,
-
       include: [{ model: Post }],
     });
   }

@@ -14,6 +14,11 @@ export declare global {
       CHAT_HMAC_KEY: string;
       DATABASE_ENCRYPTION_KEY: string;
       DATABASE_URL: string;
+      DATABASE_PASSWORD: string;
+      DATABASE_USERNAME: string;
+      DATABASE_PORT: string;
+      DATABASE_HOST: string;
+      BACKUP_EMAIL: string;
     }
   }
 }

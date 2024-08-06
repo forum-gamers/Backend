@@ -26,6 +26,19 @@ export class MailService {
       from: `${process.env.MAILER_EMAIL} <no reply>`,
     });
 
+  public sendBackup = async (attachment: string) =>
+    await this.sendEmail({
+      to: process.env.BACKUP_EMAIL,
+      subject: `Backup ${new Date().toISOString()}`,
+      text: `backup database ${new Date().toISOString()}`,
+      attachments: [
+        {
+          filename: 'backup.sql',
+          content: attachment,
+        },
+      ],
+    });
+
   public sendConfirmMail = async (to: string, token: string) =>
     await this.sendEmail({
       to,

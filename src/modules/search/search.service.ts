@@ -15,16 +15,16 @@ export class SearchService {
         `WITH
         user_search_username AS (
             SELECT
-            'user' AS source,
-            u.id::text AS "id",
-            COALESCE(
-                ts_headline('english', u.username, plainto_tsquery('english', $1), 'StartSel = <b>, StopSel = </b>'),
-                ts_headline('indonesian', u.username, plainto_tsquery('indonesian', $1), 'StartSel = <b>, StopSel = </b>')
-            ) AS text,
-            u."imageUrl" AS "imageUrl",
-            'username' AS searched_field,
-            ROUND(GREATEST(1, (ts_rank(u."searchVectorUsername", plainto_tsquery('english', $1) || plainto_tsquery('indonesian', $1)) + 0.5) * 100)) AS rank,
-            ROUND(GREATEST(1, similarity(u.username, $1) * 100)) AS similarity_score
+                'user' AS source,
+                u.id::text AS "id",
+                COALESCE(
+                    ts_headline('english', u.username, plainto_tsquery('english', $1), 'StartSel = <b>, StopSel = </b>'),
+                    ts_headline('indonesian', u.username, plainto_tsquery('indonesian', $1), 'StartSel = <b>, StopSel = </b>')
+                ) AS text,
+                u."imageUrl" AS "imageUrl",
+                'username' AS searched_field,
+                ROUND(GREATEST(1, (ts_rank(u."searchVectorUsername", plainto_tsquery('english', $1) || plainto_tsquery('indonesian', $1)) + 0.5) * 100)) AS rank,
+                ROUND(GREATEST(1, similarity(u.username, $1) * 100)) AS similarity_score
             FROM "Users" u
             WHERE (plainto_tsquery('english', $1) || plainto_tsquery('indonesian', $1)) @@ u."searchVectorUsername"
             OR u.username % $1
@@ -50,16 +50,16 @@ export class SearchService {
         ),  
         post_search AS (
             SELECT
-            'post' AS source,
-            p.id::text AS "id",
-            COALESCE(
-                ts_headline('english', p.text, plainto_tsquery('english', $1), 'StartSel = <b>, StopSel = </b>'),
-                ts_headline('indonesian', p.text, plainto_tsquery('indonesian', $1), 'StartSel = <b>, StopSel = </b>')
-            ) AS text,
-            NULL AS "imageUrl",
-            'text' AS searched_field,
-            ROUND(GREATEST(1, ts_rank(p."searchVector", plainto_tsquery('english', $1) || plainto_tsquery('indonesian', $1)) * 100)) AS rank,
-            ROUND(GREATEST(1, similarity(p.text, $1) * 100)) AS similarity_score
+                'post' AS source,
+                p.id::text AS "id",
+                COALESCE(
+                    ts_headline('english', p.text, plainto_tsquery('english', $1), 'StartSel = <b>, StopSel = </b>'),
+                    ts_headline('indonesian', p.text, plainto_tsquery('indonesian', $1), 'StartSel = <b>, StopSel = </b>')
+                ) AS text,
+                NULL AS "imageUrl",
+                'text' AS searched_field,
+                ROUND(GREATEST(1, ts_rank(p."searchVector", plainto_tsquery('english', $1) || plainto_tsquery('indonesian', $1)) * 100)) AS rank,
+                ROUND(GREATEST(1, similarity(p.text, $1) * 100)) AS similarity_score
             FROM "Posts" p
             WHERE (plainto_tsquery('english', $1) || plainto_tsquery('indonesian', $1)) @@ p."searchVector"
             OR p.text % $1
@@ -86,16 +86,16 @@ export class SearchService {
         ),
         reply_comment_search AS (
             SELECT
-            'reply' AS source,
-            rc.id::text AS "id",
-            COALESCE(
-                ts_headline('english', rc.text, plainto_tsquery('english', $1), 'StartSel = <b>, StopSel = </b>'),
-                ts_headline('indonesian', rc.text, plainto_tsquery('indonesian', $1), 'StartSel = <b>, StopSel = </b>')
-            ) AS text,
-            NULL AS "imageUrl",
-            'text' AS searched_field,
-            ROUND(GREATEST(1, ts_rank(rc."searchVector", plainto_tsquery('english', $1) || plainto_tsquery('indonesian', $1)) * 100)) AS rank,
-            ROUND(GREATEST(1, similarity(rc.text, $1) * 100)) AS similarity_score
+                'reply' AS source,
+                rc.id::text AS "id",
+                COALESCE(
+                    ts_headline('english', rc.text, plainto_tsquery('english', $1), 'StartSel = <b>, StopSel = </b>'),
+                    ts_headline('indonesian', rc.text, plainto_tsquery('indonesian', $1), 'StartSel = <b>, StopSel = </b>')
+                ) AS text,
+                NULL AS "imageUrl",
+                'text' AS searched_field,
+                ROUND(GREATEST(1, ts_rank(rc."searchVector", plainto_tsquery('english', $1) || plainto_tsquery('indonesian', $1)) * 100)) AS rank,
+                ROUND(GREATEST(1, similarity(rc.text, $1) * 100)) AS similarity_score
             FROM "ReplyComments" rc
             WHERE (plainto_tsquery('english', $1) || plainto_tsquery('indonesian', $1)) @@ rc."searchVector"
             OR rc.text % $1
@@ -104,16 +104,16 @@ export class SearchService {
         ),
         community_name_search AS (
             SELECT
-            'community' AS source,
-            c.id::text AS "id",
-            COALESCE(
-                ts_headline('english', c.name, plainto_tsquery('english', $1), 'StartSel = <b>, StopSel = </b>'),
-                ts_headline('indonesian', c.name, plainto_tsquery('indonesian', $1), 'StartSel = <b>, StopSel = </b>')
-            ) AS text,
-            c."imageUrl" AS "imageUrl",
-            'name' AS searched_field,
-            ROUND(GREATEST(1, (ts_rank(c."searchVectorName", plainto_tsquery('english', $1) || plainto_tsquery('indonesian', $1)) + 0.5) * 100)) AS rank,
-            ROUND(GREATEST(1, similarity(c.name, $1) * 100)) AS similarity_score
+                'community' AS source,
+                c.id::text AS "id",
+                COALESCE(
+                    ts_headline('english', c.name, plainto_tsquery('english', $1), 'StartSel = <b>, StopSel = </b>'),
+                    ts_headline('indonesian', c.name, plainto_tsquery('indonesian', $1), 'StartSel = <b>, StopSel = </b>')
+                ) AS text,
+                c."imageUrl" AS "imageUrl",
+                'name' AS searched_field,
+                ROUND(GREATEST(1, (ts_rank(c."searchVectorName", plainto_tsquery('english', $1) || plainto_tsquery('indonesian', $1)) + 0.5) * 100)) AS rank,
+                ROUND(GREATEST(1, similarity(c.name, $1) * 100)) AS similarity_score
             FROM "Communities" c
             WHERE (plainto_tsquery('english', $1) || plainto_tsquery('indonesian', $1)) @@ c."searchVectorName"
             OR c.name % $1
@@ -122,16 +122,16 @@ export class SearchService {
         ),
         community_description_search AS (
             SELECT
-            'community' AS source,
-            c.id::text AS "id",
-            COALESCE(
-                ts_headline('english', c.description, plainto_tsquery('english', $1), 'StartSel = <b>, StopSel = </b>'),
-                ts_headline('indonesian', c.description, plainto_tsquery('indonesian', $1), 'StartSel = <b>, StopSel = </b>')
-            ) AS text,
-            c."imageUrl" AS "imageUrl",
-            'description' AS searched_field,
-            ROUND(GREATEST(1, ts_rank(c."searchVectorDescription", plainto_tsquery('english', $1) || plainto_tsquery('indonesian', $1)) * 100)) AS rank,
-            ROUND(GREATEST(1, similarity(c.description, $1) * 100)) AS similarity_score
+                'community' AS source,
+                c.id::text AS "id",
+                COALESCE(
+                    ts_headline('english', c.description, plainto_tsquery('english', $1), 'StartSel = <b>, StopSel = </b>'),
+                    ts_headline('indonesian', c.description, plainto_tsquery('indonesian', $1), 'StartSel = <b>, StopSel = </b>')
+                ) AS text,
+                c."imageUrl" AS "imageUrl",
+                'description' AS searched_field,
+                ROUND(GREATEST(1, ts_rank(c."searchVectorDescription", plainto_tsquery('english', $1) || plainto_tsquery('indonesian', $1)) * 100)) AS rank,
+                ROUND(GREATEST(1, similarity(c.description, $1) * 100)) AS similarity_score
             FROM "Communities" c
             WHERE (plainto_tsquery('english', $1) || plainto_tsquery('indonesian', $1)) @@ c."searchVectorDescription"
             OR c.description % $1
