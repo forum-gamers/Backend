@@ -181,6 +181,26 @@ export class SearchService {
                 rank,
                 similarity_score
             FROM reply_comment_search
+            UNION ALL
+            SELECT DISTINCT
+                source,
+                "id",
+                text,
+                "imageUrl",
+                searched_field,
+                rank,
+                similarity_score
+            FROM community_name_search
+            UNION ALL
+            SELECT DISTINCT
+                source,
+                "id",
+                text,
+                "imageUrl",
+                searched_field,
+                rank,
+                similarity_score
+            FROM community_description_search
         ),
         
         total_count AS (
