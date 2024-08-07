@@ -16,6 +16,7 @@ export declare global {
       roomChat?: RoomChatAttributes;
       roomMember?: RoomMemberAttributes;
       chatCtx?: ChatCtxDto;
+      admin?: AdminAttributes;
     }
   }
 }

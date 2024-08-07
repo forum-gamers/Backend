@@ -55,6 +55,8 @@ import { ProfileViewerModule } from './modules/profileViewer/profileViewer.modul
 import { SearchModule } from './modules/search/search.module';
 import { CronModule } from './cron/cron.module';
 import { AdminModule } from './modules/admin/admin.module';
+import { AdminLog } from './models/adminlog';
+import { AdminLogModule } from './modules/adminLog/adminLog.module';
 const conf = require('../config/config.js');
 const environment = process.env.NODE_ENV ?? 'development';
 
@@ -124,6 +126,7 @@ config();
         UserPreferences,
         PostShare,
         ProfileViewers,
+        AdminLog,
       ],
       synchronize: environment !== 'production',
     }),
@@ -150,6 +153,7 @@ config();
     SearchModule,
     CronModule,
     AdminModule,
+    AdminLogModule,
   ],
 })
 export class AppModule implements NestModule {
@@ -157,7 +161,7 @@ export class AppModule implements NestModule {
     /**
      * TODO
      * fix
-     * @description i dont know what shit happer but excluded routes still affected by middleware
+     * @description i dont know what shit happen but excluded routes still affected by middleware
      */
     consumer.apply(LoggerMiddleware, XssMiddleware).forRoutes('*');
   }

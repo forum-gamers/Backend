@@ -4,20 +4,20 @@ import {
   type ExecutionContext,
 } from '@nestjs/common';
 import type { Request } from 'express';
-import type { UserAttributes } from 'src/models/user';
+import type { AdminAttributes } from 'src/models/admin';
 
-export const UserMe = createParamDecorator(
-  (key: keyof UserAttributes, ctx: ExecutionContext) => {
+export const AdminMe = createParamDecorator(
+  (key: keyof AdminAttributes, ctx: ExecutionContext) => {
     const req = ctx.switchToHttp().getRequest<Request>();
 
-    const user = req.user;
-    if (!user)
+    const admin = req.admin;
+    if (!admin)
       throw new InternalServerErrorException(
-        'you must use this decorator on authenticated user endpoint',
+        'you must use this decorator on authenticated admin endpoint',
       );
 
-    let result = user;
-    if (key) result = user[key];
+    let result: AdminAttributes | string | Date = admin;
+    if (key) result = admin[key];
 
     if (!result)
       throw new InternalServerErrorException(`user have no field ${key}`);

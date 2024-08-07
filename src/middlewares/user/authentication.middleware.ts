@@ -6,6 +6,7 @@ import {
 import type { RequestHandler } from 'express';
 import jwt from '../../utils/global/jwt.utils';
 import { UserService } from '../../modules/user/user.service';
+import { AdminService } from 'src/modules/admin/admin.service';
 
 @Injectable()
 export class UserAuthentication implements NestMiddleware {
@@ -21,15 +22,29 @@ export class UserAuthentication implements NestMiddleware {
     if (!token)
       throw new UnauthorizedException('missing or invalid authorization');
 
-    const { id } = jwt.verifyToken(token);
+    const { isAdmin } = jwt.decodeToken(token);
 
-    const user = await this.userService.findOneById(id);
-    if (!user)
-      throw new UnauthorizedException('missing or invalid authorization');
+    const { id } = jwt[isAdmin ? 'verifyAdminToken' : 'verifyToken'](token);
 
-    req.user = user;
+    if (isAdmin) {
+      const admin = await this.adminService.findOneById(id);
+      if (!admin)
+        throw new UnauthorizedException('missing or invalid authorization');
+
+      req.admin = admin.dataValues;
+    } else {
+      const user = await this.userService.findOneById(id);
+      if (!user)
+        throw new UnauthorizedException('missing or invalid authorization');
+
+      req.user = user.dataValues;
+    }
+
     next();
   };
 
-  constructor(private readonly userService: UserService) {}
+  constructor(
+    private readonly userService: UserService,
+    private readonly adminService: AdminService,
+  ) {}
 }

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { BaseValidation } from 'src/base/validation.base';
 import * as yup from 'yup';
-import type { LoginProps } from './admin.interface';
+import type { IRegisterAdminProps, LoginProps } from './admin.interface';
 
 @Injectable()
 export class AdminValidation extends BaseValidation {
@@ -13,6 +13,37 @@ export class AdminValidation extends BaseValidation {
           .email('invalid email format')
           .required('email is required'),
         password: yup.string().required('password is required'),
+      }),
+      data,
+    );
+
+  public validateCreateAdmin = async (data: any) =>
+    await this.validate<IRegisterAdminProps>(
+      yup.object().shape({
+        email: yup
+          .string()
+          .email('invalid email format')
+          .required('email is required'),
+        password: yup.string().required('password is required'),
+        fullname: yup.string().required('fullname is required'),
+        division: yup
+          .string()
+          .oneOf(
+            [
+              'Director',
+              'Finance',
+              'IT',
+              'Third Party',
+              'Customer Service',
+              'Marketing',
+            ],
+            'invalid division',
+          )
+          .required('division is required'),
+        role: yup
+          .string()
+          .oneOf(['Supervisor', 'Manager', 'Staff'], 'invalid role')
+          .required('role is required'),
       }),
       data,
     );
