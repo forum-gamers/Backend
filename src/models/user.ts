@@ -20,6 +20,9 @@ export interface UserAttributes {
   searchVectorBio: any;
   trgmSimilarityUsername: number;
   trgmSimilarityBio: number;
+  isBlocked: boolean;
+  blockedBy: string;
+  blockReason: string;
 }
 
 @Table<Model<UserAttributes, UserAttributes>>({
@@ -163,4 +166,28 @@ export class User
     type: DataTypes.FLOAT,
   })
   public trgmSimilarityBio: number;
+
+  @Column({
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+  })
+  public isBlocked: boolean;
+
+  @Column({
+    type: DataTypes.UUID,
+    allowNull: true,
+    references: {
+      model: {
+        tableName: 'Admins',
+      },
+      key: 'id',
+    },
+  })
+  public blockedBy: string;
+
+  @Column({
+    type: DataTypes.STRING,
+    allowNull: true,
+  })
+  public blockReason: string;
 }

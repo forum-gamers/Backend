@@ -19,6 +19,9 @@ export interface PostAttributes {
   tags: string[];
   trgmSimilarity: number;
   searchVector: any;
+  isBlocked: boolean;
+  blockedBy: string;
+  blockReason: string;
 }
 
 @Table<Model<PostAttributes, PostAttributes>>({
@@ -141,4 +144,28 @@ export class Post
     type: DataTypes.FLOAT,
   })
   public trgmSimilarity: number;
+
+  @Column({
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+  })
+  public isBlocked: boolean;
+
+  @Column({
+    type: DataTypes.UUID,
+    allowNull: true,
+    references: {
+      model: {
+        tableName: 'Admins',
+      },
+      key: 'id',
+    },
+  })
+  public blockedBy: string;
+
+  @Column({
+    type: DataTypes.STRING,
+    allowNull: true,
+  })
+  public blockReason: string;
 }

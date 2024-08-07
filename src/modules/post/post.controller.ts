@@ -215,6 +215,7 @@ export class PostController extends BaseController {
     if (!post) throw new NotFoundException('post not found');
     if (post.userId !== userId)
       throw new ForbiddenException('forbidden access');
+    if (post.isBlocked) throw new ForbiddenException('post is blocked');
 
     const { text } = await this.postValidation.validateEditText(
       payload,

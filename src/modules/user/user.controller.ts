@@ -4,6 +4,7 @@ import {
   Body,
   ConflictException,
   Controller,
+  ForbiddenException,
   Get,
   Headers,
   HttpCode,
@@ -129,7 +130,11 @@ export class UserController extends BaseController {
       await this.userValidation.validateLogin(payload);
 
     const user = await this.userService.findByIdentifier(identifier);
-    if (!user || !(await encryption.compareEncryption(password, user.password)))
+    if (
+      !user ||
+      !(await encryption.compareEncryption(password, user.password)) ||
+      !user.isBlocked
+    )
       throw new UnauthorizedException('invalid credentials');
 
     return this.sendResponseBody({
@@ -158,6 +163,7 @@ export class UserController extends BaseController {
     if (!user)
       throw new UnauthorizedException('missing or invalid authorization');
     if (user.isVerified) throw new ConflictException('user already verified');
+    if (!user.isBlocked) throw new ConflictException('user is blocked');
 
     await this.userService.activatedUser(user.id);
 
@@ -197,6 +203,7 @@ export class UserController extends BaseController {
   @Get('me')
   @HttpCode(200)
   public me(@UserMe() user: UserAttributes) {
+    if (!user) throw new NotFoundException('user not found');
     return this.sendResponseBody({
       message: 'user found',
       code: 200,

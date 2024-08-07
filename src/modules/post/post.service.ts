@@ -148,6 +148,7 @@ export class PostService {
           FROM "Posts" p
           LEFT JOIN "UserPreferences" up ON p."userId" = up."userId"
           WHERE p."createdAt" >= $1
+            AND p."isBlocked" = false
             AND p."privacy" = 'public'
             OR p."userId" IN (
               SELECT "Follows"."followedId"
@@ -368,7 +369,10 @@ export class PostService {
           FROM "Posts" p
           LEFT JOIN "Communities" c ON c."id" = p."communityId"
           LEFT JOIN "Users" u ON u."id" = p."userId"
-          WHERE p."id" = $1
+          WHERE 
+            p."id" = $1 AND 
+            p."isBlocked" = false AND 
+            p."privacy" = 'public'
           GROUP BY 
             p."id",
             p."userId",
@@ -450,7 +454,10 @@ export class PostService {
         FROM "Posts" p
         LEFT JOIN "Communities" c ON c."id" = p."communityId"
         LEFT JOIN "Users" u ON u."id" = p."userId"
-        WHERE p."userId" = $1
+        WHERE 
+          p."userId" = $1 AND 
+          p."isBlocked" = false AND 
+          p."privacy" = 'public'
         ${withMediaOnly ? 'AND p."id" IN (SELECT pm."postId" FROM "PostMedia" pm WHERE pm."postId" = p."id")' : ''}
         ORDER BY p."createdAt" DESC
         LIMIT $2 OFFSET $3
@@ -556,7 +563,9 @@ export class PostService {
           INNER JOIN 
               "PostLikes" pl ON pl."postId" = p."id"
           WHERE 
-              pl."userId" = $1
+              pl."userId" = $1 AND 
+              p."isBlocked" = false AND 
+              p."privacy" = 'public'
           GROUP BY 
               p."id",
               p."userId",
@@ -680,7 +689,9 @@ export class PostService {
           INNER JOIN 
               "PostBookmarks" pb ON pb."postId" = p."id"
           WHERE 
-              pb."userId" = $1
+              pb."userId" = $1 AND 
+              p."isBlocked" = false AND 
+              p."privacy" = 'public'
           GROUP BY 
               p."id",
               p."userId",

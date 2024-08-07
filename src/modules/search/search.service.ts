@@ -29,7 +29,7 @@ export class SearchService {
             WHERE (plainto_tsquery('english', $1) || plainto_tsquery('indonesian', $1)) @@ u."searchVectorUsername"
             OR u.username % $1
             OR u.username ILIKE '%' || $1 || '%'
-            AND similarity(u.username, $1) > 0.5
+            AND similarity(u.username, $1) > 0.5 AND u.status = 'active' AND u."isBlocked" = false
         ),
         user_search_bio AS (
             SELECT 
@@ -46,7 +46,7 @@ export class SearchService {
             FROM "Users" u
             WHERE (plainto_tsquery('english', $1) || plainto_tsquery('indonesian', $1)) @@ u."searchVectorBio"
             OR u.bio ILIKE '%' || $1 || '%'
-            AND similarity(u.bio, $1) > 0.3
+            AND similarity(u.bio, $1) > 0.3 AND u.status = 'active' AND u."isBlocked" = false
         ),  
         post_search AS (
             SELECT
@@ -64,7 +64,7 @@ export class SearchService {
             WHERE (plainto_tsquery('english', $1) || plainto_tsquery('indonesian', $1)) @@ p."searchVector"
             OR p.text % $1
             OR p.text ILIKE '%' || $1 || '%'
-            AND similarity(p.text, $1) > 0.3
+            AND similarity(p.text, $1) > 0.3 AND p."isBlocked" = false
         ),
         post_comment_search AS (
             SELECT
@@ -79,10 +79,11 @@ export class SearchService {
             ROUND(GREATEST(1, ts_rank(pc."searchVector", plainto_tsquery('english', $1) || plainto_tsquery('indonesian', $1)) * 100)) AS rank,
             ROUND(GREATEST(1, similarity(pc.text, $1) * 100)) AS similarity_score
             FROM "PostComments" pc
+            JOIN "Posts" p ON pc."postId" = p.id
             WHERE (plainto_tsquery('english', $1) || plainto_tsquery('indonesian', $1)) @@ pc."searchVector"
             OR pc.text % $1
             OR pc.text ILIKE '%' || $1 || '%'
-            AND similarity(pc.text, $1) > 0.3
+            AND similarity(pc.text, $1) > 0.3 AND p."isBlocked" = false
         ),
         reply_comment_search AS (
             SELECT
@@ -97,10 +98,12 @@ export class SearchService {
                 ROUND(GREATEST(1, ts_rank(rc."searchVector", plainto_tsquery('english', $1) || plainto_tsquery('indonesian', $1)) * 100)) AS rank,
                 ROUND(GREATEST(1, similarity(rc.text, $1) * 100)) AS similarity_score
             FROM "ReplyComments" rc
+            JOIN "Posts" p ON rc."postId" = p.id
             WHERE (plainto_tsquery('english', $1) || plainto_tsquery('indonesian', $1)) @@ rc."searchVector"
             OR rc.text % $1
             OR rc.text ILIKE '%' || $1 || '%'
             AND similarity(rc.text, $1) > 0.3
+            AND p."isBlocked" = false
         ),
         community_name_search AS (
             SELECT
