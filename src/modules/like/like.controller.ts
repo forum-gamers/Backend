@@ -35,7 +35,7 @@ export class LikeController extends BaseController {
     @UserMe('id') userId: string,
     @Param('id', PostLockedFindByIdPipe) post: PostAttributes | null,
   ) {
-    if (!post) throw new NotFoundException('post not found');
+    if (!post || post.isBlocked) throw new NotFoundException('post not found');
 
     if (await this.likeService.findOneByPostIdAndUserId(post.id, userId))
       throw new ConflictException('post already liked');
@@ -78,7 +78,7 @@ export class LikeController extends BaseController {
     @UserMe('id') userId: string,
     @Param('id', PostLockedFindByIdPipe) post: PostAttributes | null,
   ) {
-    if (!post) throw new NotFoundException('post not found');
+    if (!post || post.isBlocked) throw new NotFoundException('post not found');
 
     if (!(await this.likeService.findOneByPostIdAndUserId(post.id, userId)))
       throw new NotFoundException('post not liked');

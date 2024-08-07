@@ -59,7 +59,7 @@ export class CommentController extends BaseController {
     post: PostAttributes | null,
     @Body() payload: any,
   ) {
-    if (!post) throw new NotFoundException('post not found');
+    if (!post || post.isBlocked) throw new NotFoundException('post not found');
 
     if (!post.allowComment)
       throw new BadRequestException('post not allow comment');

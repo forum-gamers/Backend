@@ -32,7 +32,7 @@ export class BookmarkController extends BaseController {
     @UserMe('id') userId: string,
     @Param('id', PostLockedFindByIdPipe) post: PostAttributes | null,
   ) {
-    if (!post) throw new NotFoundException('post not found');
+    if (!post || post.isBlocked) throw new NotFoundException('post not found');
 
     if (await this.bookmarkService.findOneByPostIdAndUserId(post.id, userId))
       throw new ConflictException('post already bookmarked');
@@ -65,7 +65,7 @@ export class BookmarkController extends BaseController {
     @UserMe('id') userId: string,
     @Param('id', PostLockedFindByIdPipe) post: PostAttributes | null,
   ) {
-    if (!post) throw new NotFoundException('post not found');
+    if (!post || post.isBlocked) throw new NotFoundException('post not found');
 
     if (!(await this.bookmarkService.findOneByPostIdAndUserId(post.id, userId)))
       throw new NotFoundException('bookmark not found');

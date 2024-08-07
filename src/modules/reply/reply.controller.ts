@@ -48,7 +48,8 @@ export class ReplyController extends BaseController {
       { lock: Transaction.LOCK.UPDATE },
     );
     if (!comment) throw new NotFoundException('comment not found');
-    if (!comment?.post) throw new NotFoundException('post not found');
+    if (!comment?.post || comment.post.isBlocked)
+      throw new NotFoundException('post not found');
 
     if ((await this.replyService.countByCommentId(comment.id)) >= 150)
       throw new ConflictException('reply limit reached');
