@@ -104,9 +104,6 @@ export class PostService {
     { page, limit }: PostResponseQuery,
     userId: string,
   ) {
-    const now = new Date();
-    const aWeekAgo = new Date(now.setDate(now.getDate() - 7)).toISOString();
-
     const [{ datas, totalData }] =
       await this.sequelize.query<PostResponseQueryDB>(
         `WITH 
@@ -129,7 +126,7 @@ export class PostService {
           SELECT
             "tags" AS "userTags"
           FROM "UserPreferences"
-          WHERE "userId" = $2
+          WHERE "userId" = $1
         ),
         filtered_posts AS (
           SELECT 
@@ -149,13 +146,13 @@ export class PostService {
             p."countShare"
           FROM "Posts" p
           LEFT JOIN "UserPreferences" up ON p."userId" = up."userId"
-          WHERE p."createdAt" >= $1
+          WHERE p."createdAt" >= NOW() - INTERVAL '7 days'
             AND p."isBlocked" = false
             AND p."privacy" = 'public'
             OR p."userId" IN (
               SELECT "Follows"."followedId"
               FROM "Follows"
-              WHERE "Follows"."followerId" = $2
+              WHERE "Follows"."followerId" = $1
             )
             OR EXISTS (
               SELECT 1
@@ -165,7 +162,7 @@ export class PostService {
             OR p."communityId" IN (
               SELECT "communityId"
               FROM "CommunityMembers"
-              WHERE "userId" = $2
+              WHERE "userId" = $1
             )
             OR EXISTS (
               SELECT 1
@@ -263,14 +260,14 @@ export class PostService {
             p."countComment",
             p."countShare",
             p."countBookmark",
-            EXISTS (SELECT 1 FROM "PostBookmarks" l2 WHERE l2."postId" = p."id" AND l2."userId" = $2) AS "isBookmarked",
+            EXISTS (SELECT 1 FROM "PostBookmarks" l2 WHERE l2."postId" = p."id" AND l2."userId" = $1) AS "isBookmarked",
             EXISTS (
               SELECT 1 
               FROM "PostLikes" l 
               WHERE l."postId" = p."id" 
-                AND l."userId" = $2
+                AND l."userId" = $1
             ) AS "isLiked",
-            EXISTS (SELECT 1 FROM "PostShares" l2 WHERE l2."postId" = p."id" AND l2."userId" = $2) AS "isShared",
+            EXISTS (SELECT 1 FROM "PostShares" l2 WHERE l2."postId" = p."id" AND l2."userId" = $1) AS "isShared",
             p."community",
             COUNT(*) OVER() AS "totalData"
           FROM ranked_posts p
@@ -280,10 +277,10 @@ export class PostService {
               SELECT 1 
               FROM "PostLikes" l 
               WHERE l."postId" = p."id" 
-                AND l."userId" = $2
+                AND l."userId" = $1
             ) THEN 1 ELSE 0 END ASC,
             rank ASC
-          LIMIT $3 OFFSET $4
+          LIMIT $2 OFFSET $3
         )
       SELECT 
       COALESCE(json_agg(json_build_object(
@@ -312,7 +309,7 @@ export class PostService {
       FROM post_data pd;`,
         {
           type: QueryTypes.SELECT,
-          bind: [aWeekAgo, userId, limit, (page - 1) * limit],
+          bind: [userId, limit, (page - 1) * limit],
         },
       );
 
@@ -381,7 +378,7 @@ export class PostService {
           LEFT JOIN "Communities" c ON c."id" = p."communityId"
           LEFT JOIN "Users" u ON u."id" = p."userId"
           WHERE 
-            p."id" = $1 AND 
+            p."id" =NOW() - INTERVAL '7 days' AND 
             p."isBlocked" = false AND 
             p."privacy" = 'public'
           GROUP BY 
