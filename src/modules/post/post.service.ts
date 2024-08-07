@@ -119,7 +119,7 @@ export class PostService {
               COUNT(*) AS tag_count
             FROM "Posts"
             WHERE "createdAt" >= NOW() - INTERVAL '7 days'
-                AND "privacy" = 'public'
+                AND "privacy" = 'public' AND "isBlocked" = false
             GROUP BY "tags"
             ORDER BY tag_count DESC
             LIMIT 1
@@ -275,6 +275,7 @@ export class PostService {
             COUNT(*) OVER() AS "totalData"
           FROM ranked_posts p
           ORDER BY
+            random(),
             CASE WHEN EXISTS (
               SELECT 1 
               FROM "PostLikes" l 
