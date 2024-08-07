@@ -10,3 +10,9 @@ export interface IRegisterAdminProps extends LoginProps {
   division: AdminDivision;
   role: AdminRole;
 }
+
+export type AdminFeature = 'blockUser' | 'blockPost';
+
+export interface BlockProps {
+  reason: string;
+}

@@ -1,7 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { BaseValidation } from 'src/base/validation.base';
 import * as yup from 'yup';
-import type { IRegisterAdminProps, LoginProps } from './admin.interface';
+import type {
+  BlockProps,
+  IRegisterAdminProps,
+  LoginProps,
+} from './admin.interface';
 
 @Injectable()
 export class AdminValidation extends BaseValidation {
@@ -44,6 +48,17 @@ export class AdminValidation extends BaseValidation {
           .string()
           .oneOf(['Supervisor', 'Manager', 'Staff'], 'invalid role')
           .required('role is required'),
+      }),
+      data,
+    );
+
+  public validateBlock = async (data: any) =>
+    await this.validate<BlockProps>(
+      yup.object().shape({
+        reason: yup
+          .string()
+          .min(5, 'reason is too short')
+          .required('reason is required'),
       }),
       data,
     );

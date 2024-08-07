@@ -3,6 +3,9 @@ import {
   ConflictException,
   Controller,
   HttpCode,
+  NotFoundException,
+  Param,
+  Patch,
   Post,
   UnauthorizedException,
   UseGuards,
@@ -16,12 +19,19 @@ import { RateLimitGuard } from 'src/middlewares/global/rateLimit.middleware';
 import { AdminMe } from './decorators/me.decorator';
 import type { AdminAttributes } from 'src/models/admin';
 import { CreateAdminDto } from './dto/create.dto';
+import { UserFindByIdPipe } from '../user/pipes/findById.pipe';
+import { UserAttributes } from 'src/models/user';
+import { AdminHelper } from './admin.helper';
+import { UserService } from '../user/user.service';
+import { BlockUserDto } from './dto/blockUser.dto';
 
 @Controller('admin')
 export class AdminController extends BaseController {
   constructor(
     private readonly adminService: AdminService,
     private readonly adminValidation: AdminValidation,
+    private readonly adminHelper: AdminHelper,
+    private readonly userService: UserService,
   ) {
     super();
   }
@@ -30,7 +40,7 @@ export class AdminController extends BaseController {
   @UseGuards(
     new RateLimitGuard({
       windowMs: 1 * 60 * 1000,
-      max: 10,
+      max: 5,
       message: 'Too many requests from this IP, please try again in 1 minute.',
     }),
   )
@@ -105,6 +115,37 @@ export class AdminController extends BaseController {
         }),
         data: dataValues,
       },
+    });
+  }
+
+  @Patch('user/block/:id')
+  @HttpCode(200)
+  @UseGuards(
+    new RateLimitGuard({
+      windowMs: 1 * 60 * 1000,
+      max: 10,
+      message: 'Too many requests from this IP, please try again in 1 minute.',
+    }),
+  )
+  public async blockUser(
+    @Param('id', UserFindByIdPipe) user: UserAttributes | null,
+    @AdminMe() admin: AdminAttributes,
+    @Body() payload: any,
+  ) {
+    const { reason } = await this.adminValidation.validateBlock(payload);
+
+    if (!user) throw new NotFoundException('user not found');
+
+    if (!this.adminHelper.validateAdminAccess(admin.division, 'blockUser'))
+      throw new UnauthorizedException('cannot do this action');
+
+    await this.userService.block(
+      new BlockUserDto({ userId: user.id, blockedBy: admin.id, reason }),
+    );
+
+    return this.sendResponseBody({
+      code: 200,
+      message: 'success',
     });
   }
 }

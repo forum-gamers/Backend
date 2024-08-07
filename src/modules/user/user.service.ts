@@ -5,6 +5,7 @@ import { Op, type UpdateOptions, type CreateOptions } from 'sequelize';
 import { v4 } from 'uuid';
 import { CreateUser } from './dto/create.dto';
 import encryption from '../../utils/global/encryption.utils';
+import { BlockUserDto } from '../admin/dto/blockUser.dto';
 
 @Injectable()
 export class UserService {
@@ -111,5 +112,15 @@ export class UserService {
     opts?: UpdateOptions<UserAttributes>,
   ) {
     return await this.userModel.update({ bio }, { ...opts, where: { id } });
+  }
+
+  public async block(
+    { userId, reason, blockedBy }: BlockUserDto,
+    opts?: UpdateOptions<UserAttributes>,
+  ) {
+    return await this.userModel.update(
+      { blockReason: reason, isBlocked: true, blockedBy },
+      { ...opts, where: { id: userId } },
+    );
   }
 }
