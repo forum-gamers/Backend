@@ -80,98 +80,101 @@ export class FollowService {
   ) {
     const datas = await this.sequelize.query<FollowRecomendationDto>(
       `WITH
-        non_followed_users AS (
-          SELECT u.id AS "userId", u.username, u."imageUrl" AS "userImageUrl", u.bio AS "userBio", 'non_followed' AS source
-          FROM "Users" u
-          LEFT JOIN "Follows" f ON u.id = f."followedId" AND f."followerId" = $1
-          WHERE f.id IS NULL AND u.id != $1
-        ),
+    non_followed_users AS (
+        SELECT u.id AS "userId", u.username, u."imageUrl" AS "userImageUrl", u.bio AS "userBio", 'non_followed' AS source
+        FROM "Users" u
+        LEFT JOIN "Follows" f ON u.id = f."followedId" AND f."followerId" = $1
+        WHERE f.id IS NULL AND u.id != $1 AND u."isBlocked" = false
+    ),
 
-        user_preferences AS (
-          SELECT up.tags
-          FROM "UserPreferences" up
-          WHERE up."userId" = $1
-        ),
+    user_preferences AS (
+        SELECT up.tags
+        FROM "UserPreferences" up
+        WHERE up."userId" = $1
+    ),
 
-        user_communities AS (
-          SELECT DISTINCT cm."communityId"
-          FROM "CommunityMembers" cm
-          WHERE cm."userId" = $1
-        ),
+    user_communities AS (
+        SELECT DISTINCT cm."communityId"
+        FROM "CommunityMembers" cm
+        WHERE cm."userId" = $1
+    ),
 
-        user_groups AS (
-          SELECT DISTINCT rm."roomId"
-          FROM "RoomMembers" rm
-          WHERE rm."userId" = $1
-        ),
+    user_groups AS (
+        SELECT DISTINCT rm."roomId"
+        FROM "RoomMembers" rm
+        WHERE rm."userId" = $1
+    ),
 
-        similar_tag_users AS (
-          SELECT DISTINCT u.id AS "userId", u.username, u."imageUrl" AS "userImageUrl", u.bio AS "userBio", 'tag' AS source
-          FROM "Users" u
-          JOIN "UserPreferences" up ON u.id = up."userId"
-          WHERE
-            EXISTS (
-              SELECT 1
-              FROM unnest(up.tags) AS tag
-              JOIN unnest((SELECT tags FROM user_preferences LIMIT 1)) AS user_tag
-              ON tag = user_tag
-              HAVING COUNT(*) * 1.0 / array_length((SELECT tags FROM user_preferences LIMIT 1), 1) >= 0.5
-            )
-        ),
-
-        same_community_users AS (
-          SELECT DISTINCT u.id AS "userId", u.username, u."imageUrl" AS "userImageUrl", u.bio AS "userBio", 'community' AS source
-          FROM "Users" u
-          JOIN "CommunityMembers" cm ON u.id = cm."userId"
-          WHERE cm."communityId" IN (SELECT uc."communityId" FROM user_communities uc)
-        ),
-
-        same_group_users AS (
-          SELECT DISTINCT u.id AS "userId", u.username, u."imageUrl" AS "userImageUrl", u.bio AS "userBio", 'group' AS source
-          FROM "Users" u
-          JOIN "RoomMembers" rm ON u.id = rm."userId"
-          WHERE rm."roomId" IN (SELECT ug."roomId" FROM user_groups ug)
-        ),
-
-        recommended_users AS (
-          SELECT "userId", username, "userImageUrl", "userBio", source
-          FROM non_followed_users
-          UNION
-          SELECT "userId", username, "userImageUrl", "userBio", source
-          FROM similar_tag_users
-          UNION
-          SELECT "userId", username, "userImageUrl", "userBio", source
-          FROM same_community_users
-          UNION
-          SELECT "userId", username, "userImageUrl", "userBio", source
-          FROM same_group_users
-        ),
-
-        follow_back_users AS (
-          SELECT f."followerId" AS "userId"
-          FROM "Follows" f
-          WHERE f."followedId" = $1
+    similar_tag_users AS (
+        SELECT DISTINCT u.id AS "userId", u.username, u."imageUrl" AS "userImageUrl", u.bio AS "userBio", 'tag' AS source
+        FROM "Users" u
+        JOIN "UserPreferences" up ON u.id = up."userId"
+        WHERE u."isBlocked" = false
+        AND EXISTS (
+            SELECT 1
+            FROM unnest(up.tags) AS tag
+            JOIN unnest((SELECT tags FROM user_preferences LIMIT 1)) AS user_tag
+            ON tag = user_tag
+            HAVING COUNT(*) * 1.0 / array_length((SELECT tags FROM user_preferences LIMIT 1), 1) >= 0.5
         )
+    ),
 
-      SELECT
-        ru."userId",
-        ru.username,
-        ru."userImageUrl",
-        ru."userBio",
-        ru.source,
-        CASE
-          WHEN fbu."userId" IS NOT NULL THEN 'follower'
-          ELSE 'non-follower'
-        END AS "followerStatus"
-      FROM recommended_users ru
-      LEFT JOIN follow_back_users fbu ON ru."userId" = fbu."userId"
-      WHERE ru."userId" NOT IN (
-        SELECT f."followedId"
+    same_community_users AS (
+        SELECT DISTINCT u.id AS "userId", u.username, u."imageUrl" AS "userImageUrl", u.bio AS "userBio", 'community' AS source
+        FROM "Users" u
+        JOIN "CommunityMembers" cm ON u.id = cm."userId"
+        WHERE cm."communityId" IN (SELECT uc."communityId" FROM user_communities uc)
+        AND u."isBlocked" = false
+    ),
+
+    same_group_users AS (
+        SELECT DISTINCT u.id AS "userId", u.username, u."imageUrl" AS "userImageUrl", u.bio AS "userBio", 'group' AS source
+        FROM "Users" u
+        JOIN "RoomMembers" rm ON u.id = rm."userId"
+        WHERE rm."roomId" IN (SELECT ug."roomId" FROM user_groups ug)
+        AND u."isBlocked" = false
+    ),
+
+    recommended_users AS (
+        SELECT "userId", username, "userImageUrl", "userBio", source
+        FROM non_followed_users
+        UNION
+        SELECT "userId", username, "userImageUrl", "userBio", source
+        FROM similar_tag_users
+        UNION
+        SELECT "userId", username, "userImageUrl", "userBio", source
+        FROM same_community_users
+        UNION
+        SELECT "userId", username, "userImageUrl", "userBio", source
+        FROM same_group_users
+    ),
+
+    follow_back_users AS (
+        SELECT f."followerId" AS "userId"
         FROM "Follows" f
-        WHERE f."followerId" = $1
-      )
-      ORDER BY ru.username
-      LIMIT $2 OFFSET $3;`,
+        WHERE f."followedId" = $1
+    )
+
+SELECT
+    ru."userId",
+    ru.username,
+    ru."userImageUrl",
+    ru."userBio",
+    ru.source,
+    CASE
+        WHEN fbu."userId" IS NOT NULL THEN 'follower'
+        ELSE 'non-follower'
+    END AS "followerStatus"
+FROM recommended_users ru
+LEFT JOIN follow_back_users fbu ON ru."userId" = fbu."userId"
+WHERE ru."userId" NOT IN (
+    SELECT f."followedId"
+    FROM "Follows" f
+    WHERE f."followerId" = $1
+)
+ORDER BY ru.username
+LIMIT $2 OFFSET $3;
+`,
       { type: QueryTypes.SELECT, bind: [userId, limit, (page - 1) * limit] },
     );
     return datas.map((el) => plainToInstance(FollowRecomendationDto, el));
