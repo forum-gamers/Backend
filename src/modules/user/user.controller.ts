@@ -4,7 +4,6 @@ import {
   Body,
   ConflictException,
   Controller,
-  ForbiddenException,
   Get,
   Headers,
   HttpCode,

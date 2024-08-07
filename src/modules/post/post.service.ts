@@ -13,6 +13,7 @@ import { Sequelize } from 'sequelize-typescript';
 import { PostResponseQuery } from './dto/postResponseQuery.dto';
 import { PostResponseQueryDB } from './post.interface';
 import { plainToInstance } from 'class-transformer';
+import { validate } from 'class-validator';
 import { PostResponse } from './dto/postResponse.dto';
 import { QueryParamsDto } from 'src/utils/dto/pagination.dto';
 
@@ -314,7 +315,15 @@ export class PostService {
       );
 
     return {
-      datas: datas.map((el) => plainToInstance(PostResponse, el)),
+      datas: await Promise.all(
+        datas
+          .map(
+            async (el) =>
+              (await validate(plainToInstance(PostResponse, el)))?.[0]
+                ?.target ?? null,
+          )
+          .filter((el) => !!el),
+      ),
       totalData: Number(totalData),
     };
   }
@@ -395,7 +404,9 @@ export class PostService {
         bind: [id, userId],
       },
     );
-    return plainToInstance(PostResponse, data);
+    return (
+      (await validate(plainToInstance(PostResponse, data)))?.[0]?.target ?? null
+    );
   }
 
   public async findByUserId(
@@ -497,7 +508,15 @@ export class PostService {
         },
       );
     return {
-      datas: datas.map((el) => plainToInstance(PostResponse, el)),
+      datas: await Promise.all(
+        datas
+          .map(
+            async (el) =>
+              (await validate(plainToInstance(PostResponse, el)))?.[0]
+                ?.target ?? null,
+          )
+          .filter((el) => !!el),
+      ),
       totalData: Number(totalData),
     };
   }
@@ -623,7 +642,15 @@ export class PostService {
         },
       );
     return {
-      datas: datas.map((el) => plainToInstance(PostResponse, el)),
+      datas: await Promise.all(
+        datas
+          .map(
+            async (el) =>
+              (await validate(plainToInstance(PostResponse, el)))?.[0]
+                ?.target ?? null,
+          )
+          .filter((el) => !!el),
+      ),
       totalData: Number(totalData),
     };
   }
@@ -749,7 +776,15 @@ export class PostService {
         },
       );
     return {
-      datas: datas.map((el) => plainToInstance(PostResponse, el)),
+      datas: await Promise.all(
+        datas
+          .map(
+            async (el) =>
+              (await validate(plainToInstance(PostResponse, el)))?.[0]
+                ?.target ?? null,
+          )
+          .filter((el) => !!el),
+      ),
       totalData: Number(totalData),
     };
   }
