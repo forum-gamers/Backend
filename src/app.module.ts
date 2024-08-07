@@ -57,6 +57,8 @@ import { CronModule } from './cron/cron.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { AdminLog } from './models/adminlog';
 import { AdminLogModule } from './modules/adminLog/adminLog.module';
+import { SearchHistory } from './models/searchHistory';
+import { HistoryModule } from './modules/history/history.module';
 const conf = require('../config/config.js');
 const environment = process.env.NODE_ENV ?? 'development';
 
@@ -127,6 +129,7 @@ config();
         PostShare,
         ProfileViewers,
         AdminLog,
+        SearchHistory,
       ],
       synchronize: environment !== 'production',
     }),
@@ -154,6 +157,7 @@ config();
     CronModule,
     AdminModule,
     AdminLogModule,
+    HistoryModule,
   ],
 })
 export class AppModule implements NestModule {

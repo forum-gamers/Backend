@@ -36,5 +36,5 @@ export class SearchResultDto {
 
   @IsNumber()
   @Transform(({ value }) => parseFloat(value))
-  similarity_score: number;
+  similarityScore: number;
 }

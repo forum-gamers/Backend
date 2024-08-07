@@ -21,7 +21,7 @@ export class BackupService {
   }
 
   private backup() {
-    schedule('37 14,0 * * *', async () => {
+    schedule('0 12,0 * * *', async () => {
       try {
         this.logger.info(`backup started...`);
 

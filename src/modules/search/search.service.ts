@@ -186,7 +186,7 @@ export class SearchService {
             ) AS "totalData";`,
         {
           type: QueryTypes.SELECT,
-          bind: [q, 15, 0],
+          bind: [q, 10, 0],
         },
       );
     return {
