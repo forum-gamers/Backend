@@ -115,7 +115,7 @@ export class PostService {
               "tags",
               COUNT(*) AS tag_count
             FROM "Posts"
-            WHERE "createdAt" >= NOW() - INTERVAL '7 days'
+            WHERE "createdAt" <= NOW() - INTERVAL '7 days'
                 AND "privacy" = 'public' AND "isBlocked" = false
             GROUP BY "tags"
             ORDER BY tag_count DESC
@@ -127,6 +127,22 @@ export class PostService {
             "tags" AS "userTags"
           FROM "UserPreferences"
           WHERE "userId" = $1
+        ),
+        followed_users AS (
+          SELECT "followedId"
+          FROM "Follows"
+          WHERE "followerId" = $1
+        ),
+        interacted_posts AS (
+          SELECT DISTINCT p."id"
+          FROM "Posts" p
+          LEFT JOIN "PostLikes" pl ON p."id" = pl."postId"
+          LEFT JOIN "PostShares" ps ON p."id" = ps."postId"
+          LEFT JOIN "PostComments" pc ON p."id" = pc."postId"
+          WHERE 
+            pl."userId" IN (SELECT "followedId" FROM followed_users)
+            OR ps."userId" IN (SELECT "followedId" FROM followed_users)
+            OR pc."userId" IN (SELECT "followedId" FROM followed_users)
         ),
         filtered_posts AS (
           SELECT 
@@ -146,28 +162,33 @@ export class PostService {
             p."countShare"
           FROM "Posts" p
           LEFT JOIN "UserPreferences" up ON p."userId" = up."userId"
-          WHERE p."createdAt" >= NOW() - INTERVAL '7 days'
-            AND p."isBlocked" = false
-            AND p."privacy" = 'public'
-            OR p."userId" IN (
+          WHERE (
+                  p."isBlocked" = false
+                  AND p."privacy" = 'public'
+              )
+            AND (
+              p."userId" IN (
               SELECT "Follows"."followedId"
               FROM "Follows"
               WHERE "Follows"."followerId" = $1
-            )
-            OR EXISTS (
-              SELECT 1
-              FROM top_tags
-              WHERE p."tags" && ARRAY[top_tags.tags]::varchar[]
-            )
-            OR p."communityId" IN (
-              SELECT "communityId"
-              FROM "CommunityMembers"
-              WHERE "userId" = $1
-            )
-            OR EXISTS (
-              SELECT 1
-              FROM user_preferences up
-              WHERE up."userTags" && p."tags"::varchar[]
+              )
+              OR EXISTS (
+                SELECT 1
+                FROM top_tags
+                WHERE p."tags" && ARRAY[top_tags.tags]::varchar[]
+              )
+              OR p."communityId" IN (
+                SELECT "communityId"
+                FROM "CommunityMembers"
+                WHERE "userId" = $1
+              )
+              OR EXISTS (
+                SELECT 1
+                FROM user_preferences up
+                WHERE up."userTags" && p."tags"::varchar[]
+              )
+              OR p."createdAt" <= NOW() - INTERVAL '7 days'
+              OR p."id" IN (SELECT id FROM interacted_posts)
             )
         ),
         trending_data AS (
@@ -200,6 +221,7 @@ export class PostService {
             p."totalLike" AS "countLike",
             p."countComment",
             p."countShare",
+            p."tags",
             CASE
               WHEN p."communityId" IS NOT NULL THEN json_build_object(
                 'id', c."id",
@@ -233,12 +255,21 @@ export class PostService {
             u."username",
             u."imageUrl",
             u."bio",
-            c."id"
+            c."id",
+            p."tags"
         ),
         ranked_posts AS (
           SELECT 
             td.*,
-            RANK() OVER (ORDER BY (td."countLike" + td."countComment" + td."countShare") DESC) AS rank
+            RANK() OVER (ORDER BY 
+              (td."countLike" + td."countComment" + td."countShare") DESC,
+              CASE WHEN EXISTS (
+                SELECT 1 
+                FROM "UserPreferences" up 
+                WHERE up."tags" && td."tags"::varchar[]
+              ) THEN 1 ELSE 0 END DESC,
+              td."updatedAt" DESC
+            ) AS rank
           FROM trending_data td
         ),
         post_data AS (
@@ -279,7 +310,8 @@ export class PostService {
               WHERE l."postId" = p."id" 
                 AND l."userId" = $1
             ) THEN 1 ELSE 0 END ASC,
-            rank ASC
+            rank ASC,
+            p."createdAt" DESC
           LIMIT $2 OFFSET $3
         )
       SELECT 
