@@ -16,6 +16,7 @@ import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import { PostResponse } from './dto/postResponse.dto';
 import { QueryParamsDto } from 'src/utils/dto/pagination.dto';
+import { BlockPostDto } from '../admin/dto/blockPost.dto';
 
 @Injectable()
 export class PostService {
@@ -404,9 +405,8 @@ export class PostService {
         bind: [id, userId],
       },
     );
-    return (
-      (await validate(plainToInstance(PostResponse, data)))?.[0]?.target ?? null
-    );
+
+    return data;
   }
 
   public async findByUserId(
@@ -787,5 +787,22 @@ export class PostService {
       ),
       totalData: Number(totalData),
     };
+  }
+
+  public async block(
+    { postId, reason, blockedBy }: BlockPostDto,
+    opts?: UpdateOptions<PostAttributes>,
+  ) {
+    return await this.postModel.update(
+      { blockReason: reason, isBlocked: true, blockedBy },
+      { ...opts, where: { id: postId } },
+    );
+  }
+
+  public async unBlock(id: number, opts?: UpdateOptions<PostAttributes>) {
+    return await this.postModel.update(
+      { blockReason: null, blockedBy: null, isBlocked: false },
+      { ...opts, where: { id } },
+    );
   }
 }

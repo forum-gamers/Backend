@@ -14,10 +14,11 @@ import { UserAuthentication } from 'src/middlewares/user/authentication.middlewa
 import { AdminOnly } from 'src/middlewares/admin/adminOnly.middleware';
 import { AdminLogger } from 'src/middlewares/admin/adminLogger.middleware';
 import { AdminHelper } from './admin.helper';
+import { PostModule } from '../post/post.module';
 
 @Global()
 @Module({
-  imports: [SequelizeModule.forFeature([Admin])],
+  imports: [SequelizeModule.forFeature([Admin]), PostModule],
   providers: [AdminService, AdminValidation, AdminHelper],
   controllers: [AdminController],
   exports: [AdminService],
@@ -30,6 +31,8 @@ export class AdminModule implements NestModule {
         { path: '/admin/register', method: RequestMethod.POST },
         { path: '/admin/user/block/:id', method: RequestMethod.PATCH },
         { path: '/admin/user/unblock/:id', method: RequestMethod.PATCH },
+        { path: '/admin/post/block/:id', method: RequestMethod.PATCH },
+        { path: '/admin/post/unblock/:id', method: RequestMethod.PATCH },
       );
   }
 }

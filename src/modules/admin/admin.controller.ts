@@ -25,6 +25,10 @@ import { UserAttributes } from 'src/models/user';
 import { AdminHelper } from './admin.helper';
 import { UserService } from '../user/user.service';
 import { BlockUserDto } from './dto/blockUser.dto';
+import { PostService } from '../post/post.service';
+import { PostLockedFindByIdPipe } from '../post/pipes/findById.locked.pipe';
+import { PostAttributes } from 'src/models/post';
+import { BlockPostDto } from './dto/blockPost.dto';
 
 @Controller('admin')
 export class AdminController extends BaseController {
@@ -33,6 +37,7 @@ export class AdminController extends BaseController {
     private readonly adminValidation: AdminValidation,
     private readonly adminHelper: AdminHelper,
     private readonly userService: UserService,
+    private readonly postService: PostService,
   ) {
     super();
   }
@@ -136,6 +141,7 @@ export class AdminController extends BaseController {
     const { reason } = await this.adminValidation.validateBlock(payload);
 
     if (!user) throw new NotFoundException('user not found');
+    if (user.isBlocked) throw new ConflictException('user already blocked');
 
     if (!this.adminHelper.validateAdminAccess(admin.division, 'blockUser'))
       throw new UnauthorizedException('cannot do this action');
@@ -170,6 +176,64 @@ export class AdminController extends BaseController {
       throw new UnauthorizedException('cannot do this action');
 
     await this.userService.unBlock(user.id);
+    return this.sendResponseBody({
+      code: 200,
+      message: 'success',
+    });
+  }
+
+  @Patch('post/block/:id')
+  @HttpCode(200)
+  @UseGuards(
+    new RateLimitGuard({
+      windowMs: 1 * 60 * 1000,
+      max: 10,
+      message: 'Too many requests from this IP, please try again in 1 minute.',
+    }),
+  )
+  public async blockPost(
+    @Param('id', PostLockedFindByIdPipe) post: PostAttributes | null,
+    @AdminMe() admin: AdminAttributes,
+    @Body() payload: any,
+  ) {
+    const { reason } = await this.adminValidation.validateBlock(payload);
+
+    if (!post) throw new NotFoundException('post not found');
+    if (post.isBlocked) throw new ConflictException('post already blocked');
+
+    if (!this.adminHelper.validateAdminAccess(admin.division, 'blockPost'))
+      throw new UnauthorizedException('cannot do this action');
+
+    await this.postService.block(
+      new BlockPostDto({ postId: post.id, blockedBy: admin.id, reason }),
+    );
+
+    return this.sendResponseBody({
+      code: 200,
+      message: 'success',
+    });
+  }
+
+  @Patch('post/unblock/:id')
+  @HttpCode(200)
+  @UseGuards(
+    new RateLimitGuard({
+      windowMs: 1 * 60 * 1000,
+      max: 10,
+      message: 'Too many requests from this IP, please try again in 1 minute.',
+    }),
+  )
+  public async unblockPost(
+    @Param('id', PostLockedFindByIdPipe) post: PostAttributes | null,
+    @AdminMe() admin: AdminAttributes,
+  ) {
+    if (!post) throw new NotFoundException('post not found');
+    if (!post.isBlocked) throw new BadRequestException('user not blocked');
+
+    if (!this.adminHelper.validateAdminAccess(admin.division, 'unBlockPost'))
+      throw new UnauthorizedException('cannot do this action');
+
+    await this.postService.unBlock(post.id);
     return this.sendResponseBody({
       code: 200,
       message: 'success',
