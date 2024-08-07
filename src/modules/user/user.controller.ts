@@ -41,6 +41,7 @@ import { CreateProfileViewerDto } from '../profileViewer/dto/create.dto';
 import { plainToInstance } from 'class-transformer';
 import { UserDecryptedDto } from './dto/userDecrypted.dto';
 import { User } from 'src/models/user';
+import { validate } from 'class-validator';
 
 @Controller('user')
 export class UserController extends BaseController {
@@ -294,7 +295,7 @@ export class UserController extends BaseController {
       message: 'Too many requests from this IP, please try again in 1 minute.',
     }),
   )
-  public getById(
+  public async getById(
     @Param('id', UserFindByIdPipe) user: User | null,
     @UserMe('id') userId: string,
   ) {
@@ -313,11 +314,14 @@ export class UserController extends BaseController {
           );
       }
     })();
+    const [{ target }] = await validate(
+      plainToInstance(UserDecryptedDto, user.dataValues),
+    );
 
     return this.sendResponseBody({
       message: 'user found',
       code: 200,
-      data: plainToInstance(UserDecryptedDto, user.dataValues),
+      data: target,
     });
   }
 

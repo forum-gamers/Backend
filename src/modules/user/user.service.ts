@@ -123,4 +123,11 @@ export class UserService {
       { ...opts, where: { id: userId } },
     );
   }
+
+  public async unBlock(id: string, opts?: UpdateOptions<UserAttributes>) {
+    return await this.userModel.update(
+      { blockReason: null, blockedBy: null, isBlocked: false },
+      { ...opts, where: { id } },
+    );
+  }
 }

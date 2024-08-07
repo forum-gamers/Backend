@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   ConflictException,
   Controller,
@@ -143,6 +144,32 @@ export class AdminController extends BaseController {
       new BlockUserDto({ userId: user.id, blockedBy: admin.id, reason }),
     );
 
+    return this.sendResponseBody({
+      code: 200,
+      message: 'success',
+    });
+  }
+
+  @Patch('user/unblock/:id')
+  @HttpCode(200)
+  @UseGuards(
+    new RateLimitGuard({
+      windowMs: 1 * 60 * 1000,
+      max: 10,
+      message: 'Too many requests from this IP, please try again in 1 minute.',
+    }),
+  )
+  public async unblockUser(
+    @Param('id', UserFindByIdPipe) user: UserAttributes | null,
+    @AdminMe() admin: AdminAttributes,
+  ) {
+    if (!user) throw new NotFoundException('user not found');
+    if (!user.isBlocked) throw new BadRequestException('user not blocked');
+
+    if (!this.adminHelper.validateAdminAccess(admin.division, 'unBlockUser'))
+      throw new UnauthorizedException('cannot do this action');
+
+    await this.userService.unBlock(user.id);
     return this.sendResponseBody({
       code: 200,
       message: 'success',

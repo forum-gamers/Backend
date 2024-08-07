@@ -29,6 +29,7 @@ export class AdminModule implements NestModule {
       .forRoutes(
         { path: '/admin/register', method: RequestMethod.POST },
         { path: '/admin/user/block/:id', method: RequestMethod.PATCH },
+        { path: '/admin/user/unblock/:id', method: RequestMethod.PATCH },
       );
   }
 }
