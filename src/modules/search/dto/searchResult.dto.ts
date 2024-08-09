@@ -1,4 +1,4 @@
-import { Transform } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
   IsString,
   IsNotEmpty,
@@ -6,7 +6,14 @@ import {
   IsNumber,
   IsUrl,
   IsIn,
+  ValidateNested,
 } from 'class-validator';
+
+export class SearchResultContextDto {
+  @IsOptional()
+  @IsNumber()
+  public postId?: number;
+}
 
 export class SearchResultDto {
   @IsString()
@@ -37,4 +44,9 @@ export class SearchResultDto {
   @IsNumber()
   @Transform(({ value }) => parseFloat(value))
   similarityScore: number;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => SearchResultContextDto)
+  context?: SearchResultContextDto | null;
 }

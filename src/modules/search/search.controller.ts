@@ -1,10 +1,4 @@
-import {
-  BadRequestException,
-  Controller,
-  Get,
-  HttpCode,
-  Query,
-} from '@nestjs/common';
+import { Controller, Get, HttpCode, Query } from '@nestjs/common';
 import { BaseController } from 'src/base/controller.base';
 import { SearchService } from './search.service';
 import { HistoryService } from '../history/history.service';

@@ -24,7 +24,8 @@ export class SearchService {
                 u."imageUrl" AS "imageUrl",
                 'username' AS searched_field,
                 ROUND(GREATEST(1, (ts_rank(u."searchVectorUsername", plainto_tsquery('english', $1) || plainto_tsquery('indonesian', $1)) + 0.5) * 100)) AS rank,
-                ROUND(GREATEST(1, similarity(u.username, $1) * 100)) AS similarity_score
+                ROUND(GREATEST(1, similarity(u.username, $1) * 100)) AS similarity_score,
+                NULL::jsonb AS context
             FROM "Users" u
             WHERE (plainto_tsquery('english', $1) || plainto_tsquery('indonesian', $1)) @@ u."searchVectorUsername"
             OR u.username % $1
@@ -42,7 +43,8 @@ export class SearchService {
                 u."imageUrl" AS "imageUrl",
                 'bio' AS searched_field,
                 ROUND(GREATEST(1, ts_rank(u."searchVectorBio", plainto_tsquery('english', $1) || plainto_tsquery('indonesian', $1)) * 100)) AS rank,
-                ROUND(GREATEST(1, similarity(u.bio, $1) * 100)) AS similarity_score
+                ROUND(GREATEST(1, similarity(u.bio, $1) * 100)) AS similarity_score,
+                NULL::jsonb AS context
             FROM "Users" u
             WHERE (plainto_tsquery('english', $1) || plainto_tsquery('indonesian', $1)) @@ u."searchVectorBio"
             OR u.bio ILIKE '%' || $1 || '%'
@@ -59,7 +61,8 @@ export class SearchService {
                 NULL AS "imageUrl",
                 'text' AS searched_field,
                 ROUND(GREATEST(1, ts_rank(p."searchVector", plainto_tsquery('english', $1) || plainto_tsquery('indonesian', $1)) * 100)) AS rank,
-                ROUND(GREATEST(1, similarity(p.text, $1) * 100)) AS similarity_score
+                ROUND(GREATEST(1, similarity(p.text, $1) * 100)) AS similarity_score,
+                jsonb_build_object('postId', p.id) AS context
             FROM "Posts" p
             WHERE (plainto_tsquery('english', $1) || plainto_tsquery('indonesian', $1)) @@ p."searchVector"
             OR p.text % $1
@@ -77,7 +80,8 @@ export class SearchService {
             NULL AS "imageUrl",
             'text' AS searched_field,
             ROUND(GREATEST(1, ts_rank(pc."searchVector", plainto_tsquery('english', $1) || plainto_tsquery('indonesian', $1)) * 100)) AS rank,
-            ROUND(GREATEST(1, similarity(pc.text, $1) * 100)) AS similarity_score
+            ROUND(GREATEST(1, similarity(pc.text, $1) * 100)) AS similarity_score,
+            jsonb_build_object('postId', p.id) AS context
             FROM "PostComments" pc
             JOIN "Posts" p ON pc."postId" = p.id
             WHERE (plainto_tsquery('english', $1) || plainto_tsquery('indonesian', $1)) @@ pc."searchVector"
@@ -96,7 +100,8 @@ export class SearchService {
                 NULL AS "imageUrl",
                 'text' AS searched_field,
                 ROUND(GREATEST(1, ts_rank(rc."searchVector", plainto_tsquery('english', $1) || plainto_tsquery('indonesian', $1)) * 100)) AS rank,
-                ROUND(GREATEST(1, similarity(rc.text, $1) * 100)) AS similarity_score
+                ROUND(GREATEST(1, similarity(rc.text, $1) * 100)) AS similarity_score,
+                jsonb_build_object('postId', p.id) AS context
             FROM "ReplyComments" rc
             JOIN "Posts" p ON rc."postId" = p.id
             WHERE (plainto_tsquery('english', $1) || plainto_tsquery('indonesian', $1)) @@ rc."searchVector"
@@ -116,7 +121,8 @@ export class SearchService {
                 c."imageUrl" AS "imageUrl",
                 'name' AS searched_field,
                 ROUND(GREATEST(1, (ts_rank(c."searchVectorName", plainto_tsquery('english', $1) || plainto_tsquery('indonesian', $1)) + 0.5) * 100)) AS rank,
-                ROUND(GREATEST(1, similarity(c.name, $1) * 100)) AS similarity_score
+                ROUND(GREATEST(1, similarity(c.name, $1) * 100)) AS similarity_score,
+                NULL::jsonb AS context
             FROM "Communities" c
             WHERE (plainto_tsquery('english', $1) || plainto_tsquery('indonesian', $1)) @@ c."searchVectorName"
             OR c.name % $1
@@ -134,7 +140,8 @@ export class SearchService {
                 c."imageUrl" AS "imageUrl",
                 'description' AS searched_field,
                 ROUND(GREATEST(1, ts_rank(c."searchVectorDescription", plainto_tsquery('english', $1) || plainto_tsquery('indonesian', $1)) * 100)) AS rank,
-                ROUND(GREATEST(1, similarity(c.description, $1) * 100)) AS similarity_score
+                ROUND(GREATEST(1, similarity(c.description, $1) * 100)) AS similarity_score,
+                NULL::jsonb AS context
             FROM "Communities" c
             WHERE (plainto_tsquery('english', $1) || plainto_tsquery('indonesian', $1)) @@ c."searchVectorDescription"
             OR c.description % $1
@@ -176,7 +183,8 @@ export class SearchService {
                     'imageUrl', "imageUrl",
                     'searchedField', searched_field,
                     'rank', rank,
-                    'similarityScore', similarity_score
+                    'similarityScore', similarity_score,
+                    'context', context
                 ))
                 FROM sorted_results
                 ), '[]'

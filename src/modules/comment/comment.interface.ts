@@ -1,4 +1,4 @@
-import { CommentResponseDto } from './dto/commentResponse.dto';
+import type { CommentResponseDto } from './dto/commentResponse.dto';
 
 export interface ICreateCommentProps {
   text: string;

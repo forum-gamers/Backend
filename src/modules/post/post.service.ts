@@ -410,7 +410,7 @@ export class PostService {
           LEFT JOIN "Communities" c ON c."id" = p."communityId"
           LEFT JOIN "Users" u ON u."id" = p."userId"
           WHERE 
-            p."id" =NOW() - INTERVAL '7 days' AND 
+            p."id" = $1 AND 
             p."isBlocked" = false AND 
             p."privacy" = 'public'
           GROUP BY 
