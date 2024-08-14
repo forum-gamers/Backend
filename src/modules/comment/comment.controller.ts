@@ -24,7 +24,6 @@ import { CommentFindByIdPipe } from './pipes/commentFindById.pipe';
 import { type PostCommentAttributes } from 'src/models/postcomment';
 import { Sequelize } from 'sequelize-typescript';
 import { ReplyService } from '../reply/reply.service';
-import { QueryParamsDto } from 'src/utils/dto/pagination.dto';
 import { PostService } from '../post/post.service';
 import { PostLockedFindByIdPipe } from '../post/pipes/findById.locked.pipe';
 import { UserPreferenceService } from '../userPreference/userPreference.service';

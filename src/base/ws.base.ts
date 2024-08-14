@@ -1,7 +1,8 @@
-import type {
-  OnGatewayConnection,
-  OnGatewayDisconnect,
-  OnGatewayInit,
+import {
+  type OnGatewayConnection,
+  type OnGatewayDisconnect,
+  WebSocketServer,
+  type OnGatewayInit,
 } from '@nestjs/websockets';
 import { Socket, Server } from 'socket.io';
 
@@ -19,4 +20,7 @@ export abstract class BaseWsHandler
   abstract handleDisconnect(client: Socket): void;
 
   abstract afterInit(server: Server): void;
+
+  @WebSocketServer()
+  protected readonly server: Server;
 }
