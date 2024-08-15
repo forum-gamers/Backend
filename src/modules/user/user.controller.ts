@@ -57,6 +57,13 @@ export class UserController extends BaseController {
   }
 
   @Post('register')
+  @UseGuards(
+    new RateLimitGuard({
+      windowMs: 1 * 60 * 1000,
+      max: 25,
+      message: 'Too many requests from this IP, please try again in 1 minute.',
+    }),
+  )
   @HttpCode(201)
   public async register(@Body() payload: any) {
     const { email, username, password, phoneNumber } =

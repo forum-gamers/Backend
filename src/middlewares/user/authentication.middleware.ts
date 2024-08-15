@@ -12,10 +12,7 @@ import { AdminService } from 'src/modules/admin/admin.service';
 export class UserAuthentication implements NestMiddleware {
   public use: RequestHandler = async (req, res, next) => {
     const { authorization } = req.headers;
-    if (!authorization)
-      throw new UnauthorizedException('missing or invalid authorization');
-
-    if (!authorization.startsWith('Bearer '))
+    if (!authorization || !authorization.startsWith('Bearer '))
       throw new UnauthorizedException('missing or invalid authorization');
 
     const [, token] = authorization.split(' ');

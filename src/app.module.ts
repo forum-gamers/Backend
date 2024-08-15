@@ -61,6 +61,10 @@ import { SearchHistory } from './models/searchHistory';
 import { HistoryModule } from './modules/history/history.module';
 import { Game } from './models/game';
 import { GameModule } from './modules/game/game.module';
+import { Team } from './models/team';
+import { TeamMember } from './models/teammember';
+import { TeamModule } from './modules/team/team.module';
+import { TeamMemberModule } from './modules/teamMember/teamMember.module';
 const conf = require('../config/config.js');
 const environment = process.env.NODE_ENV ?? 'development';
 
@@ -133,6 +137,8 @@ config();
         AdminLog,
         SearchHistory,
         Game,
+        Team,
+        TeamMember,
       ],
       synchronize: environment !== 'production',
     }),
@@ -162,6 +168,8 @@ config();
     AdminLogModule,
     HistoryModule,
     GameModule,
+    TeamModule,
+    TeamMemberModule,
   ],
 })
 export class AppModule implements NestModule {
