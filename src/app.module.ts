@@ -59,6 +59,8 @@ import { AdminLog } from './models/adminlog';
 import { AdminLogModule } from './modules/adminLog/adminLog.module';
 import { SearchHistory } from './models/searchHistory';
 import { HistoryModule } from './modules/history/history.module';
+import { Game } from './models/game';
+import { GameModule } from './modules/game/game.module';
 const conf = require('../config/config.js');
 const environment = process.env.NODE_ENV ?? 'development';
 
@@ -130,6 +132,7 @@ config();
         ProfileViewers,
         AdminLog,
         SearchHistory,
+        Game,
       ],
       synchronize: environment !== 'production',
     }),
@@ -158,6 +161,7 @@ config();
     AdminModule,
     AdminLogModule,
     HistoryModule,
+    GameModule,
   ],
 })
 export class AppModule implements NestModule {

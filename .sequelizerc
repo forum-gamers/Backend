@@ -5,4 +5,5 @@ module.exports = {
   'models-path': path.resolve('src', 'models'),
   'seeders-path': path.resolve('seeders'),
   config: path.resolve('config', 'config.js'),
+  url: process.env.DATABASE_URL,
 };
