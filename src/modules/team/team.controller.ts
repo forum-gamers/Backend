@@ -8,6 +8,11 @@ import {
   UseInterceptors,
   HttpException,
   HttpStatus,
+  Delete,
+  Param,
+  ParseUUIDPipe,
+  NotFoundException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { BaseController } from 'src/base/controller.base';
 import { TeamService } from './team.service';
@@ -111,6 +116,34 @@ export class TeamController extends BaseController {
     } catch (err) {
       await transaction.rollback();
       if (data?.imageId) this.imagekitService.bulkDelete([data.imageId]);
+      throw err;
+    }
+  }
+
+  @Delete(':teamId')
+  @HttpCode(200)
+  public async deleteTeam(
+    @UserMe('id') userId: string,
+    @Param('teamId', ParseUUIDPipe) teamId: string,
+  ) {
+    const team = await this.teamService.findById(teamId);
+    if (!team) throw new NotFoundException('team not found');
+
+    if (team.owner !== userId) throw new ForbiddenException('forbidden');
+
+    const transaction = await this.sequelize.transaction();
+    try {
+      await this.teamService.deleteById(teamId, { transaction });
+      await this.teamMemberService.deleteByTeamId(teamId, { transaction });
+      await transaction.commit();
+
+      if (team.imageId) this.imagekitService.bulkDelete([team.imageId]);
+      return this.sendResponseBody({
+        message: 'OK',
+        code: 200,
+      });
+    } catch (err) {
+      await transaction.rollback();
       throw err;
     }
   }
