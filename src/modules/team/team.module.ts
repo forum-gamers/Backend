@@ -36,8 +36,12 @@ export class TeamModule implements NestModule {
           method: RequestMethod.POST,
         },
         {
-          path: '/team',
+          path: '/team/:teamId',
           method: RequestMethod.DELETE,
+        },
+        {
+          path: '/team/:teamId/:userId',
+          method: RequestMethod.PATCH,
         },
       );
   }
