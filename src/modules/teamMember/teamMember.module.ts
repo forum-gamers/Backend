@@ -6,5 +6,6 @@ import { TeamMemberService } from './teamMember.service';
 @Module({
   imports: [SequelizeModule.forFeature([TeamMember])],
   providers: [TeamMemberService],
+  exports: [TeamMemberService],
 })
 export class TeamMemberModule {}

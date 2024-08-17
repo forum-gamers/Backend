@@ -8,9 +8,7 @@ import type { UserAttributes } from 'src/models/user';
 
 export const UserMe = createParamDecorator(
   (key: keyof UserAttributes, ctx: ExecutionContext) => {
-    const req = ctx.switchToHttp().getRequest<Request>();
-
-    const user = req.user;
+    const { user = null } = ctx.switchToHttp().getRequest<Request>();
     if (!user)
       throw new InternalServerErrorException(
         'you must use this decorator on authenticated user endpoint',
