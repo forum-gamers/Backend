@@ -13,6 +13,8 @@ import {
   ParseUUIDPipe,
   NotFoundException,
   ForbiddenException,
+  Patch,
+  ConflictException,
 } from '@nestjs/common';
 import { BaseController } from 'src/base/controller.base';
 import { TeamService } from './team.service';
@@ -29,6 +31,10 @@ import { CreateTeamDto } from './dto/create.dto';
 import { ImageKitService } from 'src/third-party/imagekit/imagekit.service';
 import { TEAM_IMAGE } from './team.constant';
 import { CreateTeamMemberDto } from '../teamMember/dto/create.dto';
+import { TeamFindByIdLocked } from './pipes/findById.locked.pipe';
+import { type TeamAttributes } from 'src/models/team';
+import { UserFindByIdPipe } from '../user/pipes/findById.pipe';
+import { type UserAttributes } from 'src/models/user';
 
 @Controller('team')
 export class TeamController extends BaseController {
@@ -103,6 +109,7 @@ export class TeamController extends BaseController {
         new CreateTeamMemberDto({
           teamId: team.id,
           userId,
+          status: true,
         }),
         { transaction },
       );
@@ -124,17 +131,17 @@ export class TeamController extends BaseController {
   @HttpCode(200)
   public async deleteTeam(
     @UserMe('id') userId: string,
-    @Param('teamId', ParseUUIDPipe) teamId: string,
+    @Param('teamId', ParseUUIDPipe, TeamFindByIdLocked)
+    team: TeamAttributes | null,
   ) {
-    const team = await this.teamService.findById(teamId);
     if (!team) throw new NotFoundException('team not found');
 
     if (team.owner !== userId) throw new ForbiddenException('forbidden');
 
     const transaction = await this.sequelize.transaction();
     try {
-      await this.teamService.deleteById(teamId, { transaction });
-      await this.teamMemberService.deleteByTeamId(teamId, { transaction });
+      await this.teamService.deleteById(team.id, { transaction });
+      await this.teamMemberService.deleteByTeamId(team.id, { transaction });
       await transaction.commit();
 
       if (team.imageId) this.imagekitService.bulkDelete([team.imageId]);
@@ -146,5 +153,33 @@ export class TeamController extends BaseController {
       await transaction.rollback();
       throw err;
     }
+  }
+
+  @Patch(':teamId/:userId')
+  @HttpCode(200)
+  public async verifyNewMember(
+    @Param('teamId', ParseUUIDPipe, TeamFindByIdLocked)
+    team: TeamAttributes | null,
+    @Param('userId', ParseUUIDPipe, UserFindByIdPipe)
+    user: UserAttributes | null,
+    @UserMe('id') userId: string,
+  ) {
+    if (!team) throw new NotFoundException('team not found');
+    if (!user) throw new NotFoundException('user not found');
+
+    if (team.owner !== userId) throw new ForbiddenException('forbidden');
+    const member = await this.teamMemberService.findByTeamIdAndUserId(
+      team.id,
+      user.id,
+    );
+    if (!member) throw new NotFoundException('member not found');
+
+    if (member.status) throw new ConflictException('member already verified');
+
+    await this.teamMemberService.verifiedMember(member.userId);
+    return this.sendResponseBody({
+      message: 'OK',
+      code: 200,
+    });
   }
 }

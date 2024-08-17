@@ -4,6 +4,7 @@ import { Column, Model, Table } from 'sequelize-typescript';
 export interface TeamMemberAttributes {
   id: number;
   teamId: string;
+  status: boolean;
   userId: string;
   createdAt: Date;
   updatedAt: Date;
@@ -38,6 +39,12 @@ export class TeamMember
     onUpdate: 'CASCADE',
   })
   public teamId: string;
+
+  @Column({
+    defaultValue: false,
+    type: DataTypes.BOOLEAN,
+  })
+  public status: boolean;
 
   @Column({
     allowNull: false,

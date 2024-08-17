@@ -2,7 +2,12 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { TeamMember, type TeamMemberAttributes } from 'src/models/teammember';
 import { CreateTeamMemberDto } from './dto/create.dto';
-import { type DestroyOptions, type CreateOptions } from 'sequelize';
+import {
+  type DestroyOptions,
+  type CreateOptions,
+  type FindOptions,
+  type UpdateOptions,
+} from 'sequelize';
 
 @Injectable()
 export class TeamMemberService {
@@ -23,5 +28,26 @@ export class TeamMemberService {
     opts?: Omit<DestroyOptions<TeamMemberAttributes>, 'where'>,
   ) {
     return await this.teamMemberModel.destroy({ ...opts, where: { teamId } });
+  }
+
+  public async findByTeamIdAndUserId(
+    teamId: string,
+    userId: string,
+    opts?: Omit<FindOptions<TeamMemberAttributes>, 'where'>,
+  ) {
+    return await this.teamMemberModel.findOne({
+      ...opts,
+      where: { teamId, userId },
+    });
+  }
+
+  public async verifiedMember(
+    userId: string,
+    opts?: Omit<UpdateOptions<TeamMemberAttributes>, 'where'>,
+  ) {
+    return await this.teamMemberModel.update(
+      { status: true },
+      { ...opts, where: { userId } },
+    );
   }
 }

@@ -22,6 +22,7 @@ import { UserOnly } from 'src/middlewares/user/userOnly.middleware';
   ],
   providers: [TeamService, TeamValidation],
   controllers: [TeamController],
+  exports: [TeamService],
 })
 export class TeamModule implements NestModule {
   public configure(consumer: MiddlewareConsumer) {
@@ -29,9 +30,15 @@ export class TeamModule implements NestModule {
       .apply(...USER_VERIFIED_MIDDLEWARE)
       .forRoutes(TeamController)
       .apply(UserOnly)
-      .forRoutes({
-        path: '/team',
-        method: RequestMethod.POST,
-      });
+      .forRoutes(
+        {
+          path: '/team',
+          method: RequestMethod.POST,
+        },
+        {
+          path: '/team',
+          method: RequestMethod.DELETE,
+        },
+      );
   }
 }
