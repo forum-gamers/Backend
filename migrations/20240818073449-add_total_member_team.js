@@ -9,14 +9,13 @@ module.exports = {
      * Example:
      * await queryInterface.createTable('users', { id: Sequelize.INTEGER });
      */
-    await queryInterface.addColumn('TeamMembers', 'status', {
-      type: Sequelize.BOOLEAN,
-      defaultValue: false,
+    await queryInterface.addColumn('Teams', 'totalMember', {
+      type: Sequelize.INTEGER,
+      defaultValue: 0,
     });
-    await queryInterface.addColumn('TeamMembers', 'role', {
-      type: Sequelize.ENUM,
-      values: ['owner', 'member', 'coach', 'inspector', 'manager', 'admin'],
-      defaultValue: 'member',
+    await queryInterface.addColumn('Teams', 'maxMember', {
+      type: Sequelize.INTEGER,
+      defaultValue: 10,
     });
   },
 
@@ -27,7 +26,7 @@ module.exports = {
      * Example:
      * await queryInterface.dropTable('users');
      */
-    await queryInterface.removeColumn('TeamMembers', 'status');
-    await queryInterface.removeColumn('TeamMembers', 'role');
+    await queryInterface.removeColumn('Teams', 'totalMember');
+    await queryInterface.removeColumn('Teams', 'maxMember');
   },
 };

@@ -8,6 +8,8 @@ export interface TeamAttributes {
   imageUrl?: string;
   imageId?: string;
   description?: string;
+  totalMember: number;
+  maxMember: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -85,4 +87,18 @@ export class Team
     type: DataTypes.DATE,
   })
   public updatedAt: Date;
+
+  @Column({
+    allowNull: false,
+    type: DataTypes.INTEGER,
+    defaultValue: 0,
+  })
+  public totalMember: number;
+
+  @Column({
+    allowNull: false,
+    type: DataTypes.INTEGER,
+    defaultValue: 10,
+  })
+  public maxMember: number;
 }

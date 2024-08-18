@@ -168,6 +168,8 @@ export class TeamController extends BaseController {
     if (!user) throw new NotFoundException('user not found');
 
     if (team.owner !== userId) throw new ForbiddenException('forbidden');
+    if (team.totalMember + 1 >= team.maxMember)
+      throw new HttpException('team is full', HttpStatus.PAYMENT_REQUIRED);
     const member = await this.teamMemberService.findByTeamIdAndUserId(
       team.id,
       user.id,
@@ -176,10 +178,24 @@ export class TeamController extends BaseController {
 
     if (member.status) throw new ConflictException('member already verified');
 
-    await this.teamMemberService.verifiedMember(member.userId);
-    return this.sendResponseBody({
-      message: 'OK',
-      code: 200,
-    });
+    const transaction = await this.sequelize.transaction();
+    try {
+      await Promise.all([
+        this.teamMemberService.verifiedMember(member.userId, {
+          transaction,
+        }),
+        this.teamService.updateTotalMember(team.id, +team.totalMember + 1, {
+          transaction,
+        }),
+      ]);
+      await transaction.commit();
+      return this.sendResponseBody({
+        message: 'OK',
+        code: 200,
+      });
+    } catch (err) {
+      await transaction.rollback();
+      throw err;
+    }
   }
 }

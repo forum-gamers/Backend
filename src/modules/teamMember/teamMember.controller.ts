@@ -2,6 +2,8 @@ import {
   ConflictException,
   Controller,
   HttpCode,
+  HttpException,
+  HttpStatus,
   NotFoundException,
   Param,
   ParseUUIDPipe,
@@ -29,6 +31,9 @@ export class TeamMemberController extends BaseController {
   ) {
     if (!team) throw new NotFoundException('Team not found');
 
+    if (team.totalMember + 1 >= team.maxMember)
+      throw new HttpException('Team is full', HttpStatus.PAYMENT_REQUIRED);
+
     if (await this.teamMemberService.findByTeamIdAndUserId(team.id, userId))
       throw new ConflictException('you already joined this team');
 
@@ -36,6 +41,7 @@ export class TeamMemberController extends BaseController {
       new CreateTeamMemberDto({
         teamId: team.id,
         userId,
+        status: false,
       }),
     );
   }

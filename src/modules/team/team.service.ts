@@ -5,7 +5,8 @@ import { CreateTeamDto } from './dto/create.dto';
 import {
   type FindOptions,
   type CreateOptions,
-  DestroyOptions,
+  type DestroyOptions,
+  type UpdateOptions,
 } from 'sequelize';
 
 @Injectable()
@@ -38,5 +39,16 @@ export class TeamService {
     opts?: Omit<DestroyOptions<TeamAttributes>, 'where'>,
   ) {
     return await this.teamModel.destroy({ ...opts, where: { id } });
+  }
+
+  public async updateTotalMember(
+    id: string,
+    totalMember: number,
+    opts?: Omit<UpdateOptions<TeamAttributes>, 'where'>,
+  ) {
+    return await this.teamModel.update(
+      { totalMember },
+      { ...opts, where: { id } },
+    );
   }
 }

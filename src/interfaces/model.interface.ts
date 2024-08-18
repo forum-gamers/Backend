@@ -21,3 +21,11 @@ export type RoomMemberType = 'admin' | 'member' | 'owner';
 export type ChatStatusType = 'plain' | 'updated' | 'deleted';
 
 export type ChatFileType = FileType | 'audio' | 'document';
+
+export type TeamRole =
+  | 'owner'
+  | 'member'
+  | 'coach'
+  | 'inspector'
+  | 'manager'
+  | 'admin';

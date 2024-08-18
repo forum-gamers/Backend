@@ -7,6 +7,7 @@ export class CreateTeamDto {
   imageUrl?: string;
   imageId?: string;
   id = v4();
+  totalMember = 1;
 
   constructor({ name, description, owner }: CreateTeamDtoProps) {
     this.name = name;

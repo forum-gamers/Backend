@@ -1,5 +1,6 @@
 import { DataTypes } from 'sequelize';
 import { Column, Model, Table } from 'sequelize-typescript';
+import type { TeamRole } from 'src/interfaces/model.interface';
 
 export interface TeamMemberAttributes {
   id: number;
@@ -8,6 +9,7 @@ export interface TeamMemberAttributes {
   userId: string;
   createdAt: Date;
   updatedAt: Date;
+  role: TeamRole;
 }
 
 @Table<Model<TeamMemberAttributes, TeamMemberAttributes>>({
@@ -71,4 +73,12 @@ export class TeamMember
     type: DataTypes.DATE,
   })
   public updatedAt: Date;
+
+  @Column({
+    allowNull: false,
+    type: DataTypes.ENUM,
+    values: ['owner', 'member', 'coach', 'inspector', 'manager', 'admin'],
+    defaultValue: 'member',
+  })
+  public role: TeamRole;
 }
