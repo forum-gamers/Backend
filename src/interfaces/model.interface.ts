@@ -29,3 +29,15 @@ export type TeamRole =
   | 'inspector'
   | 'manager'
   | 'admin';
+
+export type Supported_Currency = 'USD' | 'IDR';
+
+export type Transaction_Status =
+  | 'pending'
+  | 'completed'
+  | 'failed'
+  | 'cancel'
+  | 'refund'
+  | 'settlement'
+  | 'deny'
+  | 'expire';

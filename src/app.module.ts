@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import {
   type MiddlewareConsumer,
   Module,
@@ -6,7 +7,6 @@ import {
 import { ConfigModule } from '@nestjs/config';
 import { WinstonModule } from 'nest-winston';
 import { transports, format } from 'winston';
-import { config } from 'dotenv';
 import { LoggerMiddleware } from './middlewares/global/logger.middleware';
 import { MulterModule } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
@@ -65,10 +65,10 @@ import { Team } from './models/team';
 import { TeamMember } from './models/teammember';
 import { TeamModule } from './modules/team/team.module';
 import { TeamMemberModule } from './modules/teamMember/teamMember.module';
+import { Transaction } from './models/transaction';
+import { TransactionModule } from './modules/transaction/transaction.module';
 const conf = require('../config/config.js');
 const environment = process.env.NODE_ENV ?? 'development';
-
-config();
 
 @Module({
   imports: [
@@ -139,6 +139,7 @@ config();
         Game,
         Team,
         TeamMember,
+        Transaction,
       ],
       synchronize: environment !== 'production',
     }),
@@ -170,6 +171,7 @@ config();
     GameModule,
     TeamModule,
     TeamMemberModule,
+    TransactionModule,
   ],
 })
 export class AppModule implements NestModule {

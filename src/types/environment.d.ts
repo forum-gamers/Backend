@@ -23,6 +23,8 @@ export declare global {
       FIRST_ADMIN_PASSWORD: string;
       FIRST_ADMIN_NAME: string;
       ADMIN_SECRET: string;
+      MIDTRANS_SERVER_KEY: string;
+      MIDTRANS_CLIENT_KEY: string;
     }
   }
 }
