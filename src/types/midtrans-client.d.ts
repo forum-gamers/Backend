@@ -20,6 +20,13 @@ declare module "midtrans-client" {
       transaction_status: TransactionStatus;
       status_message: string;
       va_numbers: VaNumber[];
+      actions?:EWalletActionResp[]
+    }
+
+    export interface EWalletActionResp {
+      name:string
+      method:string,
+      url:string
     }
   
     export interface VaNumber {
@@ -107,7 +114,7 @@ declare module "midtrans-client" {
       first_name: string;
       last_name?: string;
       email: string;
-      phone: string;
+      phone?: string;
       billing_address?: Address;
       shipping_address?: Address;
       enabled_payments?: EnablePayment[];

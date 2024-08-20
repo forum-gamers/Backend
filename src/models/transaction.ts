@@ -4,12 +4,13 @@ import type {
   Supported_Currency,
   Transaction_Status,
 } from 'src/interfaces/model.interface';
+import type { TransactionType } from 'src/interfaces/transaction.interface';
 
 export interface TransactionAttributes {
   id: string;
   userId: string;
   amount: number;
-  type: string;
+  type: TransactionType;
   currency: Supported_Currency;
   status: Transaction_Status;
   description?: string;
@@ -77,7 +78,7 @@ export class Transaction
       },
     },
   })
-  public type: string;
+  public type: TransactionType;
 
   @Column({
     type: DataTypes.ENUM,
