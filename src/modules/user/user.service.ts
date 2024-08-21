@@ -18,7 +18,7 @@ export class UserService {
   }
 
   public async createOne(
-    { username, email, password, phoneNumber }: CreateUser,
+    { username, email, password }: CreateUser,
     opts?: CreateOptions<UserAttributes>,
   ) {
     return await this.userModel.create(
@@ -28,7 +28,6 @@ export class UserService {
         email,
         password,
         status: 'active',
-        phoneNumber,
       },
       opts,
     );

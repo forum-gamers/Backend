@@ -15,7 +15,6 @@ export interface UserAttributes {
   status: string;
   createdAt: Date;
   updatedAt: Date;
-  phoneNumber: string;
   searchVectorUsername: any;
   searchVectorBio: any;
   trgmSimilarityUsername: number;
@@ -132,20 +131,6 @@ export class User
     type: DataTypes.DATE,
   })
   public updatedAt: Date;
-
-  @Column({
-    type: DataTypes.STRING,
-    allowNull: false,
-    validate: {
-      notEmpty: {
-        msg: 'phoneNumber is required',
-      },
-      notNull: {
-        msg: 'phoneNumber is required',
-      },
-    },
-  })
-  public phoneNumber: string;
 
   @Column({
     type: DataTypes.TSVECTOR,

@@ -55,7 +55,4 @@ export class UserDecryptedDto extends ExcludedUserFieldDto {
 
   @IsDate()
   updatedAt: Date;
-
-  @IsString()
-  phoneNumber: string;
 }

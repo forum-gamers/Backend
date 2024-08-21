@@ -59,12 +59,12 @@ export class UserController extends BaseController {
   @Post('register')
   @HttpCode(201)
   public async register(@Body() payload: any) {
-    const { email, username, password, phoneNumber } =
+    const { email, username, password } =
       await this.userValidation.validateRegister(payload);
 
     const existing = await this.userService.getByQuery({
       email,
-      phoneNumber,
+
       username,
     });
     if (existing.length)
@@ -74,10 +74,6 @@ export class UserController extends BaseController {
             throw new ConflictException(`email ${email} is already use`);
           case data.username === username:
             throw new ConflictException(`username ${username} is already use`);
-          case data.phoneNumber === phoneNumber:
-            throw new ConflictException(
-              `phoneNumber ${phoneNumber} is already use`,
-            );
           default:
             break;
         }
@@ -89,7 +85,6 @@ export class UserController extends BaseController {
           username,
           email,
           password,
-          phoneNumber,
         }),
         { transaction },
       );

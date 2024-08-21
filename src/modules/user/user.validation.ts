@@ -35,7 +35,6 @@ export class UserValidation extends BaseValidation {
             .required('password is required')
             .test((val) => this.passwordValidation(val)),
           confirmPassword: yup.string().required('confirmPassword is required'),
-          phoneNumber: yup.string().required('phoneNumber is required'),
         })
         .test(
           'is same',

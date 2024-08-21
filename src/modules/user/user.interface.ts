@@ -2,14 +2,12 @@ export interface RegisterInputProps {
   username: string;
   email: string;
   password: string;
-  phoneNumber: string;
 }
 
 export interface CreateUserProps {
   username: string;
   email: string;
   password: string;
-  phoneNumber: string;
 }
 
 export interface Message {
@@ -23,7 +21,6 @@ export interface ChangeProfileInput {
 
 export interface ICheckExisting {
   email: string;
-  phoneNumber: string;
 }
 
 export interface ILoginProps {
