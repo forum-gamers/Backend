@@ -50,7 +50,9 @@ export class MidtransService extends MidtransHelper {
     const payload: ChargeParameter = {
       payment_type: 'bank_transfer',
       transaction_details: {
-        gross_amount: amount < 100_000 ? amount + 4500 : amount,
+        gross_amount: item_details
+          .map(({ price }) => price)
+          .reduce((a, b) => a + b),
         order_id: this.generateTransactionId('topup'),
       },
       customer_details: {
@@ -95,7 +97,9 @@ export class MidtransService extends MidtransHelper {
     const payload: ChargeParameter = {
       payment_type: provider,
       transaction_details: {
-        gross_amount: amount < 100_000 ? amount + 4500 : amount,
+        gross_amount: item_details
+          .map(({ price }) => price)
+          .reduce((a, b) => a + b),
         order_id: this.generateTransactionId('topup'),
       },
       customer_details: {
@@ -110,14 +114,11 @@ export class MidtransService extends MidtransHelper {
 
   public generateSignature(
     orderId: string,
-    statusCode: number,
-    grossAmount: number,
+    statusCode: string,
+    grossAmount: string,
   ) {
     return sha512(
-      orderId +
-        String(statusCode) +
-        grossAmount +
-        process.env.MIDTRANS_SERVER_KEY,
+      orderId + statusCode + grossAmount + process.env.MIDTRANS_SERVER_KEY,
     );
   }
 }

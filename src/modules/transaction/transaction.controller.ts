@@ -1,8 +1,10 @@
 import {
+  BadRequestException,
   Body,
   ConflictException,
   Controller,
   HttpCode,
+  NotFoundException,
   Post,
   UseGuards,
 } from '@nestjs/common';
@@ -15,12 +17,18 @@ import { RateLimitGuard } from 'src/middlewares/global/rateLimit.middleware';
 import {
   BANK_PROVIDERS,
   EWALLET_PROVIDERS,
+  TransactionStatus,
   TransactionType,
 } from 'src/constants/transaction.constant';
 import { type UserAttributes } from 'src/models/user';
 import type { BankProvider } from 'src/interfaces/transaction.interface';
 import type { ChargeResp, EnablePayment } from 'midtrans-client';
 import { CreateTransactionDto } from './dto/create.dto';
+import { TransactionFindBySignaturePipe } from './pipes/findBySignature.locked.pipe';
+import { type TransactionAttributes } from 'src/models/transaction';
+import { WalletService } from '../wallet/wallet.service';
+import { Transaction } from 'sequelize';
+import { Sequelize } from 'sequelize-typescript';
 
 @Controller('transaction')
 export class TransactionController extends BaseController {
@@ -28,6 +36,8 @@ export class TransactionController extends BaseController {
     private readonly transactionValidation: TransactionValidation,
     private readonly transactionService: TransactionService,
     private readonly midtransService: MidtransService,
+    private readonly walletService: WalletService,
+    private readonly sequelize: Sequelize,
   ) {
     super();
   }
@@ -83,14 +93,15 @@ export class TransactionController extends BaseController {
         userId: user.id,
         signature: this.midtransService.generateSignature(
           charge.order_id,
-          200,
-          +charge.gross_amount,
+          '200',
+          charge.gross_amount,
         ),
-        amount: +charge.gross_amount,
-        fee: 0,
+        amount,
+        fee: amount < 100_000 ? 4500 : 0,
         tax: 0,
         discount: 0,
         description: 'Topup wallet via ' + paymentType,
+        detail: amount < 100_000 ? '+ Midtrans Fee: 4500' : null,
       }),
     );
 
@@ -109,5 +120,60 @@ export class TransactionController extends BaseController {
       },
       code: 201,
     });
+  }
+
+  @Post('notification')
+  @HttpCode(200)
+  public async notification(
+    @Body() payload: ChargeResp,
+    @Body('signature_key', TransactionFindBySignaturePipe)
+    transactionData: TransactionAttributes | null,
+  ) {
+    if (!transactionData) throw new NotFoundException('transaction not found');
+
+    if (!payload.order_id)
+      throw new BadRequestException('order id must supplied');
+
+    if (!payload.order_id.startsWith('FG'))
+      throw new BadRequestException('invalid order id');
+
+    const transaction = await this.sequelize.transaction();
+    try {
+      const splitted = payload.order_id.split('-');
+      switch (splitted[splitted.length - 1]) {
+        case 'tp':
+          {
+            const wallet = await this.walletService.findByUserId(
+              transactionData.userId,
+              { lock: Transaction.LOCK.UPDATE, transaction },
+            );
+            if (!wallet) throw new NotFoundException('wallet not found');
+
+            if (payload.transaction_status === 'settlement')
+              await this.walletService.updateBalance(
+                transactionData.userId,
+                +wallet.balance + +transactionData.amount,
+                { transaction },
+              );
+
+            await this.transactionService.updateStatus(
+              transactionData.id,
+              TransactionStatus[payload.transaction_status] ??
+                TransactionStatus.FAILED,
+              { transaction },
+            );
+          }
+          break;
+        case 'py':
+          //TODO
+          break;
+        default:
+          throw new BadRequestException('invalid order id');
+      }
+      await transaction.commit();
+    } catch (err) {
+      await transaction.rollback();
+      throw err;
+    }
   }
 }

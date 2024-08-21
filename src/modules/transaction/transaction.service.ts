@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
-import { type CreateOptions, type FindOptions } from 'sequelize';
+import { UpdateOptions, type CreateOptions, type FindOptions } from 'sequelize';
 import { TransactionStatus } from 'src/constants/transaction.constant';
 import type { TransactionType } from 'src/interfaces/transaction.interface';
 import {
@@ -32,5 +32,23 @@ export class TransactionService {
     opts?: CreateOptions<TransactionAttributes>,
   ) {
     return this.transactionModel.create(payload, opts);
+  }
+
+  public async findBySignature(
+    signature: string,
+    opts?: Omit<FindOptions<TransactionAttributes>, 'where'>,
+  ) {
+    return this.transactionModel.findOne({ ...opts, where: { signature } });
+  }
+
+  public async updateStatus(
+    id: string,
+    status: TransactionStatus,
+    opts?: Omit<UpdateOptions<TransactionAttributes>, 'where'>,
+  ) {
+    return await this.transactionModel.update(
+      { status },
+      { ...opts, where: { id } },
+    );
   }
 }
