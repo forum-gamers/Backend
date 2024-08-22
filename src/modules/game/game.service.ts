@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
-import { Game } from 'src/models/game';
+import { type FindOptions } from 'sequelize';
+import { Game, type GameAttributes } from 'src/models/game';
 
 @Injectable()
 export class GameService {
@@ -11,5 +12,12 @@ export class GameService {
 
   public async findAll() {
     return await this.gameModel.findAll();
+  }
+
+  public async findById(
+    id: number,
+    opts?: Omit<FindOptions<GameAttributes>, 'where'>,
+  ) {
+    return await this.gameModel.findByPk(id, opts);
   }
 }

@@ -14,6 +14,7 @@ async function bootstrap() {
   app.setGlobalPrefix('/api/v1');
   app.useGlobalFilters(new AllExceptionsFilter());
   app.use(new GlobalLimiter().use);
+  app.getHttpAdapter().getInstance().set('trust proxy', 1);
 
   app.enableCors({
     origin(origin, cb) {
