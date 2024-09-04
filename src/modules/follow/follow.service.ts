@@ -50,10 +50,11 @@ export class FollowService {
         {
           model: User,
           as: 'follower',
-          attributes: ['id', 'username', 'email', 'imageUrl'],
+          attributes: ['id', 'username', 'bio', 'imageUrl'],
         },
       ],
       offset: (page - 1) * limit,
+      limit,
     });
   }
 
@@ -67,10 +68,11 @@ export class FollowService {
         {
           model: User,
           as: 'followed',
-          attributes: ['id', 'username', 'email', 'imageUrl'],
+          attributes: ['id', 'username', 'bio', 'imageUrl'],
         },
       ],
       offset: (page - 1) * limit,
+      limit,
     });
   }
 

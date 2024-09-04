@@ -9,6 +9,7 @@ import {
   HttpCode,
   NotFoundException,
   Param,
+  ParseUUIDPipe,
   Patch,
   Post,
   Query,
@@ -34,13 +35,10 @@ import { type UserAttributes } from '../../models/user';
 import { UserMe } from './decorators/me.decorator';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { USER_BACKGROUND_FOLDER, USER_PROFILE_FOLDER } from './user.constant';
-import { UserFindByIdPipe } from './pipes/findById.pipe';
 import { ProfileViewerService } from '../profileViewer/profileViewer.service';
 import { CreateProfileViewerDto } from '../profileViewer/dto/create.dto';
-import { plainToInstance } from 'class-transformer';
-import { UserDecryptedDto } from './dto/userDecrypted.dto';
-import { User } from 'src/models/user';
-import { validate } from 'class-validator';
+import { UserProfileDto } from './dto/userProfile.dto';
+import { FindUserProfile } from './pipes/findProfile.pipe';
 
 @Controller('user')
 export class UserController extends BaseController {
@@ -204,7 +202,7 @@ export class UserController extends BaseController {
 
   @Get('me')
   @HttpCode(200)
-  public me(@UserMe() user: UserAttributes) {
+  public me(@UserMe('id', FindUserProfile) user: UserProfileDto) {
     if (!user) throw new NotFoundException('user not found');
     return this.sendResponseBody({
       message: 'user found',
@@ -297,9 +295,10 @@ export class UserController extends BaseController {
     }),
   )
   public async getById(
-    @Param('id', UserFindByIdPipe) user: User | null,
+    @Param('id', ParseUUIDPipe) id: string | null,
     @UserMe('id') userId: string,
   ) {
+    const user = await this.userService.findUserProfile(id, userId);
     if (!user) throw new NotFoundException('user not found');
 
     (async () => {
@@ -315,14 +314,11 @@ export class UserController extends BaseController {
           );
       }
     })();
-    const [{ target }] = await validate(
-      plainToInstance(UserDecryptedDto, user.dataValues),
-    );
 
     return this.sendResponseBody({
       message: 'user found',
       code: 200,
-      data: target,
+      data: user,
     });
   }
 

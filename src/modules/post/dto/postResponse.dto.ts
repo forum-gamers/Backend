@@ -81,4 +81,10 @@ export class PostResponse {
   @IsOptional()
   @IsString()
   userBio: string;
+
+  @IsBoolean()
+  @Transform(({ value }) =>
+    typeof value === 'string' ? value === 'true' : Boolean(value),
+  )
+  isFollowed: boolean;
 }

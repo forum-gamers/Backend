@@ -7,6 +7,7 @@ import {
   Get,
   HttpCode,
   Param,
+  ParseUUIDPipe,
   Post,
   Query,
 } from '@nestjs/common';
@@ -28,7 +29,10 @@ export class FollowController extends BaseController {
 
   @Post(':id')
   @HttpCode(201)
-  public async follow(@Param('id') id: string, @UserMe('id') userId: string) {
+  public async follow(
+    @Param('id', ParseUUIDPipe) id: string,
+    @UserMe('id') userId: string,
+  ) {
     if (id === userId)
       throw new ForbiddenException('you can not follow yourself');
 
@@ -46,7 +50,10 @@ export class FollowController extends BaseController {
 
   @Delete(':id')
   @HttpCode(200)
-  public async unfollow(@Param('id') id: string, @UserMe('id') userId: string) {
+  public async unfollow(
+    @Param('id', ParseUUIDPipe) id: string,
+    @UserMe('id') userId: string,
+  ) {
     if (id === userId)
       throw new ForbiddenException('you can not unfollow yourself');
 
@@ -101,6 +108,25 @@ export class FollowController extends BaseController {
     });
   }
 
+  @Get('following/:id')
+  @HttpCode(200)
+  public async getUserFollowing(
+    @Param('id', ParseUUIDPipe) userId: string,
+    @Query() query: QueryParamsDto,
+  ) {
+    const { page = 1, limit = 15 } =
+      await this.followValidation.validatePagination(query);
+
+    return this.sendResponseBody({
+      message: 'get following success',
+      code: 200,
+      data: await this.followService.getMyFollowings(userId, {
+        page,
+        limit,
+      }),
+    });
+  }
+
   @Get('recomendation')
   @HttpCode(200)
   public async getRecomendation(
@@ -113,6 +139,25 @@ export class FollowController extends BaseController {
       message: 'get recomendation success',
       code: 200,
       data: await this.followService.getRecomendation(userId, { page, limit }),
+    });
+  }
+
+  @Get(':id')
+  @HttpCode(200)
+  public async getUserFollowers(
+    @Param('id', ParseUUIDPipe) userId: string,
+    @Query() query: QueryParamsDto,
+  ) {
+    const { page = 1, limit = 15 } =
+      await this.followValidation.validatePagination(query);
+
+    return this.sendResponseBody({
+      message: 'get followers success',
+      code: 200,
+      data: await this.followService.getFollowers(userId, {
+        page,
+        limit,
+      }),
     });
   }
 }

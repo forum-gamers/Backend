@@ -5,11 +5,12 @@ import {
   IsDate,
   IsUUID,
   IsOptional,
+  IsNumber,
 } from 'class-validator';
-import { Exclude } from 'class-transformer';
 import { ExcludedUserFieldDto } from './excludedField.dto';
+import { Transform } from 'class-transformer';
 
-export class UserDecryptedDto extends ExcludedUserFieldDto {
+export class UserProfileDto extends ExcludedUserFieldDto {
   @IsUUID()
   id: string;
 
@@ -19,11 +20,10 @@ export class UserDecryptedDto extends ExcludedUserFieldDto {
   @IsEmail()
   email: string;
 
-  @IsString()
-  @Exclude()
-  password: string;
-
   @IsBoolean()
+  @Transform(({ value }) =>
+    typeof value === 'string' ? value === 'true' : Boolean(value),
+  )
   isVerified: boolean;
 
   @IsOptional()
@@ -55,4 +55,16 @@ export class UserDecryptedDto extends ExcludedUserFieldDto {
 
   @IsDate()
   updatedAt: Date;
+
+  @IsNumber()
+  @Transform(({ value }) => parseInt(value, 10))
+  followersCount: number;
+
+  @IsNumber()
+  @Transform(({ value }) => parseInt(value, 10))
+  followingCount: number;
+
+  @IsBoolean()
+  @Transform(({ value }) => Boolean(value))
+  isFollower: boolean;
 }

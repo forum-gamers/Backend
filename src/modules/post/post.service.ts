@@ -299,6 +299,11 @@ export class PostService {
                 AND l."userId" = $1
             ) AS "isLiked",
             EXISTS (SELECT 1 FROM "PostShares" l2 WHERE l2."postId" = p."id" AND l2."userId" = $1) AS "isShared",
+            EXISTS (
+              SELECT 1
+              FROM "Follows" f
+              WHERE f."followerId" = $1 AND f."followedId" = p."userId"
+            ) AS "isFollowed",
             p."community",
             COUNT(*) OVER() AS "totalData"
           FROM ranked_posts p
@@ -335,6 +340,7 @@ export class PostService {
         'isLiked', pd."isLiked",
         'isShared', pd."isShared",
         'isBookmarked', pd."isBookmarked",
+        'isFollowed', pd."isFollowed",
         'community', pd."community"
       )), '[]'::json) as "datas",
       MAX(pd."totalData") as "totalData"
@@ -393,6 +399,11 @@ export class PostService {
             EXISTS (SELECT 1 FROM "PostBookmarks" l2 WHERE l2."postId" = p."id" AND l2."userId" = $2) AS "isBookmarked",
             EXISTS (SELECT 1 FROM "PostLikes" l2 WHERE l2."postId" = p."id" AND l2."userId" = $2) AS "isLiked",
             EXISTS (SELECT 1 FROM "PostShares" l2 WHERE l2."postId" = p."id" AND l2."userId" = $2) AS "isShared",
+            EXISTS (
+              SELECT 1
+              FROM "Follows" f
+              WHERE f."followerId" = $2 AND f."followedId" = p."userId"
+            ) AS "isFollowed",
             CASE
               WHEN p."communityId" IS NOT NULL THEN json_build_object(
                 'id', c."id",
@@ -479,6 +490,11 @@ export class PostService {
           EXISTS (SELECT 1 FROM "PostBookmarks" l2 WHERE l2."postId" = p."id" AND l2."userId" = $1) AS "isBookmarked",
           EXISTS (SELECT 1 FROM "PostLikes" l2 WHERE l2."postId" = p."id" AND l2."userId" = $1) AS "isLiked",
           EXISTS (SELECT 1 FROM "PostShares" l2 WHERE l2."postId" = p."id" AND l2."userId" = $1) AS "isShared",
+          EXISTS (
+              SELECT 1
+              FROM "Follows" f
+              WHERE f."followerId" = $1 AND f."followedId" = p."userId"
+          ) AS "isFollowed",
           CASE
             WHEN p."communityId" IS NOT NULL THEN json_build_object(
               'id', c."id",
@@ -529,6 +545,7 @@ export class PostService {
         'isLiked', "isLiked",
         'isShared', "isShared",
         'isBookmarked', "isBookmarked",
+        'isFollowed', "isFollowed",
         'community', "community"
       )), '[]'::json) as "datas"
       FROM filtered_posts;`,
@@ -590,6 +607,11 @@ export class PostService {
               EXISTS (SELECT 1 FROM "PostBookmarks" l2 WHERE l2."postId" = p."id" AND l2."userId" = $1) AS "isBookmarked",
               true AS "isLiked",
               EXISTS (SELECT 1 FROM "PostShares" l2 WHERE l2."postId" = p."id" AND l2."userId" = $1) AS "isShared",
+              EXISTS (
+                SELECT 1
+                FROM "Follows" f
+                WHERE f."followerId" = $1 AND f."followedId" = p."userId"
+              ) AS "isFollowed",
               CASE
                 WHEN p."communityId" IS NOT NULL THEN json_build_object(
                   'id', c."id",
@@ -661,6 +683,7 @@ export class PostService {
               'isLiked', "isLiked",
               'isShared', "isShared",
               'isBookmarked', "isBookmarked",
+              'isFollowed', "isFollowed",
               'community', "community"
           )), '[]'::json) AS "datas"
       FROM 
@@ -724,6 +747,11 @@ export class PostService {
               true AS "isBookmarked",
               EXISTS (SELECT 1 FROM "PostLikes" l2 WHERE l2."postId" = p."id" AND l2."userId" = $1)  AS "isLiked",
               EXISTS (SELECT 1 FROM "PostShares" l2 WHERE l2."postId" = p."id" AND l2."userId" = $1) AS "isShared",
+              EXISTS (
+                SELECT 1
+                FROM "Follows" f
+                WHERE f."followerId" = $1 AND f."followedId" = p."userId"
+              ) AS "isFollowed",
               CASE
                 WHEN p."communityId" IS NOT NULL THEN json_build_object(
                   'id', c."id",
@@ -795,6 +823,7 @@ export class PostService {
               'isLiked', "isLiked",
               'isShared', "isShared",
               'isBookmarked', "isBookmarked",
+              'isFollowed', "isFollowed",
               'community', "community"
           )), '[]'::json) AS "datas"
       FROM 

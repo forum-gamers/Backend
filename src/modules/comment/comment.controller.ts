@@ -151,14 +151,19 @@ export class CommentController extends BaseController {
     @Param('id', ParseIntPipe) id: number,
     @Query()
     query: any,
+    @UserMe('id') userId: string,
   ) {
     if (isNaN(id)) throw new BadRequestException('postId must be a number');
     const { page, limit } = await this.commentValidation.validateQuery(query);
 
-    const { rows, count } = await this.commentService.getPostComment(id, {
-      page,
-      limit,
-    });
+    const { rows, count } = await this.commentService.getPostComment(
+      id,
+      {
+        page,
+        limit,
+      },
+      userId,
+    );
 
     return this.sendResponseBody(
       {

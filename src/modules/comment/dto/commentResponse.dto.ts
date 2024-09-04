@@ -1,6 +1,7 @@
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
   IsArray,
+  IsBoolean,
   IsDate,
   IsInt,
   IsOptional,
@@ -43,4 +44,10 @@ export class CommentResponseDto {
   @ValidateNested({ each: true })
   @Type(() => ReplyResponseDto)
   public replies: ReplyResponseDto[];
+
+  @IsBoolean()
+  @Transform(({ value }) =>
+    typeof value === 'string' ? value === 'true' : Boolean(value),
+  )
+  isFollowed: boolean;
 }

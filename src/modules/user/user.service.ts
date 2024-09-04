@@ -1,17 +1,26 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { User, type UserAttributes } from '../../models/user';
-import { Op, type UpdateOptions, type CreateOptions } from 'sequelize';
+import {
+  Op,
+  type UpdateOptions,
+  type CreateOptions,
+  QueryTypes,
+} from 'sequelize';
 import { v4 } from 'uuid';
 import { CreateUser } from './dto/create.dto';
 import encryption from '../../utils/global/encryption.utils';
 import { BlockUserDto } from '../admin/dto/blockUser.dto';
+import { Sequelize } from 'sequelize-typescript';
+import { plainToInstance } from 'class-transformer';
+import { UserProfileDto } from './dto/userProfile.dto';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectModel(User)
     private readonly userModel: typeof User,
+    private readonly sequelize: Sequelize,
   ) {}
   public async findOneById(id: string) {
     return await this.userModel.findOne({ where: { id } });
@@ -128,5 +137,64 @@ export class UserService {
       { blockReason: null, blockedBy: null, isBlocked: false },
       { ...opts, where: { id } },
     );
+  }
+
+  public async findUserProfile(id: string, followerId: string = null) {
+    const [result] = await this.sequelize.query(
+      `SELECT 
+        u.id,
+        u.username,
+        u.email,
+        u."isVerified",
+        u.bio,
+        u."imageUrl",
+        u."imageId",
+        u."backgroundImageUrl",
+        u."backgroundImageId",
+        u.status,
+        u."createdAt",
+        u."updatedAt",
+        COALESCE(followers."followersCount", 0) AS "followersCount",
+        COALESCE(following."followingCount", 0) AS "followingCount",
+        CASE 
+            WHEN f."followerId" IS NOT NULL THEN TRUE 
+            ELSE FALSE 
+        END AS "isFollower"
+    FROM 
+        "Users" u
+    LEFT JOIN (
+        SELECT 
+            "followedId" AS "userId", 
+            COUNT(*) AS "followersCount"
+        FROM 
+            "Follows"
+        GROUP BY 
+            "followedId"
+    ) AS followers ON u.id = followers."userId"
+    LEFT JOIN (
+        SELECT 
+            "followerId" AS "userId", 
+            COUNT(*) AS "followingCount"
+        FROM 
+            "Follows"
+        GROUP BY 
+            "followerId"
+    ) AS following ON u.id = following."userId"
+    LEFT JOIN 
+        "Follows" f 
+        ON u.id = f."followedId" AND f."followerId" = $2
+    WHERE 
+        u.id = $1;
+  `,
+      {
+        type: QueryTypes.SELECT,
+        bind: [id, followerId],
+        benchmark: true,
+      },
+    );
+
+    if (!result) return null;
+
+    return plainToInstance(UserProfileDto, result);
   }
 }

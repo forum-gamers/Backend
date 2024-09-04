@@ -18,7 +18,6 @@ import { Sequelize } from 'sequelize-typescript';
 import { CommentResponseQueryResult } from './comment.interface';
 import { CommentResponseDto } from './dto/commentResponse.dto';
 import { plainToInstance } from 'class-transformer';
-import { ReplyComment } from 'src/models/replycomment';
 
 @Injectable()
 export class CommentService {
@@ -78,6 +77,7 @@ export class CommentService {
   public async getPostComment(
     postId: number,
     { page = 1, limit = 10 }: QueryParamsDto,
+    userId = '',
   ) {
     const [{ rows, count }] =
       await this.sequelize.query<CommentResponseQueryResult>(
@@ -93,6 +93,12 @@ export class CommentService {
               u.username,
               u."imageUrl",
               u.bio,
+              EXISTS (
+                SELECT 1 
+                FROM "Follows" f 
+                WHERE f."followerId" = $4 
+                  AND f."followedId" = c."userId"
+              ) AS "isFollowed",
               COALESCE(
               (
                 SELECT json_agg(
@@ -105,7 +111,13 @@ export class CommentService {
                     'updatedAt', r."updatedAt",
                     'username', ru.username,
                     'imageUrl', ru."imageUrl",
-                    'bio', ru.bio
+                    'bio', ru.bio,
+                    'isFollowed', EXISTS (
+                        SELECT 1 
+                        FROM "Follows" f 
+                        WHERE f."followerId" = $4 
+                          AND f."followedId" = r."userId"
+                      )
                   )
                 )
                 FROM "ReplyComments" r
@@ -133,13 +145,17 @@ export class CommentService {
                     'username', c.username,
                     'imageUrl', c."imageUrl",
                     'bio', c.bio,
+                    'isFollowed', c."isFollowed",
                     'replies', COALESCE(c.replies, '[]'::json)
                   )
                 )
                 FROM comments_cte c
               ), '[]'::json
             ) AS rows;`,
-        { type: QueryTypes.SELECT, bind: [postId, limit, (page - 1) * limit] },
+        {
+          type: QueryTypes.SELECT,
+          bind: [postId, limit, (page - 1) * limit, userId],
+        },
       );
 
     return { rows: plainToInstance(CommentResponseDto, rows), count };
