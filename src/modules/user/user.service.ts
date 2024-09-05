@@ -6,6 +6,7 @@ import {
   type UpdateOptions,
   type CreateOptions,
   QueryTypes,
+  FindOrCreateOptions,
 } from 'sequelize';
 import { v4 } from 'uuid';
 import { CreateUser } from './dto/create.dto';
@@ -196,5 +197,29 @@ export class UserService {
     if (!result) return null;
 
     return plainToInstance(UserProfileDto, result);
+  }
+
+  public async findByEmailOrCreate(
+    email: string,
+    username: string,
+    isVerified: boolean,
+    opts?: Omit<FindOrCreateOptions<UserAttributes>, 'where'>,
+  ) {
+    return await this.userModel.findOrCreate({
+      ...opts,
+      where: { email },
+      hooks: false,
+      defaults: {
+        ...new CreateUser({
+          email,
+          password: 'GOOGLE OAUTH',
+          username,
+        }),
+        password: 'GOOGLE OAUTH',
+        isVerified,
+        status: 'active',
+        id: v4(),
+      },
+    });
   }
 }

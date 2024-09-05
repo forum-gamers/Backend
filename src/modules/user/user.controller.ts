@@ -39,6 +39,8 @@ import { ProfileViewerService } from '../profileViewer/profileViewer.service';
 import { CreateProfileViewerDto } from '../profileViewer/dto/create.dto';
 import { UserProfileDto } from './dto/userProfile.dto';
 import { FindUserProfile } from './pipes/findProfile.pipe';
+import { GoogleOauthService } from 'src/third-party/google/oauth.service';
+import globalUtils from 'src/utils/global/global.utils';
 
 @Controller('user')
 export class UserController extends BaseController {
@@ -50,6 +52,7 @@ export class UserController extends BaseController {
     private readonly userValidation: UserValidation,
     private readonly walletService: WalletService,
     private readonly profileViewerService: ProfileViewerService,
+    private readonly googleOauthService: GoogleOauthService,
   ) {
     super();
   }
@@ -383,6 +386,30 @@ export class UserController extends BaseController {
     return this.sendResponseBody({
       message: 'password changed successfully',
       code: 200,
+    });
+  }
+
+  @Post('google-login')
+  @HttpCode(200)
+  public async googleLogin(@Headers('google-token') token: string) {
+    if (!token) throw new UnauthorizedException('invalid credentials');
+
+    const ticket = await this.googleOauthService.verifyIdToken(token);
+    const { email, email_verified, given_name } = ticket.getPayload();
+    const [user] = await this.userService.findByEmailOrCreate(
+      email,
+      given_name + globalUtils.generateRandomNumber(6),
+      email_verified,
+    );
+
+    return this.sendResponseBody({
+      code: 200,
+      message: 'Login successful',
+      data: jwt.createToken({
+        id: user.id,
+        isVerified: user.isVerified,
+        isAdmin: false,
+      }),
     });
   }
 }
