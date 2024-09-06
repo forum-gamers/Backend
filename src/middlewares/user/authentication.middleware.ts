@@ -19,7 +19,11 @@ export class UserAuthentication implements NestMiddleware {
     if (!token)
       throw new UnauthorizedException('missing or invalid authorization');
 
-    const { isAdmin } = jwt.decodeToken(token);
+    const decoded = jwt.decodeToken(token);
+    if (!decoded)
+      throw new UnauthorizedException('missing or invalid authorization');
+
+    const { isAdmin = false } = decoded;
 
     const { id } = jwt[isAdmin ? 'verifyAdminToken' : 'verifyToken'](token);
 

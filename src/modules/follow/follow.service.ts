@@ -55,6 +55,16 @@ export class FollowService {
       ],
       offset: (page - 1) * limit,
       limit,
+      attributes: {
+        include: [
+          [
+            Sequelize.literal(
+              `(SELECT COUNT(*) FROM "Follows" WHERE "followedId" = follower.id AND "followerId" = '${followedId}') > 0`,
+            ),
+            'isFollowed',
+          ],
+        ],
+      },
     });
   }
 
@@ -73,6 +83,16 @@ export class FollowService {
       ],
       offset: (page - 1) * limit,
       limit,
+      attributes: {
+        include: [
+          [
+            Sequelize.literal(
+              `(SELECT COUNT(*) FROM "Follows" WHERE "followerId" = followed.id AND "followedId" = '${followerId}') > 0`,
+            ),
+            'isFollowed',
+          ],
+        ],
+      },
     });
   }
 
@@ -111,7 +131,7 @@ export class FollowService {
           SELECT DISTINCT u.id AS "userId", u.username, u."imageUrl" AS "userImageUrl", u.bio AS "userBio", 'tag' AS source
           FROM "Users" u
           JOIN "UserPreferences" up ON u.id = up."userId"
-          WHERE u."isBlocked" = false
+          WHERE u."isBlocked" = false AND u.id != $1
           AND EXISTS (
               SELECT 1
               FROM unnest(up.tags) AS tag

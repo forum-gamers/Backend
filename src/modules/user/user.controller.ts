@@ -396,20 +396,33 @@ export class UserController extends BaseController {
 
     const ticket = await this.googleOauthService.verifyIdToken(token);
     const { email, email_verified, given_name } = ticket.getPayload();
-    const [user] = await this.userService.findByEmailOrCreate(
-      email,
-      given_name + globalUtils.generateRandomNumber(6),
-      email_verified,
-    );
 
-    return this.sendResponseBody({
-      code: 200,
-      message: 'Login successful',
-      data: jwt.createToken({
-        id: user.id,
-        isVerified: user.isVerified,
-        isAdmin: false,
-      }),
-    });
+    const transaction = await this.sequelize.transaction();
+    try {
+      const [user, created] = await this.userService.findByEmailOrCreate(
+        email,
+        given_name + globalUtils.generateRandomNumber(6),
+        email_verified,
+        { transaction },
+      );
+      if (created)
+        await this.walletService.createWallet(new CreateWallet(user.id), {
+          transaction,
+        });
+
+      await transaction.commit();
+      return this.sendResponseBody({
+        code: 200,
+        message: 'Login successful',
+        data: jwt.createToken({
+          id: user.id,
+          isVerified: user.isVerified,
+          isAdmin: false,
+        }),
+      });
+    } catch (err) {
+      await transaction.rollback();
+      throw err;
+    }
   }
 }

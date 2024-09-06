@@ -142,6 +142,7 @@ const environment = process.env.NODE_ENV ?? 'development';
         Transaction,
       ],
       synchronize: environment !== 'production',
+      timezone: '+07:00',
     }),
     ThirdPartyModule,
     UserModule,
