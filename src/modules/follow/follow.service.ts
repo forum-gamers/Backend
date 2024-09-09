@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Follow, type FollowAttributes } from 'src/models/follow';
 import { CreateFollowDto } from './dto/create.dto';
-import { DestroyOptions, QueryTypes, type CreateOptions } from 'sequelize';
+import { type DestroyOptions, QueryTypes, type CreateOptions } from 'sequelize';
 import { User } from 'src/models/user';
 import { QueryParamsDto } from 'src/utils/dto/pagination.dto';
 import { Sequelize } from 'sequelize-typescript';

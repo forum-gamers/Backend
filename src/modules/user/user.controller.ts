@@ -140,6 +140,8 @@ export class UserController extends BaseController {
     )
       throw new UnauthorizedException('invalid credentials');
 
+    if (!user.isVerified) throw new UnauthorizedException('user not verified');
+
     return this.sendResponseBody({
       code: 200,
       message: 'Login successful',
@@ -347,8 +349,8 @@ export class UserController extends BaseController {
       if (!data)
         throw new UnauthorizedException('missing or invalid authorization');
 
-      email = user.email;
-      user = user;
+      email = data.email;
+      user = data;
     } else {
       email = (await this.userValidation.validateResendEmail(payload)).email;
 
