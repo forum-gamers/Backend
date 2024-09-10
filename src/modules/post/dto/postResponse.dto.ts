@@ -87,4 +87,11 @@ export class PostResponse {
     typeof value === 'string' ? value === 'true' : Boolean(value),
   )
   isFollowed: boolean;
+
+  @IsString()
+  userCreatedAt: Date | string;
+
+  @IsOptional()
+  @IsString()
+  userBackgroundImageUrl: string;
 }

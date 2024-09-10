@@ -92,6 +92,8 @@ export class CommentService {
               c."updatedAt",
               u.username,
               u."imageUrl",
+              u."backgroundImageUrl",
+              u."createdAt" AS "userCreatedAt",
               u.bio,
               EXISTS (
                 SELECT 1 
@@ -110,6 +112,8 @@ export class CommentService {
                     'createdAt', r."createdAt",
                     'updatedAt', r."updatedAt",
                     'username', ru.username,
+                    'backgroundImageUrl', ru."backgroundImageUrl",
+                    'userCreatedAt', ru."createdAt",
                     'imageUrl', ru."imageUrl",
                     'bio', ru.bio,
                     'isFollowed', EXISTS (
@@ -144,6 +148,8 @@ export class CommentService {
                     'updatedAt', c."updatedAt",
                     'username', c.username,
                     'imageUrl', c."imageUrl",
+                    'backgroundImageUrl', c."backgroundImageUrl",
+                    'userCreatedAt', c."userCreatedAt",
                     'bio', c.bio,
                     'isFollowed', c."isFollowed",
                     'replies', COALESCE(c.replies, '[]'::json)

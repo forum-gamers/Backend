@@ -16,4 +16,11 @@ export class BaseUserDto extends ExcludedUserFieldDto {
   @IsOptional()
   @IsString()
   userBio: string;
+
+  @IsString()
+  userCreatedAt: Date | string;
+
+  @IsOptional()
+  @IsString()
+  userBackgroundImageUrl: string;
 }

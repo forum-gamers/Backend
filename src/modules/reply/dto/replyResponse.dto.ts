@@ -28,5 +28,12 @@ export class ReplyResponseDto {
 
   @IsOptional()
   @IsString()
+  public backgroundImageUrl: string;
+
+  @IsString()
+  public userCreatedAt: Date | string;
+
+  @IsOptional()
+  @IsString()
   public bio: string;
 }

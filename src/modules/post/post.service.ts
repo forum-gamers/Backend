@@ -205,6 +205,8 @@ export class PostService {
             p."countBookmark",
             u."username",
             u."imageUrl" AS "userImageUrl",
+            u."backgroundImageUrl" AS "userBackgroundImageUrl",
+            u."createdAt" AS "userCreatedAt",
             u."bio" AS "userBio",
             COALESCE(
               (SELECT json_agg(
@@ -256,7 +258,9 @@ export class PostService {
             u."imageUrl",
             u."bio",
             c."id",
-            p."tags"
+            p."tags",
+            u."backgroundImageUrl",
+            u."createdAt"
         ),
         ranked_posts AS (
           SELECT 
@@ -291,6 +295,8 @@ export class PostService {
             p."countComment",
             p."countShare",
             p."countBookmark",
+            p."userBackgroundImageUrl",
+            p."userCreatedAt",
             EXISTS (SELECT 1 FROM "PostBookmarks" l2 WHERE l2."postId" = p."id" AND l2."userId" = $1) AS "isBookmarked",
             EXISTS (
               SELECT 1 
@@ -341,6 +347,8 @@ export class PostService {
         'isShared', pd."isShared",
         'isBookmarked', pd."isBookmarked",
         'isFollowed', pd."isFollowed",
+        'userBackgroundImageUrl', pd."userBackgroundImageUrl",
+        'userCreatedAt', pd."userCreatedAt",
         'community', pd."community"
       )), '[]'::json) as "datas",
       MAX(pd."totalData") as "totalData"
@@ -373,6 +381,8 @@ export class PostService {
             u."username",
             u."imageUrl" AS "userImageUrl",
             u."bio" AS "userBio",
+            u."backgroundImageUrl" AS "userBackgroundImageUrl",
+            u."createdAt" AS "userCreatedAt",
             p."text",
             p."allowComment",
             p."createdAt",
@@ -429,6 +439,8 @@ export class PostService {
             p."userId",
             u."username",
             u."imageUrl",
+            u."backgroundImageUrl",
+            u."createdAt",
             u."bio",
             p."text",
             p."allowComment",
@@ -440,6 +452,7 @@ export class PostService {
             p."totalLike",
             p."countComment",
             p."countShare",
+            p."countBookmark",
             c."id";`,
       {
         type: QueryTypes.SELECT,
@@ -464,6 +477,8 @@ export class PostService {
           u."username",
           u."imageUrl" AS "userImageUrl",
           u."bio" AS "userBio",
+          u."backgroundImageUrl" AS "userBackgroundImageUrl",
+          u."createdAt" AS "userCreatedAt",
           p."text",
           p."allowComment",
           p."createdAt",
@@ -530,6 +545,8 @@ export class PostService {
         'userId', "userId",
         'username', "username",
         'userImageUrl', "userImageUrl",
+        'userBackgroundImageUrl', "userBackgroundImageUrl",
+        'userCreatedAt', "userCreatedAt",
         'userBio', "userBio",
         'text', "text",
         'allowComment', "allowComment",
@@ -580,6 +597,8 @@ export class PostService {
               p."userId",
               u."username",
               u."imageUrl" AS "userImageUrl",
+              u."backgroundImageUrl" AS "userBackgroundImageUrl",
+              u."createdAt" AS "userCreatedAt",
               u."bio" AS "userBio",
               p."text",
               p."allowComment",
@@ -668,6 +687,8 @@ export class PostService {
               'userId', "userId",
               'username', "username",
               'userImageUrl', "userImageUrl",
+              'userBackgroundImageUrl', "userBackgroundImageUrl",
+              'userCreatedAt', "userCreatedAt",
               'userBio', "userBio",
               'text', "text",
               'allowComment', "allowComment",
@@ -720,6 +741,8 @@ export class PostService {
               p."userId",
               u."username",
               u."imageUrl" AS "userImageUrl",
+              u."backgroundImageUrl" AS "userBackgroundImageUrl",
+              u."createdAt" AS "userCreatedAt",
               u."bio" AS "userBio",
               p."text",
               p."allowComment",
@@ -808,6 +831,8 @@ export class PostService {
               'userId', "userId",
               'username', "username",
               'userImageUrl', "userImageUrl",
+              'userBackgroundImageUrl', "userBackgroundImageUrl",
+              'userCreatedAt', "userCreatedAt",
               'userBio', "userBio",
               'text', "text",
               'allowComment', "allowComment",

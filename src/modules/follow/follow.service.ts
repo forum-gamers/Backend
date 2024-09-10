@@ -50,7 +50,14 @@ export class FollowService {
         {
           model: User,
           as: 'follower',
-          attributes: ['id', 'username', 'bio', 'imageUrl'],
+          attributes: [
+            'id',
+            'username',
+            'bio',
+            'imageUrl',
+            'backgroundImageUrl',
+            'createdAt',
+          ],
         },
       ],
       offset: (page - 1) * limit,
@@ -78,7 +85,14 @@ export class FollowService {
         {
           model: User,
           as: 'followed',
-          attributes: ['id', 'username', 'bio', 'imageUrl'],
+          attributes: [
+            'id',
+            'username',
+            'bio',
+            'imageUrl',
+            'backgroundImageUrl',
+            'createdAt',
+          ],
         },
       ],
       offset: (page - 1) * limit,
@@ -103,7 +117,7 @@ export class FollowService {
     const datas = await this.sequelize.query<FollowRecomendationDto>(
       `WITH
       non_followed_users AS (
-          SELECT u.id AS "userId", u.username, u."imageUrl" AS "userImageUrl", u.bio AS "userBio", 'non_followed' AS source
+          SELECT u.id AS "userId", u.username, u."imageUrl" AS "userImageUrl", u.bio AS "userBio", u."backgroundImageUrl" as "userBackgroundImageUrl", u."createdAt" as "userCreatedAt", 'non_followed' AS source
           FROM "Users" u
           LEFT JOIN "Follows" f ON u.id = f."followedId" AND f."followerId" = $1
           WHERE f.id IS NULL AND u.id != $1 AND u."isBlocked" = false
@@ -128,7 +142,7 @@ export class FollowService {
       ),
 
       similar_tag_users AS (
-          SELECT DISTINCT u.id AS "userId", u.username, u."imageUrl" AS "userImageUrl", u.bio AS "userBio", 'tag' AS source
+          SELECT DISTINCT u.id AS "userId", u.username, u."imageUrl" AS "userImageUrl", u.bio AS "userBio", u."backgroundImageUrl" as "userBackgroundImageUrl", u."createdAt" as "userCreatedAt", 'non_followed' AS source
           FROM "Users" u
           JOIN "UserPreferences" up ON u.id = up."userId"
           WHERE u."isBlocked" = false AND u.id != $1
@@ -142,7 +156,7 @@ export class FollowService {
       ),
 
       same_community_users AS (
-          SELECT DISTINCT u.id AS "userId", u.username, u."imageUrl" AS "userImageUrl", u.bio AS "userBio", 'community' AS source
+          SELECT DISTINCT u.id AS "userId", u.username, u."imageUrl" AS "userImageUrl", u.bio AS "userBio", u."backgroundImageUrl" as "userBackgroundImageUrl", u."createdAt" as "userCreatedAt", 'non_followed' AS source
           FROM "Users" u
           JOIN "CommunityMembers" cm ON u.id = cm."userId"
           WHERE cm."communityId" IN (SELECT uc."communityId" FROM user_communities uc)
@@ -150,7 +164,7 @@ export class FollowService {
       ),
 
       same_group_users AS (
-          SELECT DISTINCT u.id AS "userId", u.username, u."imageUrl" AS "userImageUrl", u.bio AS "userBio", 'group' AS source
+          SELECT DISTINCT u.id AS "userId", u.username, u."imageUrl" AS "userImageUrl", u.bio AS "userBio", u."backgroundImageUrl" as "userBackgroundImageUrl", u."createdAt" as "userCreatedAt", 'non_followed' AS source
           FROM "Users" u
           JOIN "RoomMembers" rm ON u.id = rm."userId"
           WHERE rm."roomId" IN (SELECT ug."roomId" FROM user_groups ug)
@@ -158,16 +172,16 @@ export class FollowService {
       ),
 
       recommended_users AS (
-          SELECT "userId", username, "userImageUrl", "userBio", source
+          SELECT "userId", username, "userImageUrl", "userBio", source, "userBackgroundImageUrl", "userCreatedAt"
           FROM non_followed_users
           UNION
-          SELECT "userId", username, "userImageUrl", "userBio", source
+          SELECT "userId", username, "userImageUrl", "userBio", source, "userBackgroundImageUrl", "userCreatedAt"
           FROM similar_tag_users
           UNION
-          SELECT "userId", username, "userImageUrl", "userBio", source
+          SELECT "userId", username, "userImageUrl", "userBio", source, "userBackgroundImageUrl", "userCreatedAt"
           FROM same_community_users
           UNION
-          SELECT "userId", username, "userImageUrl", "userBio", source
+          SELECT "userId", username, "userImageUrl", "userBio", source, "userBackgroundImageUrl", "userCreatedAt"
           FROM same_group_users
       ),
 
@@ -183,6 +197,8 @@ export class FollowService {
       ru."userImageUrl",
       ru."userBio",
       ru.source,
+      ru."userBackgroundImageUrl",
+      ru."userCreatedAt",
       CASE
           WHEN fbu."userId" IS NOT NULL THEN 'follower'
           ELSE 'non-follower'

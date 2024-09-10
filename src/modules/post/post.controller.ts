@@ -160,6 +160,8 @@ export class PostController extends BaseController {
           username: user.username,
           userImageUrl: user.imageUrl,
           bio: user.bio,
+          userBackgroundImageUrl: user.backgroundImageUrl,
+          userCreatedAt: user.createdAt,
         }),
       });
     } catch (err) {

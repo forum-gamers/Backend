@@ -1,4 +1,4 @@
-import { IsArray, IsInt, IsOptional, Min } from 'class-validator';
+import { IsInt, IsOptional, Min } from 'class-validator';
 
 export class PostResponseQuery {
   @IsOptional()
