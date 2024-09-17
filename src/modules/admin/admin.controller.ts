@@ -69,6 +69,7 @@ export class AdminController extends BaseController {
         id: admin.id,
         isVerified: true,
         isAdmin: true,
+        discordData: null,
       }),
     });
   }
@@ -118,6 +119,7 @@ export class AdminController extends BaseController {
           id: dataValues.id,
           isVerified: true,
           isAdmin: true,
+          discordData: null,
         }),
         data: dataValues,
       },

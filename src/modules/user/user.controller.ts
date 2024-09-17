@@ -41,6 +41,15 @@ import { UserProfileDto } from './dto/userProfile.dto';
 import { FindUserProfile } from './pipes/findProfile.pipe';
 import { GoogleOauthService } from 'src/third-party/google/oauth.service';
 import globalUtils from 'src/utils/global/global.utils';
+import { RequiredField } from 'src/utils/pipes/requiredField.pipe';
+import { DiscordOauthService } from 'src/third-party/discord/oauth.service';
+import { DiscordMeService } from 'src/third-party/discord/me.service';
+import { DiscordService } from '../discord/discord.service';
+import { CreateDiscordProfileDto } from '../discord/dto/create.dto';
+import {
+  DiscordProfile,
+  type DiscordProfileAttributes,
+} from 'src/models/discordprofile';
 
 @Controller('user')
 export class UserController extends BaseController {
@@ -53,6 +62,9 @@ export class UserController extends BaseController {
     private readonly walletService: WalletService,
     private readonly profileViewerService: ProfileViewerService,
     private readonly googleOauthService: GoogleOauthService,
+    private readonly discordOauthService: DiscordOauthService,
+    private readonly discordMeService: DiscordMeService,
+    private readonly discordService: DiscordService,
   ) {
     super();
   }
@@ -104,6 +116,7 @@ export class UserController extends BaseController {
         id: user.id,
         isVerified: false,
         isAdmin: false,
+        discordData: null,
       });
       this.mailService.sendConfirmMail(email, token);
 
@@ -132,11 +145,13 @@ export class UserController extends BaseController {
     const { identifier, password } =
       await this.userValidation.validateLogin(payload);
 
-    const user = await this.userService.findByIdentifier(identifier);
+    const user = await this.userService.findByIdentifier(identifier, {
+      include: [{ model: DiscordProfile, required: false }],
+    });
     if (
       !user ||
       !(await encryption.compareEncryption(password, user.password)) ||
-      !user.isBlocked
+      user.isBlocked
     )
       throw new UnauthorizedException('invalid credentials');
 
@@ -149,6 +164,14 @@ export class UserController extends BaseController {
         id: user.id,
         isVerified: user.isVerified,
         isAdmin: false,
+        discordData: user?.discordProfile?.dataValues
+          ? {
+              id: user.discordProfile.dataValues.id,
+              accessToken: user.discordProfile.dataValues.accessToken,
+              refreshToken: user.discordProfile.dataValues.refreshToken,
+              tokenExpires: Number(user.discordProfile.dataValues.tokenExpires),
+            }
+          : null,
       }),
     });
   }
@@ -196,7 +219,12 @@ export class UserController extends BaseController {
 
     this.mailService.sendConfirmMail(
       email,
-      jwt.createToken({ id: user.id, isVerified: false, isAdmin: false }),
+      jwt.createToken({
+        id: user.id,
+        isVerified: false,
+        isAdmin: false,
+        discordData: null,
+      }),
     );
 
     return this.sendResponseBody({
@@ -364,7 +392,12 @@ export class UserController extends BaseController {
       email,
       lang,
       jwt.createToken(
-        { id: user.id, isVerified: user.isVerified, isAdmin: false },
+        {
+          id: user.id,
+          isVerified: user.isVerified,
+          isAdmin: false,
+          discordData: null,
+        },
         {
           expiresIn: '30m',
         },
@@ -393,6 +426,13 @@ export class UserController extends BaseController {
 
   @Post('google-login')
   @HttpCode(200)
+  @UseGuards(
+    new RateLimitGuard({
+      windowMs: 1 * 60 * 1000,
+      max: 5,
+      message: 'Too many requests from this IP, please try again in 1 minute.',
+    }),
+  )
   public async googleLogin(@Headers('google-token') token: string) {
     if (!token) throw new UnauthorizedException('invalid credentials');
 
@@ -405,6 +445,7 @@ export class UserController extends BaseController {
         email,
         given_name + globalUtils.generateRandomNumber(6),
         email_verified,
+        'GOOGLE OAUTH',
         { transaction },
       );
       if (created)
@@ -420,9 +461,114 @@ export class UserController extends BaseController {
           id: user.id,
           isVerified: user.isVerified,
           isAdmin: false,
+          discordData: null,
         }),
       });
     } catch (err) {
+      await transaction.rollback();
+      throw err;
+    }
+  }
+
+  @Get('discord/callback') //dari sono nya dah gini
+  @HttpCode(200)
+  @UseGuards(
+    new RateLimitGuard({
+      windowMs: 1 * 60 * 1000,
+      max: 5,
+      message: 'Too many requests from this IP, please try again in 1 minute.',
+    }),
+  )
+  public async discordAuthorizationCallback(
+    @Query('code', RequiredField) code: string,
+  ) {
+    const {
+      data: { access_token, refresh_token, expires_in, ...rest },
+      status: requestTokenStatus,
+    } = await this.discordOauthService.requestToken(code);
+    if (requestTokenStatus !== 200)
+      throw new UnauthorizedException('invalid credentials');
+
+    const { data, status: meStatus } =
+      await this.discordMeService.getMe(access_token);
+    if (meStatus !== 200)
+      throw new UnauthorizedException('invalid credentials');
+
+    if (!data.email)
+      throw new BadGatewayException('missing email in discord profile');
+
+    const transaction = await this.sequelize.transaction();
+    let discordData: DiscordProfileAttributes | null = null;
+    try {
+      const [user, created] = await this.userService.findByEmailOrCreate(
+        data.email,
+        data.username,
+        data.verified,
+        'DISCORD OAUTH',
+        { transaction },
+      );
+      if (created)
+        await this.walletService.createWallet(new CreateWallet(user.id), {
+          transaction,
+        });
+
+      discordData = await this.discordService.findByUserId(user.id, {
+        transaction,
+      });
+      if (!discordData)
+        discordData = await this.discordService.create(
+          new CreateDiscordProfileDto({
+            id: data.id,
+            accessToken: access_token,
+            refreshToken: refresh_token,
+            userId: user.id,
+            imageUrl: data?.avatar,
+            backgroundUrl: data?.banner,
+            tokenExpires: BigInt(expires_in),
+          }),
+          { transaction },
+        );
+      else {
+        await this.discordService.updateData(
+          data.id,
+          {
+            accessToken: access_token,
+            refreshToken: refresh_token,
+            tokenExpires: BigInt(expires_in),
+            imageUrl: data?.avatar,
+            backgroundUrl: data?.banner,
+          },
+          { transaction },
+        );
+        discordData = {
+          id: data.id,
+          accessToken: access_token,
+          refreshToken: refresh_token,
+          tokenExpires: BigInt(expires_in),
+          imageUrl: data?.avatar,
+          backgroundUrl: data?.banner,
+          userId: user.id,
+        };
+      }
+
+      await transaction.commit();
+      return this.sendResponseBody({
+        code: 200,
+        message: 'OK',
+        data: jwt.createToken({
+          id: user.id,
+          isVerified: created ? data?.verified : user.isVerified,
+          isAdmin: false,
+          discordData: {
+            id: discordData?.id,
+            accessToken: discordData?.accessToken,
+            refreshToken: discordData?.refreshToken,
+            tokenExpires: Number(discordData?.tokenExpires),
+          },
+        }),
+      });
+    } catch (err) {
+      console.log(err);
       await transaction.rollback();
       throw err;
     }

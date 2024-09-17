@@ -11,6 +11,7 @@ export declare global {
       IMAGEKIT_URL: string;
       CHAT_ENCRYPTION_KEY: string;
       PUBLIC_APP_URL: string;
+      APP_URL: string;
       CHAT_HMAC_KEY: string;
       DATABASE_ENCRYPTION_KEY: string;
       DATABASE_URL: string;
@@ -27,6 +28,8 @@ export declare global {
       MIDTRANS_CLIENT_KEY: string;
       GOOGLE_OAUTH_CLIENTID: string;
       GOOGLE_OAUTH_CLIENT_SECRET: string;
+      DISCORD_CLIENTID: string;
+      DISCORD_CLIENT_SECRET: string;
     }
   }
 }

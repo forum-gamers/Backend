@@ -1,12 +1,10 @@
+import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import helmet from 'helmet';
-import { config } from 'dotenv';
 import { ForbiddenException } from '@nestjs/common';
 import { AllExceptionsFilter } from './middlewares/global/exceptions.middleware';
 import { GlobalLimiter } from './middlewares/global/globalLimiter.middleware';
-
-config();
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);

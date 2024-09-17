@@ -1,9 +1,11 @@
-import { Inject, UnauthorizedException } from '@nestjs/common';
+import { Inject, UseFilters } from '@nestjs/common';
 import {
   MessageBody,
   SubscribeMessage,
   WebSocketGateway,
   ConnectedSocket,
+  WsException,
+  BaseWsExceptionFilter,
 } from '@nestjs/websockets';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { Server, Socket } from 'socket.io';
@@ -27,6 +29,7 @@ import { ChatService } from '../chat/chat.service';
 import { CreateChatReadDto } from '../chatRead/dto/create.dto';
 
 @WebSocketGateway({ namespace: 'chat' })
+@UseFilters(new BaseWsExceptionFilter())
 export class ChatGateway extends BaseWsHandler {
   constructor(
     @Inject(WINSTON_MODULE_PROVIDER)
@@ -48,7 +51,7 @@ export class ChatGateway extends BaseWsHandler {
     try {
       const authorization = this.getAuthorization(client);
       if (!authorization)
-        throw new UnauthorizedException('missing or invalid authorization');
+        throw new WsException('missing or invalid authorization');
 
       const { id } = jwt.verifyToken(authorization);
       if (!this.clients.get(id)) this.clients.set(id, client);
@@ -98,7 +101,7 @@ export class ChatGateway extends BaseWsHandler {
     try {
       const authorization = this.getAuthorization(client);
       if (!authorization)
-        throw new UnauthorizedException('missing or invalid authorization');
+        throw new WsException('missing or invalid authorization');
 
       const { id } = jwt.verifyToken(authorization);
 

@@ -15,6 +15,7 @@ import { WalletModule } from '../wallet/wallet.module';
 import { ProfileViewerModule } from '../profileViewer/profileViewer.module';
 import { UserAuthentication } from 'src/middlewares/user/authentication.middleware';
 import { VerifiedMiddleware } from 'src/middlewares/user/verified.middleware';
+import { DiscordModule } from '../discord/discord.module';
 
 @Global()
 @Module({
@@ -23,6 +24,7 @@ import { VerifiedMiddleware } from 'src/middlewares/user/verified.middleware';
     SequelizeModule.forFeature([User]),
     WalletModule,
     ProfileViewerModule,
+    DiscordModule,
   ],
   providers: [UserValidation, UserService],
   controllers: [UserController],

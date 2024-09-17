@@ -1,5 +1,6 @@
 import { DataTypes } from 'sequelize';
-import { Table, Model, Column } from 'sequelize-typescript';
+import { Table, Model, Column, HasOne } from 'sequelize-typescript';
+import { DiscordProfile } from './discordprofile';
 
 export interface UserAttributes {
   id: string;
@@ -175,4 +176,7 @@ export class User
     allowNull: true,
   })
   public blockReason: string;
+
+  @HasOne(() => DiscordProfile, 'userId')
+  public discordProfile?: DiscordProfile;
 }

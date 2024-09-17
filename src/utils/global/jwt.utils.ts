@@ -6,6 +6,7 @@ import {
   decode,
 } from 'jsonwebtoken';
 import { config } from 'dotenv';
+import { DiscordProfileAttributes } from 'src/models/discordprofile';
 
 config();
 
@@ -13,6 +14,11 @@ export interface TokenValue {
   id: string;
   isVerified: boolean;
   isAdmin: boolean;
+  discordData:
+    | (Pick<DiscordProfileAttributes, 'id' | 'accessToken' | 'refreshToken'> & {
+        tokenExpires: number;
+      })
+    | null;
 }
 
 export type TokenPayload = TokenValue & JwtPayload;

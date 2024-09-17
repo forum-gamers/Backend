@@ -6,7 +6,8 @@ import {
   type UpdateOptions,
   type CreateOptions,
   QueryTypes,
-  FindOrCreateOptions,
+  type FindOrCreateOptions,
+  type FindOptions,
 } from 'sequelize';
 import { v4 } from 'uuid';
 import { CreateUser } from './dto/create.dto';
@@ -80,8 +81,12 @@ export class UserService {
     );
   }
 
-  public async findByIdentifier(identifier: string) {
+  public async findByIdentifier(
+    identifier: string,
+    opts?: FindOptions<UserAttributes>,
+  ) {
     return await this.userModel.findOne({
+      ...opts,
       where: {
         [Op.or]: {
           username: identifier,
@@ -203,6 +208,7 @@ export class UserService {
     email: string,
     username: string,
     isVerified: boolean,
+    defaultPassword: string,
     opts?: Omit<FindOrCreateOptions<UserAttributes>, 'where'>,
   ) {
     return await this.userModel.findOrCreate({
@@ -212,10 +218,10 @@ export class UserService {
       defaults: {
         ...new CreateUser({
           email,
-          password: 'GOOGLE OAUTH',
+          password: defaultPassword,
           username,
         }),
-        password: 'GOOGLE OAUTH',
+        password: defaultPassword,
         isVerified,
         status: 'active',
         id: v4(),

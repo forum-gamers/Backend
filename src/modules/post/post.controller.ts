@@ -284,6 +284,7 @@ export class PostController extends BaseController {
       await this.postValidation.validateGetUserPostQuery(query);
     const { datas, totalData } = await this.postService.findByUserId(
       userId,
+      userId,
       withMediaOnly,
       {
         page,
@@ -376,11 +377,13 @@ export class PostController extends BaseController {
   public async getUserPost(
     @Param('id', ParseUUIDPipe) id: string,
     @Query() query: any,
+    @UserMe('id') userId: string,
   ) {
     const { page, limit, withMediaOnly } =
       await this.postValidation.validateGetUserPostQuery(query);
     const { datas, totalData } = await this.postService.findByUserId(
       id,
+      userId,
       withMediaOnly,
       {
         page,

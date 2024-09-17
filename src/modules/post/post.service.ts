@@ -465,6 +465,7 @@ export class PostService {
 
   public async findByUserId(
     userId: string,
+    meId: string,
     withMediaOnly: boolean,
     { page = 1, limit = 10 }: QueryParamsDto,
   ) {
@@ -502,9 +503,9 @@ export class PostService {
           p."countComment",
           p."countShare",
           p."countBookmark",
-          EXISTS (SELECT 1 FROM "PostBookmarks" l2 WHERE l2."postId" = p."id" AND l2."userId" = $1) AS "isBookmarked",
-          EXISTS (SELECT 1 FROM "PostLikes" l2 WHERE l2."postId" = p."id" AND l2."userId" = $1) AS "isLiked",
-          EXISTS (SELECT 1 FROM "PostShares" l2 WHERE l2."postId" = p."id" AND l2."userId" = $1) AS "isShared",
+          EXISTS (SELECT 1 FROM "PostBookmarks" l2 WHERE l2."postId" = p."id" AND l2."userId" = $2) AS "isBookmarked",
+          EXISTS (SELECT 1 FROM "PostLikes" l2 WHERE l2."postId" = p."id" AND l2."userId" = $2) AS "isLiked",
+          EXISTS (SELECT 1 FROM "PostShares" l2 WHERE l2."postId" = p."id" AND l2."userId" = $2) AS "isShared",
           EXISTS (
               SELECT 1
               FROM "Follows" f
@@ -532,7 +533,7 @@ export class PostService {
           p."privacy" = 'public'
         ${withMediaOnly ? 'AND p."id" IN (SELECT pm."postId" FROM "PostMedia" pm WHERE pm."postId" = p."id")' : ''}
         ORDER BY p."createdAt" DESC
-        LIMIT $2 OFFSET $3
+        LIMIT $3 OFFSET $4
       ),
       count_posts AS (
         SELECT COUNT(*) AS count
@@ -568,7 +569,7 @@ export class PostService {
       FROM filtered_posts;`,
         {
           type: QueryTypes.SELECT,
-          bind: [userId, limit, (page - 1) * limit],
+          bind: [userId, meId, limit, (page - 1) * limit],
         },
       );
     return {
@@ -673,7 +674,9 @@ export class PostService {
               p."countComment",
               p."countShare",
               c."id",
-              pl."createdAt"
+              pl."createdAt",
+              u."backgroundImageUrl",
+              u."createdAt"
           ORDER BY 
               pl."createdAt" DESC
       ),
@@ -817,7 +820,9 @@ export class PostService {
               p."countComment",
               p."countShare",
               c."id",
-              pb."createdAt"
+              pb."createdAt",
+              u."backgroundImageUrl",
+              u."createdAt"
           ORDER BY 
               pb."createdAt" DESC
       ),
