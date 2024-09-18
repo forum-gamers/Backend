@@ -4,6 +4,7 @@ import {
   Body,
   ConflictException,
   Controller,
+  ForbiddenException,
   Get,
   Headers,
   HttpCode,
@@ -453,6 +454,10 @@ export class UserController extends BaseController {
           transaction,
         });
 
+      const discordData = await this.discordService.findByUserId(user.id, {
+        transaction,
+      });
+
       await transaction.commit();
       return this.sendResponseBody({
         code: 200,
@@ -461,7 +466,14 @@ export class UserController extends BaseController {
           id: user.id,
           isVerified: user.isVerified,
           isAdmin: false,
-          discordData: null,
+          discordData: discordData?.dataValues
+            ? {
+                id: discordData.dataValues.id,
+                accessToken: discordData.dataValues.accessToken,
+                refreshToken: discordData.dataValues.refreshToken,
+                tokenExpires: Number(discordData.dataValues.tokenExpires),
+              }
+            : null,
         }),
       });
     } catch (err) {
@@ -483,7 +495,7 @@ export class UserController extends BaseController {
     @Query('code', RequiredField) code: string,
   ) {
     const {
-      data: { access_token, refresh_token, expires_in, ...rest },
+      data: { access_token, refresh_token, expires_in },
       status: requestTokenStatus,
     } = await this.discordOauthService.requestToken(code);
     if (requestTokenStatus !== 200)
@@ -529,6 +541,9 @@ export class UserController extends BaseController {
           { transaction },
         );
       else {
+        if (discordData.id !== data.id)
+          throw new ForbiddenException('invalid credentials');
+
         await this.discordService.updateData(
           data.id,
           {
@@ -568,7 +583,6 @@ export class UserController extends BaseController {
         }),
       });
     } catch (err) {
-      console.log(err);
       await transaction.rollback();
       throw err;
     }

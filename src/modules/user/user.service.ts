@@ -24,8 +24,8 @@ export class UserService {
     private readonly userModel: typeof User,
     private readonly sequelize: Sequelize,
   ) {}
-  public async findOneById(id: string) {
-    return await this.userModel.findOne({ where: { id } });
+  public async findOneById(id: string, opts?: FindOptions<UserAttributes>) {
+    return await this.userModel.findOne({ ...opts, where: { id } });
   }
 
   public async createOne(

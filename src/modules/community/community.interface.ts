@@ -1,6 +1,7 @@
 export interface ICreateCommunityProps {
-  name: string;
+  name?: string;
   description?: string;
+  discordServerId?: string;
 }
 
 export interface IFileProps {

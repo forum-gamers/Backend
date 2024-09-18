@@ -25,3 +25,13 @@ export interface DiscordUser {
   email: string;
   verified: boolean;
 }
+
+export interface DiscordGuild {
+  id: string;
+  name: string;
+  icon: null | string;
+  banner: null | string;
+  owner: boolean;
+  permissions: string;
+  features: string[];
+}

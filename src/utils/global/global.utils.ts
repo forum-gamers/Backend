@@ -43,6 +43,11 @@ class GlobalUtils {
 
     return result;
   }
+
+  public isExpires(expires: number, lastUpdated: number) {
+    const currentTime = Math.floor(Date.now() / 1000);
+    return currentTime > lastUpdated + expires;
+  }
 }
 
 const globalUtils = new GlobalUtils();

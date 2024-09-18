@@ -8,20 +8,33 @@ import { SUPPORTED_IMAGE_TYPE } from 'src/constants/global.constant';
 export class CommunityValidation extends BaseValidation {
   public validateCreate = async (data: any) =>
     await this.validate<ICreateCommunityProps>(
-      yup.object().shape({
-        name: yup.string().required('name is required'),
-        description: yup
-          .string()
-          .test(
-            'is valid text',
-            'description must be between 3 and 160 characters and can only contain letters, numbers, and basic punctuation.',
-            (val) =>
-              val === 'N/A' ||
-              /^(?=.*\S)[a-zA-Z0-9.,!?'"()\-\n ]{3,160}$/.test(val),
-          )
-          .default('N/A')
-          .optional(),
-      }),
+      yup
+        .object()
+        .shape({
+          name: yup
+            .string()
+            .min(3, 'name must be at least 3 characters')
+            .max(30, 'name must be at most 30 characters')
+            .nullable()
+            .optional(),
+          description: yup
+            .string()
+            .test(
+              'is valid text',
+              'description must be between 3 and 160 characters and can only contain letters, numbers, and basic punctuation.',
+              (val) =>
+                !val || /^(?=.*\S)[a-zA-Z0-9.,!?'"()\-\n ]{3,160}$/.test(val),
+            )
+            .default(null)
+            .nullable()
+            .optional(),
+          discordServerId: yup.string().optional(),
+        })
+        .test(
+          'required one of',
+          'one of discord server id or discord server name is required',
+          ({ discordServerId, name }) => !!discordServerId || !!name,
+        ),
       data,
     );
 

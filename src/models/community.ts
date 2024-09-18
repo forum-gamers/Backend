@@ -9,6 +9,7 @@ export interface CommunityAttributes {
   imageUrl?: string;
   imageId?: string;
   owner: string;
+  isDiscordServer: boolean;
   createdAt: Date;
   updatedAt: Date;
   searchVectorName: any;
@@ -81,6 +82,13 @@ export class Community
     onUpdate: 'CASCADE',
   })
   public owner: string;
+
+  @Column({
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false,
+  })
+  public isDiscordServer: boolean;
 
   @Column({
     allowNull: false,

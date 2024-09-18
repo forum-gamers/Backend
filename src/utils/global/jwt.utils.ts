@@ -10,15 +10,17 @@ import { DiscordProfileAttributes } from 'src/models/discordprofile';
 
 config();
 
+export type TokenDiscordData =
+  | (Pick<DiscordProfileAttributes, 'id' | 'accessToken' | 'refreshToken'> & {
+      tokenExpires: number;
+    })
+  | null;
+
 export interface TokenValue {
   id: string;
   isVerified: boolean;
   isAdmin: boolean;
-  discordData:
-    | (Pick<DiscordProfileAttributes, 'id' | 'accessToken' | 'refreshToken'> & {
-        tokenExpires: number;
-      })
-    | null;
+  discordData: TokenDiscordData;
 }
 
 export type TokenPayload = TokenValue & JwtPayload;

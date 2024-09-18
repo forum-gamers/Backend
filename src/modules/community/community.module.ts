@@ -13,12 +13,14 @@ import { ThirdPartyModule } from 'src/third-party/third-party.module';
 import { CommunityMemberModule } from '../communityMember/communityMember.module';
 import { CommunityAccessMiddleware } from 'src/middlewares/community/access.middleware';
 import { USER_VERIFIED_MIDDLEWARE } from 'src/constants/global.constant';
+import { DiscordModule } from '../discord/discord.module';
 
 @Module({
   imports: [
     SequelizeModule.forFeature([Community]),
     ThirdPartyModule,
     CommunityMemberModule,
+    DiscordModule
   ],
   providers: [CommunityService, CommunityValidation],
   controllers: [CommunityController],
