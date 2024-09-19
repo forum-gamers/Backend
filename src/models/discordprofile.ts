@@ -10,6 +10,8 @@ export interface DiscordProfileAttributes {
   accessToken: string;
   refreshToken: string;
   tokenExpires: bigint;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 @Table<Model<DiscordProfileAttributes, DiscordProfileAttributes>>({

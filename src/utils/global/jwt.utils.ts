@@ -13,6 +13,7 @@ config();
 export type TokenDiscordData =
   | (Pick<DiscordProfileAttributes, 'id' | 'accessToken' | 'refreshToken'> & {
       tokenExpires: number;
+      lastUpdated: number;
     })
   | null;
 

@@ -13,7 +13,6 @@ import {
   UploadedFile,
   UseGuards,
   UseInterceptors,
-  UsePipes,
 } from '@nestjs/common';
 import { BaseController } from 'src/base/controller.base';
 import { CommunityService } from './community.service';
@@ -29,7 +28,6 @@ import { CreateCommunityMemberDto } from '../communityMember/dto/create.dto';
 import { RateLimitGuard } from 'src/middlewares/global/rateLimit.middleware';
 import { type CommunityAttributes } from 'src/models/community';
 import { CommunityContext } from './decorators/community.decorator';
-import { PaginationPipe } from 'src/utils/pipes/pagination.pipe';
 import { DiscordService } from '../discord/discord.service';
 import { DiscordMeService } from 'src/third-party/discord/me.service';
 import globalUtils from 'src/utils/global/global.utils';
@@ -38,6 +36,9 @@ import { RequiredField } from 'src/utils/pipes/requiredField.pipe';
 import { DiscordOauthService } from 'src/third-party/discord/oauth.service';
 import jwt, { TokenDiscordData } from 'src/utils/global/jwt.utils';
 import { UserAttributes } from 'src/models/user';
+import * as yup from 'yup';
+import { QueryPipe } from 'src/utils/pipes/query.pipe';
+import { BaseQuery } from 'src/interfaces/request.interface';
 
 @Controller('community')
 export class CommunityController extends BaseController {
@@ -165,12 +166,13 @@ export class CommunityController extends BaseController {
       accessToken: discordAccount.accessToken,
       refreshToken: discordAccount.refreshToken,
       tokenExpires: Number(discordAccount.tokenExpires),
+      lastUpdated: discordAccount.updatedAt.getTime(),
     };
 
     if (
       globalUtils.isExpires(
         Number(discordAccount.tokenExpires),
-        Math.floor(discordAccount.updatedAt.getTime() / 1000),
+        Math.floor(token.lastUpdated / 1000),
       )
     ) {
       const { data, status } = await this.discordOauthService.refreshToken(
@@ -184,6 +186,7 @@ export class CommunityController extends BaseController {
         accessToken: data?.access_token,
         refreshToken: data?.refresh_token,
         tokenExpires: Number(data?.expires_in),
+        lastUpdated: Date.now(),
       };
       this.discordService.updateData(discordAccount.id, {
         accessToken: data?.access_token,
@@ -313,7 +316,6 @@ export class CommunityController extends BaseController {
   }
 
   @Get()
-  @UsePipes(PaginationPipe)
   @HttpCode(200)
   @UseGuards(
     new RateLimitGuard({
@@ -322,24 +324,31 @@ export class CommunityController extends BaseController {
       message: 'Too many requests from this IP, please try again in 1 minute.',
     }),
   )
-  public async findAll(@Query() query: any) {
-    const { page, limit } =
-      await this.communityValidation.validatePaginationQuery(query);
-
-    const { rows, count } = await this.communityService.findAndCountAll({
+  public async findAll(
+    @Query(
+      new QueryPipe(1, 10, {
+        q: yup.string().optional(),
+      }),
+    )
+    { page, limit, q = null }: BaseQuery & { q?: string },
+    @UserMe('id') userId: string,
+  ) {
+    const { datas, totalData } = await this.communityService.findAndCountAll({
       page,
       limit,
+      userId,
+      q,
     });
 
     return this.sendResponseBody(
       {
         message: 'OK',
         code: 200,
-        data: rows,
+        data: datas,
       },
       {
-        totalData: count,
-        totalPage: Math.ceil(count / limit),
+        totalData,
+        totalPage: Math.ceil(totalData / limit),
         page,
         limit,
       },

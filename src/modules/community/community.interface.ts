@@ -1,3 +1,5 @@
+import type { GetCommunityDto } from './dto/get.dto';
+
 export interface ICreateCommunityProps {
   name?: string;
   description?: string;
@@ -6,4 +8,9 @@ export interface ICreateCommunityProps {
 
 export interface IFileProps {
   file: Express.Multer.File;
+}
+
+export interface IGetCommunityDBResponse {
+  datas: GetCommunityDto;
+  totalData: number;
 }

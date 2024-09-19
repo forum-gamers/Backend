@@ -171,6 +171,7 @@ export class UserController extends BaseController {
               accessToken: user.discordProfile.dataValues.accessToken,
               refreshToken: user.discordProfile.dataValues.refreshToken,
               tokenExpires: Number(user.discordProfile.dataValues.tokenExpires),
+              lastUpdated: user.discordProfile.dataValues.updatedAt.getTime(),
             }
           : null,
       }),
@@ -472,6 +473,7 @@ export class UserController extends BaseController {
                 accessToken: discordData.dataValues.accessToken,
                 refreshToken: discordData.dataValues.refreshToken,
                 tokenExpires: Number(discordData.dataValues.tokenExpires),
+                lastUpdated: discordData.dataValues.updatedAt.getTime(),
               }
             : null,
         }),
@@ -563,6 +565,8 @@ export class UserController extends BaseController {
           imageUrl: data?.avatar,
           backgroundUrl: data?.banner,
           userId: user.id,
+          createdAt: discordData.createdAt ?? new Date(),
+          updatedAt: discordData.updatedAt ?? new Date(),
         };
       }
 
@@ -579,6 +583,7 @@ export class UserController extends BaseController {
             accessToken: discordData?.accessToken,
             refreshToken: discordData?.refreshToken,
             tokenExpires: Number(discordData?.tokenExpires),
+            lastUpdated: discordData?.updatedAt.getTime(),
           },
         }),
       });
