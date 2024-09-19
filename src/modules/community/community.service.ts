@@ -2,15 +2,9 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Community, type CommunityAttributes } from 'src/models/community';
 import { CreateCommunityDto } from './dto/create.dto';
-import {
-  type DestroyOptions,
-  type CreateOptions,
-  fn,
-  QueryTypes,
-} from 'sequelize';
+import { type DestroyOptions, type CreateOptions, QueryTypes } from 'sequelize';
 import { CommunityMembers } from 'src/models/communitymember';
 import { User } from 'src/models/user';
-import { QueryParamsDto } from 'src/utils/dto/pagination.dto';
 import { Sequelize } from 'sequelize-typescript';
 import { BaseQuery } from 'src/interfaces/request.interface';
 import { IGetCommunityDBResponse } from './community.interface';
@@ -117,7 +111,8 @@ export class CommunityService {
               ? `
             WHERE
               (c."searchVectorName" @@ plainto_tsquery('english', $4)
-              OR c."searchVectorDescription" @@ plainto_tsquery('english', $4))
+              OR c."searchVectorDescription" @@ plainto_tsquery('english', $4)) 
+              OR c.name ILIKE '%' || $4 || '%' OR c.description ILIKE '%' || $4 || '%' OR c.name % $4 OR c.description % $4
           `
               : ''
           }
@@ -141,7 +136,7 @@ export class CommunityService {
             "isMember"
           FROM filtered_communities
           ORDER BY 
-            ${q ? 'ts_rank("searchVectorName", plainto_tsquery(\'english\', $4)) DESC,' : ''}
+            ${q ? 'ts_rank("searchVectorName", plainto_tsquery(\'english\', $4)) DESC, ts_rank("searchVectorDescription", plainto_tsquery(\'english\', $4)) DESC,' : ''}
             CASE WHEN "isMember" THEN 1 ELSE 0 END,
             "createdAt" DESC
           LIMIT $2 OFFSET $1
