@@ -40,6 +40,7 @@ export class UserModule implements NestModule {
         { path: '/user/image', method: RequestMethod.PATCH },
         { path: '/user/:id', method: RequestMethod.GET },
         { path: '/user/change-password', method: RequestMethod.PATCH },
+        { path: '/user/community/:id', method: RequestMethod.GET },
       )
       .apply(VerifiedMiddleware)
       .forRoutes(
@@ -47,6 +48,7 @@ export class UserModule implements NestModule {
         { path: '/user/bio', method: RequestMethod.PATCH },
         { path: '/user/image', method: RequestMethod.PATCH },
         { path: '/user/:id', method: RequestMethod.GET },
+        { path: '/user/community/:id', method: RequestMethod.GET },
       );
   }
 }

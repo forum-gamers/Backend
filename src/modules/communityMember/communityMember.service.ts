@@ -4,7 +4,7 @@ import {
   CommunityMembers,
   type CommunityMembersAttributes,
 } from 'src/models/communitymember';
-import { DestroyOptions, type CreateOptions } from 'sequelize';
+import { DestroyOptions, FindOptions, type CreateOptions } from 'sequelize';
 import { CreateCommunityMemberDto } from './dto/create.dto';
 
 @Injectable()
@@ -28,6 +28,28 @@ export class CommunityMemberService {
     return await this.communityMemberModel.destroy({
       ...opts,
       where: { communityId },
+    });
+  }
+
+  public async findByCommunityIdAndUserId(
+    communityId: number,
+    userId: string,
+    opts?: FindOptions<CommunityMembersAttributes>,
+  ) {
+    return await this.communityMemberModel.findOne({
+      ...opts,
+      where: { communityId, userId },
+    });
+  }
+
+  public async deleteByCommunityIdAndUserId(
+    communityId: number,
+    userId: string,
+    opts?: Omit<DestroyOptions<CommunityMembersAttributes>, 'where'>,
+  ) {
+    return await this.communityMemberModel.destroy({
+      ...opts,
+      where: { communityId, userId },
     });
   }
 }

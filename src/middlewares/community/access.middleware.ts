@@ -17,30 +17,32 @@ import { CommunityService } from 'src/modules/community/community.service';
 @Injectable()
 export class CommunityAccessMiddleware implements NestMiddleware {
   public use: RequestHandler = async (req, res, next) => {
-    if (req.method === 'GET') return next();
-
     const { id } = req.params;
 
     const value = parseInt(id);
     if (isNaN(value)) throw new BadRequestException('id must be a number');
 
-    const { id: userId } = req?.user;
+    const { id: userId } = req.user;
     if (!userId)
       throw new InternalServerErrorException(
         'route not provided for anonymous user',
       );
-
     const community = await this.communityService.findByIdAndFindMe(
       value,
       userId,
     );
     if (!community) throw new NotFoundException('community not found');
 
-    if (!community.members?.length)
-      throw new UnauthorizedException('you have not access');
+    if (community?.dataValues) req.community = community.dataValues;
+    if (community?.members?.length)
+      req.communityMember = community.members.find(
+        (el) => el.userId === userId,
+      )?.dataValues;
 
-    req.community = community.dataValues;
-    req.communityMember = community.members[0].dataValues;
+    if (req.method === 'GET') return next();
+
+    if (!community.members?.length)
+      throw new UnauthorizedException('unauthorized');
 
     next();
   };

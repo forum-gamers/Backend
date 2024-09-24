@@ -13,7 +13,7 @@ export const CommunityContext = createParamDecorator(
       .switchToHttp()
       .getRequest<Request>();
 
-    if (!community || !communityMember)
+    if (!community)
       throw new InternalServerErrorException(
         'you must use this decorator on authenticated community endpoint',
       );

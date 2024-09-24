@@ -1,7 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { BaseValidation } from 'src/base/validation.base';
 import * as yup from 'yup';
-import type { ICreateCommunityProps, IFileProps } from './community.interface';
+import type {
+  ICreateCommunityProps,
+  IFileProps,
+  UpdateCommunityBodyProps,
+} from './community.interface';
 import { SUPPORTED_IMAGE_TYPE } from 'src/constants/global.constant';
 
 @Injectable()
@@ -62,6 +66,35 @@ export class CommunityValidation extends BaseValidation {
       yup.object().shape({
         page: yup.number().default(1).optional(),
         limit: yup.number().default(15).optional(),
+      }),
+      data,
+    );
+
+  public validateUpdateCommunity = async (
+    data: any,
+    defaultValue: UpdateCommunityBodyProps,
+  ) =>
+    await this.validate<UpdateCommunityBodyProps>(
+      yup.object().shape({
+        name: yup
+          .string()
+          .transform((_, v: string) => v?.trim() || '')
+          .min(3, 'name must be at least 3 characters')
+          .max(30, 'name must be at most 30 characters')
+          .default(defaultValue.name)
+          .optional(),
+        description: yup
+          .string()
+          .transform((_, v: string) => v?.trim() || '')
+          .test(
+            'is valid text',
+            'description must be between 3 and 160 characters and can only contain letters, numbers, and basic punctuation.',
+            (val) =>
+              !val || /^(?=.*\S)[a-zA-Z0-9.,!?'"()\-\n ]{3,160}$/.test(val),
+          )
+          .default(defaultValue.description)
+          .nullable()
+          .optional(),
       }),
       data,
     );

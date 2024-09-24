@@ -14,3 +14,8 @@ export interface IGetCommunityDBResponse {
   datas: GetCommunityDto;
   totalData: number;
 }
+
+export interface UpdateCommunityBodyProps {
+  name: string;
+  description?: string;
+}

@@ -16,6 +16,8 @@ import { BlockUserDto } from '../admin/dto/blockUser.dto';
 import { Sequelize } from 'sequelize-typescript';
 import { plainToInstance } from 'class-transformer';
 import { UserProfileDto } from './dto/userProfile.dto';
+import { BaseQuery } from 'src/interfaces/request.interface';
+import type { UserProfileDbResult } from './user.interface';
 
 @Injectable()
 export class UserService {
@@ -202,6 +204,105 @@ export class UserService {
     if (!result) return null;
 
     return plainToInstance(UserProfileDto, result);
+  }
+
+  public async findUserCommunity(
+    communityId: number,
+    followerId: string | null,
+    { page = 1, limit = 15 }: BaseQuery,
+  ) {
+    const [{ totalData, datas } = { totalData: 0, datas: [] }] =
+      await this.sequelize.query<UserProfileDbResult>(
+        `WITH community_users AS (
+        SELECT 
+          u.id,
+          u.username,
+          u.email,
+          u."isVerified",
+          u.bio,
+          u."imageUrl",
+          u."imageId",
+          u."backgroundImageUrl",
+          u."backgroundImageId",
+          u.status,
+          u."createdAt",
+          u."updatedAt",
+          cm."createdAt" AS "communityCreatedAt",
+          COALESCE(followers."followersCount", 0) AS "followersCount",
+          COALESCE(following."followingCount", 0) AS "followingCount",
+          CASE 
+              WHEN f."followerId" IS NOT NULL THEN TRUE 
+              ELSE FALSE 
+          END AS "isFollower"
+        FROM 
+            "Users" u
+        JOIN 
+            "CommunityMembers" cm ON cm."userId" = u.id
+        LEFT JOIN (
+            SELECT 
+                "followedId" AS "userId", 
+                COUNT(*) AS "followersCount"
+            FROM 
+                "Follows"
+            GROUP BY 
+                "followedId"
+        ) AS followers ON u.id = followers."userId"
+        LEFT JOIN (
+            SELECT 
+                "followerId" AS "userId", 
+                COUNT(*) AS "followingCount"
+            FROM 
+                "Follows"
+            GROUP BY 
+                "followerId"
+        ) AS following ON u.id = following."userId"
+        LEFT JOIN 
+            "Follows" f 
+            ON u.id = f."followedId" AND f."followerId" = $2
+        WHERE 
+            cm."communityId" = $1
+      ),
+      count_users AS (
+          SELECT COUNT(*) AS count FROM community_users
+      ),
+      paginated_users AS (
+        SELECT * FROM community_users
+        ORDER BY 
+            "communityCreatedAt" DESC,
+            "createdAt" DESC
+        LIMIT $3 OFFSET $4
+        )
+    SELECT
+        (SELECT count FROM count_users) AS "totalData",
+        COALESCE(
+            json_agg(json_build_object(
+                'id', id,
+                'username', username,
+                'email', email,
+                'isVerified', "isVerified",
+                'bio', bio,
+                'imageUrl', "imageUrl",
+                'backgroundImageUrl', "backgroundImageUrl",
+                'createdAt', "createdAt",
+                'updatedAt', "updatedAt",
+                'followersCount', "followersCount",
+                'followingCount', "followingCount",
+                'isFollower', "isFollower"
+            )),
+            '[]'::json
+        ) AS "datas"
+    FROM paginated_users;`,
+        {
+          type: QueryTypes.SELECT,
+          bind: [communityId, followerId, limit, (page - 1) * limit],
+          benchmark: true,
+        },
+      );
+
+    return {
+      datas: plainToInstance(UserProfileDto, datas),
+      totalData: Number(totalData),
+    };
   }
 
   public async findByEmailOrCreate(

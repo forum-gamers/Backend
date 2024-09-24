@@ -69,6 +69,8 @@ import { Transaction } from './models/transaction';
 import { TransactionModule } from './modules/transaction/transaction.module';
 import { DiscordProfile } from './models/discordprofile';
 import { DiscordModule } from './modules/discord/discord.module';
+import { CommunityEvent } from './models/communityevent';
+import { CommunityEventModule } from './modules/communityEvent/communityEvent.module';
 const conf = require('../config/config.js');
 const environment = process.env.NODE_ENV ?? 'development';
 
@@ -143,6 +145,7 @@ const environment = process.env.NODE_ENV ?? 'development';
         TeamMember,
         Transaction,
         DiscordProfile,
+        CommunityEvent,
       ],
       synchronize: environment !== 'production',
       timezone: '+07:00',
@@ -177,6 +180,7 @@ const environment = process.env.NODE_ENV ?? 'development';
     TeamMemberModule,
     TransactionModule,
     DiscordModule,
+    CommunityEventModule,
   ],
 })
 export class AppModule implements NestModule {

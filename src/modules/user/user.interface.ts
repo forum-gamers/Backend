@@ -1,3 +1,5 @@
+import type { UserProfileDto } from './dto/userProfile.dto';
+
 export interface RegisterInputProps {
   username: string;
   email: string;
@@ -51,4 +53,9 @@ export interface LangQueryAccept {
 export interface ChangePasswordProps {
   password: string;
   confirmPassword: string;
+}
+
+export interface UserProfileDbResult {
+  totalData: number;
+  datas: UserProfileDto;
 }

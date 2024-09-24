@@ -8,7 +8,10 @@ import {
   Get,
   HttpCode,
   NotFoundException,
+  Param,
+  ParseIntPipe,
   Post,
+  Put,
   Query,
   UploadedFile,
   UseGuards,
@@ -34,11 +37,15 @@ import globalUtils from 'src/utils/global/global.utils';
 import type { DiscordGuild } from 'src/third-party/discord/discord.interface';
 import { RequiredField } from 'src/utils/pipes/requiredField.pipe';
 import { DiscordOauthService } from 'src/third-party/discord/oauth.service';
-import jwt, { TokenDiscordData } from 'src/utils/global/jwt.utils';
-import { UserAttributes } from 'src/models/user';
+import jwt, { type TokenDiscordData } from 'src/utils/global/jwt.utils';
+import { type UserAttributes } from 'src/models/user';
 import * as yup from 'yup';
 import { QueryPipe } from 'src/utils/pipes/query.pipe';
-import { BaseQuery } from 'src/interfaces/request.interface';
+import type { BaseQuery } from 'src/interfaces/request.interface';
+import { type CommunityMembersAttributes } from 'src/models/communitymember';
+import { FileValidationPipe } from 'src/utils/pipes/file.pipe';
+import { SUPPORTED_IMAGE_TYPE } from 'src/constants/global.constant';
+import { UpdateCommunityDto } from './dto/update.dto';
 
 @Controller('community')
 export class CommunityController extends BaseController {
@@ -353,5 +360,137 @@ export class CommunityController extends BaseController {
         limit,
       },
     );
+  }
+
+  @Get(':id')
+  @HttpCode(200)
+  public async findById(
+    @Param('id', ParseIntPipe) id: number,
+    @UserMe('id') userId: string,
+  ) {
+    const community = await this.communityService.findDetailById(id, userId);
+    if (!community) throw new NotFoundException('community not found');
+
+    return this.sendResponseBody({
+      message: 'OK',
+      code: 200,
+      data: community,
+    });
+  }
+
+  @Put(':id')
+  @HttpCode(200)
+  @UseGuards(
+    new RateLimitGuard({
+      windowMs: 5 * 60 * 1000,
+      max: 10,
+      message: 'Too many requests from this IP, please try again in 5 minutes.',
+    }),
+  )
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: {
+        fileSize: 2 * 1024 * 1024, // 2mb
+      },
+    }),
+  )
+  public async updateCommunity(
+    @CommunityContext()
+    {
+      community,
+      communityMember,
+    }: {
+      community: CommunityAttributes;
+      communityMember: CommunityMembersAttributes;
+    },
+    @Body() payload: any,
+    @UploadedFile(
+      new FileValidationPipe({
+        mimetype: yup
+          .string()
+          .oneOf([...SUPPORTED_IMAGE_TYPE], 'unsupported file')
+          .required('mimetype is required'),
+        size: yup
+          .number()
+          .max(2 * 1024 * 1024, 'max size 2mb')
+          .required('size is required'),
+      }),
+    )
+    rawFile: Express.Multer.File | null,
+  ) {
+    if (!community) throw new NotFoundException('community not found');
+    if (!communityMember?.role || communityMember?.role === 'member')
+      throw new ForbiddenException('cannot update community');
+
+    const { name, description } =
+      await this.communityValidation.validateUpdateCommunity(payload, {
+        name: community.name,
+        description: community.description,
+      });
+
+    if (
+      community.name !== name &&
+      (await this.communityService.findOneByName(name))
+    )
+      throw new ConflictException('name already exist');
+
+    const transaction = await this.sequelize.transaction();
+    const payloadData = new UpdateCommunityDto({
+      name,
+      description,
+      imageUrl: community.imageUrl,
+      imageId: community.imageId,
+    });
+    let uploadedImage: string | null = null;
+    try {
+      if (rawFile) {
+        const {
+          file: { buffer, originalname },
+        } = await this.communityValidation.validateCreateCommunityImage({
+          file: rawFile,
+        });
+        const upload = await this.imagekitService.uploadFile({
+          file: buffer,
+          fileName: originalname,
+          folder: COMMUNITY_IMAGE_FOLDER,
+          useUniqueFileName: true,
+        });
+        if (!upload) throw new BadGatewayException('failed to upload file');
+
+        uploadedImage = upload.fileId;
+        payloadData.updateImage(upload.url, upload.fileId);
+      }
+
+      const result =
+        (
+          (await this.communityService.updateData(community.id, payloadData, {
+            returning: [
+              'id',
+              'name',
+              'description',
+              'imageUrl',
+              'imageId',
+              'owner',
+              'isDiscordServer',
+              'createdAt',
+              'updatedAt',
+            ],
+            transaction,
+          })) as any
+        )?.[1]?.[0] ?? null;
+
+      await transaction.commit();
+      this.imagekitService.bulkDelete([community.imageId]);
+      return this.sendResponseBody({
+        message: 'successfully updated',
+        code: 200,
+        data: result,
+      });
+    } catch (err) {
+      await transaction.rollback();
+      if (uploadedImage && uploadedImage !== community.imageId)
+        this.imagekitService.bulkDelete([uploadedImage]);
+      throw err;
+    }
   }
 }

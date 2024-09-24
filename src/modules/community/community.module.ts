@@ -20,10 +20,11 @@ import { DiscordModule } from '../discord/discord.module';
     SequelizeModule.forFeature([Community]),
     ThirdPartyModule,
     CommunityMemberModule,
-    DiscordModule
+    DiscordModule,
   ],
   providers: [CommunityService, CommunityValidation],
   controllers: [CommunityController],
+  exports: [CommunityService],
 })
 export class CommunityModule implements NestModule {
   public configure(consumer: MiddlewareConsumer) {
@@ -31,6 +32,9 @@ export class CommunityModule implements NestModule {
       .apply(...USER_VERIFIED_MIDDLEWARE)
       .forRoutes(CommunityController)
       .apply(CommunityAccessMiddleware)
-      .forRoutes({ path: '/community/:id', method: RequestMethod.DELETE });
+      .forRoutes(
+        { path: '/community/:id', method: RequestMethod.DELETE },
+        { path: '/community/:id', method: RequestMethod.PUT },
+      );
   }
 }

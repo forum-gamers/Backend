@@ -46,6 +46,9 @@ import { CreateUserPreferenceDto } from '../userPreference/dto/create.dto';
 import { plainToInstance } from 'class-transformer';
 import { PostResponse } from './dto/postResponse.dto';
 import { type UserAttributes } from 'src/models/user';
+import * as yup from 'yup';
+import { QueryPipe } from 'src/utils/pipes/query.pipe';
+import type { BaseQuery } from 'src/interfaces/request.interface';
 
 @Controller('post')
 export class PostController extends BaseController {
@@ -390,6 +393,43 @@ export class PostController extends BaseController {
         limit,
       },
     );
+    return this.sendResponseBody(
+      {
+        message: 'OK',
+        code: 200,
+        data: datas,
+      },
+      {
+        totalData,
+        totalPage: Math.ceil(totalData / limit),
+        page,
+        limit,
+      },
+    );
+  }
+
+  @Get('community/:id')
+  @HttpCode(200)
+  public async getCommunityPost(
+    @UserMe('id') userId: string,
+    @Param('id', ParseIntPipe) communityId: number,
+    @Query(
+      new QueryPipe(1, 15, {
+        q: yup.string().optional(),
+      }),
+    )
+    { page, limit, q }: BaseQuery & { q?: string },
+  ) {
+    const { datas, totalData } = await this.postService.findByCommunityId(
+      communityId,
+      userId,
+      {
+        page,
+        limit,
+        q,
+      },
+    );
+
     return this.sendResponseBody(
       {
         message: 'OK',

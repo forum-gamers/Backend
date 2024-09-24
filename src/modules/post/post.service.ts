@@ -17,6 +17,7 @@ import { validate } from 'class-validator';
 import { PostResponse } from './dto/postResponse.dto';
 import { QueryParamsDto } from 'src/utils/dto/pagination.dto';
 import { BlockPostDto } from '../admin/dto/blockPost.dto';
+import { BaseQuery } from 'src/interfaces/request.interface';
 
 @Injectable()
 export class PostService {
@@ -893,5 +894,141 @@ export class PostService {
       { blockReason: null, blockedBy: null, isBlocked: false },
       { ...opts, where: { id } },
     );
+  }
+
+  public async findByCommunityId(
+    communityId: number,
+    userId: string,
+    { q, page, limit }: BaseQuery & { q?: string },
+  ) {
+    const bind: any[] = [communityId, userId, limit, (page - 1) * limit];
+    if (q) bind.push(q);
+
+    const [{ totalData, datas } = { totalData: 0, datas: [] }] =
+      await this.sequelize.query<PostResponseQueryDB>(
+        `WITH filtered_posts AS (
+        SELECT 
+          p."id",
+          p."userId",
+          u."username",
+          u."imageUrl" AS "userImageUrl",
+          u."bio" AS "userBio",
+          u."backgroundImageUrl" AS "userBackgroundImageUrl",
+          u."createdAt" AS "userCreatedAt",
+          ${
+            !!q
+              ? `COALESCE(
+          ts_headline('english', p.text, plainto_tsquery('english', $5), 'StartSel = <b>, StopSel = </b>'),
+          ts_headline('indonesian', p.text, plainto_tsquery('indonesian', $5), 'StartSel = <b>, StopSel = </b>')
+        ) AS text`
+              : 'p.text'
+          },
+          p."allowComment",
+          p."createdAt",
+          p."updatedAt",
+          p."editedText",
+          p."privacy",
+          p."communityId",
+          COALESCE(
+            (SELECT json_agg(
+              json_build_object(
+                'fileId', pm."fileId",
+                'url', pm."url",
+                'type', pm."type"
+              )
+            ) 
+            FROM "PostMedia" pm 
+            WHERE pm."postId" = p."id"),
+            '[]'::json
+          ) AS "medias",
+          p."totalLike" AS "countLike",
+          p."countComment",
+          p."countShare",
+          p."countBookmark",
+          EXISTS (SELECT 1 FROM "PostBookmarks" l2 WHERE l2."postId" = p."id" AND l2."userId" = $2) AS "isBookmarked",
+          EXISTS (SELECT 1 FROM "PostLikes" l2 WHERE l2."postId" = p."id" AND l2."userId" = $2) AS "isLiked",
+          EXISTS (SELECT 1 FROM "PostShares" l2 WHERE l2."postId" = p."id" AND l2."userId" = $2) AS "isShared",
+          EXISTS (
+              SELECT 1
+              FROM "Follows" f
+              WHERE f."followerId" = $2 AND f."followedId" = p."userId"
+          ) AS "isFollowed",
+          CASE
+            WHEN p."communityId" IS NOT NULL THEN json_build_object(
+              'id', c."id",
+              'name', c."name",
+              'description', c."description",
+              'imageUrl', c."imageUrl",
+              'imageId', c."imageId",
+              'owner', c."owner",
+              'createdAt', c."createdAt",
+              'updatedAt', c."updatedAt"
+            )
+            ELSE NULL
+          END AS "community"
+        FROM "Posts" p
+        LEFT JOIN "Communities" c ON c."id" = p."communityId"
+        LEFT JOIN "Users" u ON u."id" = p."userId"
+        WHERE 
+          p."communityId" = $1 AND 
+          p."isBlocked" = false AND 
+          p."privacy" = 'public'
+          ${
+            !!q
+              ? `AND (
+              p."searchVector" @@ plainto_tsquery(\'english\', $5) OR 
+              p."searchVector" @@ plainto_tsquery(\'indonesian\', $5) OR
+              p."text" ILIKE '%' || $5 || '%' OR p."text" % $5
+            )`
+              : ''
+          }
+        ORDER BY 
+          ${!!q ? 'ts_rank("searchVector", plainto_tsquery(\'english\', $5)) DESC, ts_rank("searchVector", plainto_tsquery(\'indonesian\', $5)) DESC, ' : ''}
+          p."createdAt" DESC
+        LIMIT $3 OFFSET $4
+      ),
+      count_posts AS (
+        SELECT COUNT(*) AS count
+        FROM filtered_posts
+      )
+      SELECT 
+        (SELECT count FROM count_posts) AS "totalData",
+        COALESCE(json_agg(json_build_object(
+        'id', "id",
+        'userId', "userId",
+        'username', "username",
+        'userImageUrl', "userImageUrl",
+        'userBackgroundImageUrl', "userBackgroundImageUrl",
+        'userCreatedAt', "userCreatedAt",
+        'userBio', "userBio",
+        'text', "text",
+        'allowComment', "allowComment",
+        'editedText', "editedText",
+        'createdAt', "createdAt",
+        'updatedAt', "updatedAt",
+        'privacy', "privacy",
+        'medias', "medias",
+        'countLike', "countLike",
+        'countComment', "countComment",
+        'countShare', "countShare",
+        'countBookmark', "countBookmark",
+        'isLiked', "isLiked",
+        'isShared', "isShared",
+        'isBookmarked', "isBookmarked",
+        'isFollowed', "isFollowed",
+        'community', "community"
+      )), '[]'::json) as "datas"
+      FROM filtered_posts;`,
+        {
+          type: QueryTypes.SELECT,
+          bind,
+          benchmark: true,
+        },
+      );
+
+    return {
+      totalData: Number(totalData),
+      datas: plainToInstance(PostResponse, datas),
+    };
   }
 }

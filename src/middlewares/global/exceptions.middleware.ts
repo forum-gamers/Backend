@@ -8,7 +8,11 @@ import {
 import type { Response } from 'express';
 import { JsonWebTokenError, TokenExpiredError } from 'jsonwebtoken';
 import { BaseController } from '../../base/controller.base';
-import { HostNotFoundError, HostNotReachableError } from 'sequelize';
+import {
+  ConnectionError,
+  HostNotFoundError,
+  HostNotReachableError,
+} from 'sequelize';
 
 @Catch()
 export class AllExceptionsFilter
@@ -35,7 +39,8 @@ export class AllExceptionsFilter
 
     if (
       exception instanceof HostNotFoundError ||
-      exception instanceof HostNotReachableError
+      exception instanceof HostNotReachableError ||
+      exception instanceof ConnectionError
     ) {
       status = HttpStatus.GATEWAY_TIMEOUT;
       message = 'server connection lost';

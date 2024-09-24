@@ -36,6 +36,10 @@ export class GetCommunityDto {
   @Transform(({ value }) => Number(value))
   public totalPost: number;
 
+  @IsInt()
+  @Transform(({ value }) => Number(value))
+  public totalEvent: number;
+
   @IsString()
   public createdAt: string;
 

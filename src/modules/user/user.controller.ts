@@ -10,6 +10,7 @@ import {
   HttpCode,
   NotFoundException,
   Param,
+  ParseIntPipe,
   ParseUUIDPipe,
   Patch,
   Post,
@@ -51,6 +52,8 @@ import {
   DiscordProfile,
   type DiscordProfileAttributes,
 } from 'src/models/discordprofile';
+import { QueryPipe } from 'src/utils/pipes/query.pipe';
+import { BaseQuery } from 'src/interfaces/request.interface';
 
 @Controller('user')
 export class UserController extends BaseController {
@@ -591,5 +594,36 @@ export class UserController extends BaseController {
       await transaction.rollback();
       throw err;
     }
+  }
+
+  @Get('community/:id')
+  @HttpCode(200)
+  public async getCommunityMember(
+    @Param('id', ParseIntPipe) communityId: number,
+    @UserMe('id') userId: string,
+    @Query(new QueryPipe(1, 10)) { page, limit }: BaseQuery,
+  ) {
+    const { datas, totalData } = await this.userService.findUserCommunity(
+      communityId,
+      userId,
+      {
+        page,
+        limit,
+      },
+    );
+
+    return this.sendResponseBody(
+      {
+        code: 200,
+        message: 'OK',
+        data: datas,
+      },
+      {
+        page,
+        limit,
+        totalData,
+        totalPage: Math.ceil(totalData / limit),
+      },
+    );
   }
 }

@@ -1,6 +1,7 @@
 import { DataTypes } from 'sequelize';
-import { Table, Model, Column, HasOne } from 'sequelize-typescript';
+import { Table, Model, Column, HasOne, HasMany } from 'sequelize-typescript';
 import { DiscordProfile } from './discordprofile';
+import { CommunityEvent } from './communityevent';
 
 export interface UserAttributes {
   id: string;
@@ -179,4 +180,7 @@ export class User
 
   @HasOne(() => DiscordProfile, 'userId')
   public discordProfile?: DiscordProfile;
+
+  @HasMany(() => CommunityEvent, 'createdBy')
+  public communityEvents?: CommunityEvent[];
 }

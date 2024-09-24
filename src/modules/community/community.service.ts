@@ -2,14 +2,20 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Community, type CommunityAttributes } from 'src/models/community';
 import { CreateCommunityDto } from './dto/create.dto';
-import { type DestroyOptions, type CreateOptions, QueryTypes } from 'sequelize';
+import {
+  type DestroyOptions,
+  type CreateOptions,
+  QueryTypes,
+  type UpdateOptions,
+} from 'sequelize';
 import { CommunityMembers } from 'src/models/communitymember';
 import { User } from 'src/models/user';
 import { Sequelize } from 'sequelize-typescript';
 import { BaseQuery } from 'src/interfaces/request.interface';
-import { IGetCommunityDBResponse } from './community.interface';
+import type { IGetCommunityDBResponse } from './community.interface';
 import { plainToInstance } from 'class-transformer';
 import { GetCommunityDto } from './dto/get.dto';
+import { UpdateCommunityDto } from './dto/update.dto';
 
 @Injectable()
 export class CommunityService {
@@ -94,6 +100,16 @@ export class CommunityService {
             c.owner,
             (SELECT COUNT(*) FROM "CommunityMembers" WHERE "communityId" = c.id) AS "totalMember",
             (SELECT COUNT(*) FROM "Posts" WHERE "communityId" = c.id) AS "totalPost",
+            (SELECT COUNT(*) 
+              FROM "CommunityEvents" 
+              WHERE "communityId" = c.id
+              AND ("isPublic" = true OR 
+                    EXISTS (SELECT 1 FROM "CommunityMembers" 
+                            WHERE "userId" = $3
+                            AND "communityId" = c.id))) AS "totalEvent",
+            COALESCE(
+              (SELECT role FROM "CommunityMembers" WHERE "userId" = $3 AND "communityId" = c.id) , NULL
+            ) AS role,
             c."createdAt",
             c."updatedAt",
             c."searchVectorName",
@@ -133,11 +149,13 @@ export class CommunityService {
             "totalPost",
             "createdAt",
             "updatedAt",
+            role,
+            "totalEvent",
             "isMember"
           FROM filtered_communities
           ORDER BY 
             ${q ? 'ts_rank("searchVectorName", plainto_tsquery(\'english\', $4)) DESC, ts_rank("searchVectorDescription", plainto_tsquery(\'english\', $4)) DESC,' : ''}
-            CASE WHEN "isMember" THEN 1 ELSE 0 END,
+            CASE WHEN "isMember" THEN 0 ELSE 1 END,
             "createdAt" DESC
           LIMIT $2 OFFSET $1
         )
@@ -155,6 +173,8 @@ export class CommunityService {
               'totalMember', "totalMember",
               'totalPost', "totalPost",
               'createdAt', "createdAt",
+              'totalEvent', "totalEvent",
+              'role', role,
               'updatedAt', "updatedAt",
               'isMember', "isMember"
             )),
@@ -173,5 +193,51 @@ export class CommunityService {
       datas: plainToInstance(GetCommunityDto, datas),
       totalData: Number(totalData),
     };
+  }
+
+  public async findDetailById(communityId: number, userId: string | null) {
+    const [result] = await this.sequelize.query<GetCommunityDto>(
+      `SELECT c.id, c.name, c.description, c."imageUrl", c."imageId", c."isDiscordServer", c.owner, c."createdAt", c."updatedAt", 
+      (SELECT COUNT(*) FROM "CommunityMembers" WHERE "communityId" = c.id) AS "totalMember",
+      (SELECT COUNT(*) FROM "Posts" WHERE "communityId" = c.id) AS "totalPost",
+      (SELECT COUNT(*) 
+        FROM "CommunityEvents" 
+        WHERE "communityId" = c.id
+        AND ("isPublic" = true OR 
+              EXISTS (SELECT 1 FROM "CommunityMembers" 
+                      WHERE "userId" = $2
+                      AND "communityId" = c.id))) AS "totalEvent",
+      CASE
+        WHEN EXISTS (
+          SELECT 1 FROM "CommunityMembers"
+          WHERE "userId" = $2 AND "communityId" = c.id
+        ) THEN true
+        ELSE false
+        END AS "isMember",
+      (SELECT role FROM "CommunityMembers" WHERE "userId" = $2 AND "communityId" = c.id) AS "role"
+      FROM "Communities" c
+      WHERE c.id = $1
+      LIMIT 1;
+      `,
+      {
+        type: QueryTypes.SELECT,
+        benchmark: true,
+        bind: [communityId, userId],
+      },
+    );
+    if (!result) return null;
+
+    return plainToInstance(GetCommunityDto, result);
+  }
+
+  public async updateData(
+    id: number,
+    data: UpdateCommunityDto,
+    opts?: Omit<UpdateOptions<CommunityAttributes>, 'where'>,
+  ) {
+    return await this.communityModel.update(data, {
+      ...opts,
+      where: { id },
+    });
   }
 }
