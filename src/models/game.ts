@@ -7,6 +7,7 @@ export interface GameAttributes {
   code: string;
   imageUrl: string;
   imageId: string;
+  minPlayer: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -96,4 +97,23 @@ export class Game
     type: DataTypes.DATE,
   })
   public updatedAt: Date;
+
+  @Column({
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 1,
+    validate: {
+      min: {
+        args: [1],
+        msg: 'minPlayer must be greater than 0',
+      },
+      notEmpty: {
+        msg: 'minPlayer is required',
+      },
+      notNull: {
+        msg: 'minPlayer is required',
+      },
+    },
+  })
+  public minPlayer: number;
 }
