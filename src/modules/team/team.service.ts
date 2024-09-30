@@ -92,14 +92,14 @@ export class TeamService {
               ELSE false 
             END AS "isJoined",
             u.bio AS "ownerBio"
-            FROM "Teams" t
-            LEFT JOIN "TeamMembers" tm 
-              ON t."id" = tm."teamId" 
-              AND tm."userId" = $3
-            INNER JOIN "Games" g ON t."gameId" = g.id
-            INNER JOIN "Users" u ON t."owner" = u.id
-            WHERE t."isPublic" = true OR (t."isPublic" = false AND tm."userId" IS NOT NULL)
-            ${q ? `AND t."name" ILIKE '%' || $4 || '%' OR t.description ILIKE '%' || $4 || '%' OR g.name ILIKE '%' || $4 || '%'` : ''}
+          FROM "Teams" t
+          LEFT JOIN "TeamMembers" tm 
+            ON t."id" = tm."teamId" 
+            AND tm."userId" = $3
+          INNER JOIN "Games" g ON t."gameId" = g.id
+          INNER JOIN "Users" u ON t."owner" = u.id
+          WHERE (t."isPublic" = true OR (t."isPublic" = false AND tm."userId" IS NOT NULL))
+          ${q ? ` AND t."name" ILIKE '%' || $4 || '%' OR t.description ILIKE '%' || $4 || '%' OR g.name ILIKE '%' || $4 || '%'` : ''}
         ),
         filtered_teams_count AS (
           SELECT COUNT(*) AS total FROM filtered_teams
