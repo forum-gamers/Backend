@@ -11,13 +11,21 @@ export class TeamValidation extends BaseValidation {
         name: yup.string().required(),
         description: yup
           .string()
+          .transform((_, v: string) => (!!v ? v?.trim() : v))
           .test(
             'is valid text',
             'description must be between 3 and 160 characters and can only contain letters, numbers, and basic punctuation.',
             (val) =>
               !val || /^(?=.*\S)[a-zA-Z0-9.,!?'"()\-\n ]{3,160}$/.test(val),
           )
-          .nullable(),
+          .nullable()
+          .optional(),
+        isPublic: yup
+          .boolean()
+          .transform(Boolean)
+          .default(true)
+          .nullable()
+          .optional(),
       }),
       data,
     );

@@ -1,3 +1,4 @@
+import type { GameAttributes } from 'src/models/game';
 import { v4 } from 'uuid';
 
 export class CreateTeamDto {
@@ -8,11 +9,23 @@ export class CreateTeamDto {
   imageId?: string;
   id = v4();
   totalMember = 1;
+  gameId: number;
+  maxMember: number;
+  isPublic = true;
 
-  constructor({ name, description, owner }: CreateTeamDtoProps) {
+  constructor({
+    name,
+    description,
+    owner,
+    game,
+    isPublic,
+  }: CreateTeamDtoProps) {
     this.name = name;
     this.description = description;
     this.owner = owner;
+    this.gameId = game.id;
+    this.maxMember = game.minPlayer;
+    this.isPublic = isPublic;
   }
 
   public addImage(imageUrl: string, imageId: string) {
@@ -25,4 +38,6 @@ export interface CreateTeamDtoProps {
   name: string;
   description?: string;
   owner: string;
+  game: GameAttributes;
+  isPublic: boolean;
 }

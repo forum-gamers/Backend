@@ -1,6 +1,7 @@
 import { DataTypes } from 'sequelize';
-import { Column, Model, Table } from 'sequelize-typescript';
+import { BelongsTo, Column, Model, Table } from 'sequelize-typescript';
 import type { TeamRole } from 'src/interfaces/model.interface';
+import { User } from './user';
 
 export interface TeamMemberAttributes {
   id: number;
@@ -81,4 +82,7 @@ export class TeamMember
     defaultValue: 'member',
   })
   public role: TeamRole;
+
+  @BelongsTo(() => User, 'userId')
+  public user: User;
 }

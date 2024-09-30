@@ -53,7 +53,7 @@ import {
   type DiscordProfileAttributes,
 } from 'src/models/discordprofile';
 import { QueryPipe } from 'src/utils/pipes/query.pipe';
-import { BaseQuery } from 'src/interfaces/request.interface';
+import type { BaseQuery } from 'src/interfaces/request.interface';
 
 @Controller('user')
 export class UserController extends BaseController {
@@ -158,8 +158,6 @@ export class UserController extends BaseController {
       user.isBlocked
     )
       throw new UnauthorizedException('invalid credentials');
-
-    if (!user.isVerified) throw new UnauthorizedException('user not verified');
 
     return this.sendResponseBody({
       code: 200,

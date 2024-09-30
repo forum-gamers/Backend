@@ -13,12 +13,14 @@ import { USER_VERIFIED_MIDDLEWARE } from 'src/constants/global.constant';
 import { TeamValidation } from './team.validation';
 import { ThirdPartyModule } from 'src/third-party/third-party.module';
 import { UserOnly } from 'src/middlewares/user/userOnly.middleware';
+import { GameModule } from '../game/game.module';
 
 @Module({
   imports: [
     SequelizeModule.forFeature([Team]),
     TeamMemberModule,
     ThirdPartyModule,
+    GameModule,
   ],
   providers: [TeamService, TeamValidation],
   controllers: [TeamController],
@@ -32,7 +34,7 @@ export class TeamModule implements NestModule {
       .apply(UserOnly)
       .forRoutes(
         {
-          path: '/team',
+          path: '/team/:gameId',
           method: RequestMethod.POST,
         },
         {

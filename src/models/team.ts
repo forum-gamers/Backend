@@ -1,5 +1,6 @@
 import { DataTypes } from 'sequelize';
-import { Column, Model, Table } from 'sequelize-typescript';
+import { Column, HasMany, Model, Table } from 'sequelize-typescript';
+import { TeamMember } from './teammember';
 
 export interface TeamAttributes {
   id: string;
@@ -8,7 +9,9 @@ export interface TeamAttributes {
   imageUrl?: string;
   imageId?: string;
   description?: string;
+  gameId: number;
   totalMember: number;
+  isPublic: boolean;
   maxMember: number;
   createdAt: Date;
   updatedAt: Date;
@@ -71,6 +74,43 @@ export class Team
   public imageId?: string;
 
   @Column({
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: {
+        tableName: 'Games',
+      },
+      key: 'id',
+    },
+    onDelete: 'CASCADE',
+    onUpdate: 'CASCADE',
+    validate: {
+      notEmpty: {
+        msg: 'gameId cannot be empty',
+      },
+      notNull: {
+        msg: 'gameId cannot be empty',
+      },
+    },
+  })
+  public gameId: number;
+
+  @Column({
+    allowNull: false,
+    type: DataTypes.BOOLEAN,
+    defaultValue: true,
+    validate: {
+      notEmpty: {
+        msg: 'isPublic cannot be empty',
+      },
+      notNull: {
+        msg: 'isPublic cannot be empty',
+      },
+    },
+  })
+  public isPublic: boolean;
+
+  @Column({
     allowNull: true,
     type: DataTypes.TEXT,
   })
@@ -101,4 +141,7 @@ export class Team
     defaultValue: 10,
   })
   public maxMember: number;
+
+  @HasMany(() => TeamMember, 'teamId')
+  public members: TeamMember[];
 }

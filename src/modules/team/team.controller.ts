@@ -15,6 +15,9 @@ import {
   ForbiddenException,
   Patch,
   ConflictException,
+  ParseIntPipe,
+  Get,
+  Query,
 } from '@nestjs/common';
 import { BaseController } from 'src/base/controller.base';
 import { TeamService } from './team.service';
@@ -35,6 +38,10 @@ import { TeamFindByIdLocked } from './pipes/findById.locked.pipe';
 import { type TeamAttributes } from 'src/models/team';
 import { UserFindByIdPipe } from '../user/pipes/findById.pipe';
 import { type UserAttributes } from 'src/models/user';
+import { GameFindById } from '../game/pipes/findById.pipe';
+import { type GameAttributes } from 'src/models/game';
+import { QueryPipe } from 'src/utils/pipes/query.pipe';
+import type { BaseQuery } from 'src/interfaces/request.interface';
 
 @Controller('team')
 export class TeamController extends BaseController {
@@ -48,7 +55,7 @@ export class TeamController extends BaseController {
     super();
   }
 
-  @Post()
+  @Post(':gameId')
   @HttpCode(201)
   @UseGuards(
     new RateLimitGuard({
@@ -66,7 +73,7 @@ export class TeamController extends BaseController {
   )
   public async createTeam(
     @Body() payload: any,
-    @UserMe('id') userId: string,
+    @UserMe() user: UserAttributes,
     @UploadedFile(
       new FileValidationPipe({
         required: { value: true, errorMessage: 'file is required' },
@@ -81,18 +88,23 @@ export class TeamController extends BaseController {
       }),
     )
     file: Express.Multer.File | null,
+    @Param('gameId', ParseIntPipe, GameFindById)
+    game: (GameAttributes & { dataValues: GameAttributes }) | null,
   ) {
-    const { name, description } =
+    if (!game) throw new NotFoundException('game not found');
+    const { name, description, isPublic } =
       await this.teamValidation.validateCreateTeam(payload);
 
-    if ((await this.teamService.countByOwner(userId)) >= 5)
+    if ((await this.teamService.countByOwner(user.id)) >= 5)
       throw new HttpException('payment required', HttpStatus.PAYMENT_REQUIRED);
 
     const transaction = await this.sequelize.transaction();
     const data = new CreateTeamDto({
       name,
       description,
-      owner: userId,
+      owner: user.id,
+      game,
+      isPublic,
     });
     if (file) {
       const { url, fileId } = await this.imagekitService.uploadFile({
@@ -108,8 +120,9 @@ export class TeamController extends BaseController {
       await this.teamMemberService.create(
         new CreateTeamMemberDto({
           teamId: team.id,
-          userId,
+          userId: user.id,
           status: true,
+          role: 'owner',
         }),
         { transaction },
       );
@@ -118,7 +131,18 @@ export class TeamController extends BaseController {
       return this.sendResponseBody({
         message: 'OK',
         code: 201,
-        data: team.dataValues,
+        data: {
+          team: team.dataValues,
+          game: game.dataValues,
+          user: {
+            id: user.id,
+            username: user.username,
+            imageUrl: user.imageUrl,
+            bio: user.bio,
+            backgroundUrl: user.backgroundImageUrl,
+            createdAt: user.createdAt,
+          },
+        },
       });
     } catch (err) {
       await transaction.rollback();
@@ -175,7 +199,6 @@ export class TeamController extends BaseController {
       user.id,
     );
     if (!member) throw new NotFoundException('member not found');
-
     if (member.status) throw new ConflictException('member already verified');
 
     const transaction = await this.sequelize.transaction();
@@ -197,5 +220,80 @@ export class TeamController extends BaseController {
       await transaction.rollback();
       throw err;
     }
+  }
+
+  @Delete(':teamId/:userId')
+  @HttpCode(200)
+  public async removeMember(
+    @Param('teamId', ParseUUIDPipe, TeamFindByIdLocked)
+    team: TeamAttributes | null,
+    @Param('userId', ParseUUIDPipe, UserFindByIdPipe)
+    user: UserAttributes | null,
+    @UserMe('id') userId: string,
+  ) {
+    if (!team) throw new NotFoundException('team not found');
+    if (!user) throw new NotFoundException('user not found');
+
+    if (team.owner !== userId) throw new ForbiddenException('forbidden');
+    const member = await this.teamMemberService.findByTeamIdAndUserId(
+      team.id,
+      user.id,
+    );
+    if (!member) throw new NotFoundException('member not found');
+
+    await this.teamMemberService.deleteByTeamIdAndUserId(team.id, user.id);
+
+    return this.sendResponseBody({
+      message: 'OK',
+      code: 200,
+    });
+  }
+
+  @Get()
+  @HttpCode(200)
+  public async getTeams(
+    @Query(
+      new QueryPipe(1, 10, {
+        q: yup.string().optional(),
+      }),
+    )
+    { page, limit, q = null }: BaseQuery & { q?: string },
+    @UserMe('id') userId: string,
+  ) {
+    const { datas = [], totalData = 0 } = await this.teamService.findAll(
+      { page, limit, q },
+      userId,
+    );
+
+    return this.sendResponseBody(
+      {
+        message: 'OK',
+        code: 200,
+        data: datas,
+      },
+      {
+        totalData,
+        totalPage: Math.ceil(totalData / limit),
+        page,
+        limit,
+      },
+    );
+  }
+
+  @Get(':teamId')
+  @HttpCode(200)
+  public async getTeamById(
+    @Param('teamId', ParseUUIDPipe)
+    teamId: string,
+    @UserMe('id') userId: string,
+  ) {
+    const data = await this.teamService.findDetailById(teamId, userId);
+    if (!data) throw new NotFoundException('team not found');
+
+    return this.sendResponseBody({
+      message: 'OK',
+      code: 200,
+      data,
+    });
   }
 }

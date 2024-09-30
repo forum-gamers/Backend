@@ -18,28 +18,28 @@
     "code": "PUBG",
     "imageId": "66bd5256e375273f608693f6",
     "imageUrl": "https://ik.imagekit.io/d2jwx074f/game-image/pubg.jpeg?updatedAt=1723683478402",
-    "minPlayer": 1
+    "minPlayer": 4
   },
   {
     "name": "Clash of Clans",
     "code": "COC",
     "imageId": "66bd5369e375273f608bcade",
     "imageUrl": "https://ik.imagekit.io/d2jwx074f/game-image/clash-of-clans.jpg?updatedAt=1723683702126",
-    "minPlayer": 1
+    "minPlayer": 10
   },
   {
     "name": "Clash Royale",
     "code": "CRA",
     "imageId": "66bd530ce375273f60892924",
     "imageUrl": "https://ik.imagekit.io/d2jwx074f/game-image/clash-royale.jpg?updatedAt=1723683597068",
-    "minPlayer": 2
+    "minPlayer": 10
   },
   {
     "name": "Call of Duty: Modern Warfare",
     "code": "CODMW",
     "imageId": "66bd53f4e375273f608ce2e4",
     "imageUrl": "https://ik.imagekit.io/d2jwx074f/game-image/cod-warfare.jpg?updatedAt=1723683828563",
-    "minPlayer": 1
+    "minPlayer": 5
   },
   {
     "name": "Candy Crush Saga",
@@ -53,7 +53,7 @@
     "code": "CODM",
     "imageId": "66bd54dde375273f608f8a62",
     "imageUrl": "https://ik.imagekit.io/d2jwx074f/game-image/codm.jpg?updatedAt=1723684061253",
-    "minPlayer": 1
+    "minPlayer": 5
   },
   {
     "name": "Valorant",
@@ -88,7 +88,7 @@
     "code": "Fn",
     "imageId": "66bd56b1e375273f609c5b40",
     "imageUrl": "https://ik.imagekit.io/d2jwx074f/game-image/Fortnite.jpg?updatedAt=1723684529590",
-    "minPlayer": 1
+    "minPlayer": 4
   },
   {
     "name": "Genshin Impact",
@@ -102,7 +102,7 @@
     "code": "AMONGUS",
     "imageId": "66bd574de375273f609e8527",
     "imageUrl": "https://ik.imagekit.io/d2jwx074f/game-image/among-us.jpg?updatedAt=1723684685878",
-    "minPlayer": 4
+    "minPlayer": 8
   },
   {
     "name": "Minecraft",
