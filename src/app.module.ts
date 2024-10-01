@@ -71,6 +71,10 @@ import { DiscordProfile } from './models/discordprofile';
 import { DiscordModule } from './modules/discord/discord.module';
 import { CommunityEvent } from './models/communityevent';
 import { CommunityEventModule } from './modules/communityEvent/communityEvent.module';
+import { TeamAchievement } from './models/teamachievement';
+import { Achievement } from './models/achievement';
+import { Tournament } from './models/tournament';
+import { UserAchievement } from './models/userachievement';
 const conf = require('../config/config.js');
 const environment = process.env.NODE_ENV ?? 'development';
 
@@ -104,15 +108,13 @@ const environment = process.env.NODE_ENV ?? 'development';
         },
       },
     }),
-    ConfigModule.forRoot({
-      isGlobal: true,
-    }),
+    ConfigModule.forRoot({ isGlobal: true }),
     SequelizeModule.forRoot({
-      username: conf[environment].username,
-      password: conf[environment].password,
-      database: conf[environment].database,
-      dialect: conf[environment].dialect,
-      uri: conf[environment].uri,
+      username: conf?.[environment]?.username,
+      password: conf?.[environment]?.password,
+      database: conf?.[environment]?.database,
+      dialect: conf?.[environment]?.dialect,
+      uri: conf?.[environment]?.uri,
       logging: environment !== 'production',
       pool: {
         idle: 5,
@@ -146,6 +148,10 @@ const environment = process.env.NODE_ENV ?? 'development';
         Transaction,
         DiscordProfile,
         CommunityEvent,
+        Achievement,
+        TeamAchievement,
+        Tournament,
+        UserAchievement,
       ],
       synchronize: environment !== 'production',
       timezone: '+07:00',
