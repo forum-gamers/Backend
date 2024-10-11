@@ -23,5 +23,6 @@ module.exports = {
         rejectUnauthorized: true,
       },
     },
+    uri: process.env.PROD_DATABASE_URL,
   },
 };

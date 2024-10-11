@@ -41,3 +41,9 @@ export type Transaction_Status =
   | 'settlement'
   | 'deny'
   | 'expire';
+
+export type TournamentStatus =
+  | 'preparation'
+  | 'started'
+  | 'finished'
+  | 'cancel';

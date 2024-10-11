@@ -1,5 +1,6 @@
 import { DataTypes } from 'sequelize';
 import { Column, Model, Table } from 'sequelize-typescript';
+import type { TournamentStatus } from 'src/interfaces/model.interface';
 
 export interface TournamentAttributes {
   id: number;
@@ -18,7 +19,10 @@ export interface TournamentAttributes {
   communityId?: number | null;
   location: string;
   tags: string[];
-  status: string;
+  status: TournamentStatus;
+  liveOn?: string | null;
+  isPublic: boolean;
+  moneyPool: number;
 }
 
 @Table<Model<TournamentAttributes, TournamentAttributes>>({
@@ -150,10 +154,10 @@ export class Tournament
 
   @Column({
     type: DataTypes.ENUM,
-    values: ['preparation', 'started', 'finished'],
+    values: ['preparation', 'started', 'finished', 'cancel'],
     defaultValue: 'preparation',
   })
-  public status: string;
+  public status: TournamentStatus;
 
   @Column({
     allowNull: false,
@@ -244,4 +248,33 @@ export class Tournament
     defaultValue: null,
   })
   public communityId?: number;
+
+  @Column({
+    allowNull: true,
+    type: DataTypes.STRING,
+    defaultValue: null,
+  })
+  public liveOn?: string | null;
+
+  @Column({
+    type: DataTypes.BOOLEAN,
+    defaultValue: true,
+    allowNull: false,
+  })
+  public isPublic: boolean;
+
+  @Column({
+    type: DataTypes.DECIMAL(15, 2),
+    defaultValue: 0,
+    allowNull: false,
+    validate: {
+      notEmpty: {
+        msg: 'moneyPool is required',
+      },
+      notNull: {
+        msg: 'moneyPool is required',
+      },
+    },
+  })
+  public moneyPool: number;
 }

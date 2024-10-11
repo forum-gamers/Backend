@@ -11,13 +11,13 @@ import {
 } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
 import { PostResponseQuery } from './dto/postResponseQuery.dto';
-import { PostResponseQueryDB } from './post.interface';
+import type { PostResponseQueryDB } from './post.interface';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import { PostResponse } from './dto/postResponse.dto';
 import { QueryParamsDto } from 'src/utils/dto/pagination.dto';
 import { BlockPostDto } from '../admin/dto/blockPost.dto';
-import { BaseQuery } from 'src/interfaces/request.interface';
+import type { BaseQuery } from 'src/interfaces/request.interface';
 
 @Injectable()
 export class PostService {

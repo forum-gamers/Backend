@@ -8,7 +8,7 @@
   "scripts": {
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
-    "start": "nest start",
+    "start": "NODE_ENV = production; NEST start",
     "dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "bun dist/main",
@@ -46,6 +46,7 @@
     "nest-winston": "^1.9.7",
     "node-cron": "^3.0.3",
     "nodemailer": "^6.9.14",
+    "pg": "^8.13.0",
     "pm2": "^5.4.2",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.1",

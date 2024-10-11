@@ -53,4 +53,5 @@ export enum TransactionType {
 export enum ITEM_ID {
   TOPUP_ITEM_ID = 'FGTP',
   TRANSACTION_MIDTRANS_FEE = 'FGMF',
+  PAYMENT_ITEM_ID = 'FGPY',
 }

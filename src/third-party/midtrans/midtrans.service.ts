@@ -1,7 +1,13 @@
 import 'dotenv/config';
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { type ChargeParameter, CoreApi, ItemDetail } from 'midtrans-client';
 import {
+  type ChargeParameter,
+  CoreApi,
+  EnablePayment,
+  ItemDetail,
+} from 'midtrans-client';
+import {
+  ChargeTopupProps,
   ChargeTopupViaBankProps,
   ChargeTopupViaEWalletProps,
 } from './midtrans.interface';
@@ -11,7 +17,10 @@ import {
   ITEM_ID,
 } from 'src/constants/transaction.constant';
 import { MidtransHelper } from './midtrans.helper';
-import { sha512 } from 'js-sha512';
+import type {
+  BankProvider,
+  PaymentProvider,
+} from 'src/interfaces/transaction.interface';
 
 @Injectable()
 export class MidtransService extends MidtransHelper {
@@ -21,7 +30,7 @@ export class MidtransService extends MidtransHelper {
     clientKey: process.env.MIDTRANS_CLIENT_KEY,
   });
 
-  public async chargeTopupViaBank({
+  private async chargeTopupViaBank({
     username,
     email,
     amount,
@@ -30,22 +39,12 @@ export class MidtransService extends MidtransHelper {
     if (!BANK_PROVIDERS.includes(bank))
       throw new BadRequestException('unsupported bank');
 
-    const item_details: ItemDetail[] = [
-      {
-        id: ITEM_ID.TOPUP_ITEM_ID,
-        price: amount,
-        quantity: 1,
-        name: 'Topup',
-      },
-    ];
-
-    if (amount < 100_000)
-      item_details.push({
-        id: ITEM_ID.TRANSACTION_MIDTRANS_FEE,
-        price: 4500,
-        quantity: 1,
-        name: 'Transaction Midtrans Fee',
-      });
+    const item_details: ItemDetail[] = this.generateItemDetails({
+      id: ITEM_ID.TOPUP_ITEM_ID,
+      price: amount,
+      quantity: 1,
+      name: 'Topup',
+    });
 
     const payload: ChargeParameter = {
       payment_type: 'bank_transfer',
@@ -68,7 +67,7 @@ export class MidtransService extends MidtransHelper {
     return await this.coreApi.charge(payload);
   }
 
-  public async chargeTopupViaEwallet({
+  private async chargeTopupViaEwallet({
     username,
     email,
     amount,
@@ -77,22 +76,12 @@ export class MidtransService extends MidtransHelper {
     if (!EWALLET_PROVIDERS.includes(provider))
       throw new BadRequestException('unsupported ewallet');
 
-    const item_details: ItemDetail[] = [
-      {
-        id: ITEM_ID.TOPUP_ITEM_ID,
-        price: amount,
-        quantity: 1,
-        name: 'Topup',
-      },
-    ];
-
-    if (amount < 100_000)
-      item_details.push({
-        id: ITEM_ID.TRANSACTION_MIDTRANS_FEE,
-        price: 4500,
-        quantity: 1,
-        name: 'Transaction Midtrans Fee',
-      });
+    const item_details: ItemDetail[] = this.generateItemDetails({
+      id: ITEM_ID.TOPUP_ITEM_ID,
+      price: amount,
+      quantity: 1,
+      name: 'Topup',
+    });
 
     const payload: ChargeParameter = {
       payment_type: provider,
@@ -112,13 +101,131 @@ export class MidtransService extends MidtransHelper {
     return await this.coreApi.charge(payload);
   }
 
-  public generateSignature(
-    orderId: string,
-    statusCode: string,
-    grossAmount: string,
+  public async chargeTopup(
+    type: PaymentProvider,
+    { username, email, amount }: ChargeTopupProps,
   ) {
-    return sha512(
-      orderId + statusCode + grossAmount + process.env.MIDTRANS_SERVER_KEY,
-    );
+    switch (true) {
+      case BANK_PROVIDERS.includes(type as BankProvider):
+        return await this.chargeTopupViaBank({
+          username,
+          email,
+          amount,
+          bank: type as BankProvider,
+        });
+      case EWALLET_PROVIDERS.includes(type as EnablePayment):
+        return await this.chargeTopupViaEwallet({
+          username,
+          email,
+          amount,
+          provider: type as EnablePayment,
+        });
+      default:
+        throw new BadRequestException('unsupported payment provider');
+    }
+  }
+
+  private async chargePaymentViaEwallet({
+    username,
+    email,
+    amount,
+    provider,
+    transactionName,
+  }: ChargeTopupViaEWalletProps & { transactionName: string }) {
+    if (!EWALLET_PROVIDERS.includes(provider))
+      throw new BadRequestException('unsupported ewallet');
+
+    const item_details: ItemDetail[] = this.generateItemDetails({
+      id: ITEM_ID.PAYMENT_ITEM_ID,
+      price: amount,
+      quantity: 1,
+      name: transactionName,
+    });
+
+    const payload: ChargeParameter = {
+      payment_type: provider,
+      transaction_details: {
+        gross_amount: item_details
+          .map(({ price }) => price)
+          .reduce((a, b) => a + b),
+        order_id: this.generateTransactionId('payment'),
+      },
+      customer_details: {
+        first_name: username,
+        email,
+      },
+      item_details,
+    };
+
+    return await this.coreApi.charge(payload);
+  }
+
+  private async chargePaymentViaBank({
+    username,
+    email,
+    amount,
+    bank,
+    transactionName,
+  }: ChargeTopupViaBankProps & { transactionName: string }) {
+    if (!BANK_PROVIDERS.includes(bank))
+      throw new BadRequestException('unsupported bank');
+
+    const item_details: ItemDetail[] = this.generateItemDetails({
+      id: ITEM_ID.PAYMENT_ITEM_ID,
+      price: amount,
+      quantity: 1,
+      name: transactionName,
+    });
+
+    const payload: ChargeParameter = {
+      payment_type: 'bank_transfer',
+      transaction_details: {
+        gross_amount: item_details
+          .map(({ price }) => price)
+          .reduce((a, b) => a + b),
+        order_id: this.generateTransactionId('payment'),
+      },
+      customer_details: {
+        first_name: username,
+        email,
+      },
+      item_details,
+      bank_transfer: {
+        bank,
+      },
+    };
+
+    return await this.coreApi.charge(payload);
+  }
+
+  public async chargePayment(
+    type: PaymentProvider,
+    {
+      username,
+      email,
+      amount,
+      transactionName,
+    }: ChargeTopupProps & { transactionName: string },
+  ) {
+    switch (true) {
+      case BANK_PROVIDERS.includes(type as BankProvider):
+        return await this.chargePaymentViaBank({
+          username,
+          email,
+          amount,
+          bank: type as BankProvider,
+          transactionName,
+        });
+      case EWALLET_PROVIDERS.includes(type as EnablePayment):
+        return await this.chargePaymentViaEwallet({
+          username,
+          email,
+          amount,
+          provider: type as EnablePayment,
+          transactionName,
+        });
+      default:
+        throw new BadRequestException('unsupported payment provider');
+    }
   }
 }

@@ -15,26 +15,31 @@ import { UserMe } from '../user/decorators/me.decorator';
 import { TransactionValidation } from './transaction.validation';
 import { RateLimitGuard } from 'src/middlewares/global/rateLimit.middleware';
 import {
-  BANK_PROVIDERS,
-  EWALLET_PROVIDERS,
   TransactionStatus,
   TransactionType,
 } from 'src/constants/transaction.constant';
 import { type UserAttributes } from 'src/models/user';
-import type { BankProvider } from 'src/interfaces/transaction.interface';
-import type { ChargeResp, EnablePayment } from 'midtrans-client';
+import type { ChargeResp } from 'midtrans-client';
 import { CreateTransactionDto } from './dto/create.dto';
 import { TransactionFindBySignaturePipe } from './pipes/findBySignature.locked.pipe';
 import { type TransactionAttributes } from 'src/models/transaction';
 import { WalletService } from '../wallet/wallet.service';
 import { Transaction } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
+import {
+  MINIMUM_FREE_ADMIN,
+  ORDER_ID_START_WITH,
+  ORDER_TYPES,
+} from 'src/third-party/midtrans/midtrans.constant';
+import { OrderType } from 'src/third-party/midtrans/midtrans.interface';
+import { TransactionHelper } from './transaction.helper';
 
 @Controller('transaction')
 export class TransactionController extends BaseController {
   constructor(
     private readonly transactionValidation: TransactionValidation,
     private readonly transactionService: TransactionService,
+    private readonly transactionHelper: TransactionHelper,
     private readonly midtransService: MidtransService,
     private readonly walletService: WalletService,
     private readonly sequelize: Sequelize,
@@ -65,27 +70,11 @@ export class TransactionController extends BaseController {
     )
       throw new ConflictException('You have an active top up transaction');
 
-    let charge: ChargeResp;
-    switch (true) {
-      case BANK_PROVIDERS.includes(paymentType as BankProvider):
-        charge = await this.midtransService.chargeTopupViaBank({
-          username: user.username,
-          email: user.email,
-          amount,
-          bank: paymentType as BankProvider,
-        });
-        break;
-      case EWALLET_PROVIDERS.includes(paymentType as EnablePayment):
-        charge = await this.midtransService.chargeTopupViaEwallet({
-          username: user.username,
-          email: user.email,
-          amount,
-          provider: paymentType as EnablePayment,
-        });
-        break;
-      default:
-        throw new ConflictException('Unsupported payment type');
-    }
+    const charge = await this.midtransService.chargeTopup(paymentType, {
+      username: user.username,
+      email: user.email,
+      amount,
+    });
 
     const transaction = await this.transactionService.create(
       new CreateTransactionDto({
@@ -97,27 +86,20 @@ export class TransactionController extends BaseController {
           charge.gross_amount,
         ),
         amount,
-        fee: amount < 100_000 ? 4500 : 0,
+        fee: amount < MINIMUM_FREE_ADMIN ? 4500 : 0,
         tax: 0,
         discount: 0,
         description: 'Topup wallet via ' + paymentType,
-        detail: amount < 100_000 ? '+ Midtrans Fee: 4500' : null,
+        detail: amount < MINIMUM_FREE_ADMIN ? '+ Midtrans Fee: 4500' : null,
       }),
     );
 
     return this.sendResponseBody({
       message: 'Topup transaction created',
-      data: {
-        orderId: charge.order_id,
-        grossAmount: +charge.gross_amount,
-        paymentType: charge.payment_type,
-        transactionId: transaction.dataValues.id,
-        permataVaNumber: charge.permata_va_number,
-        transactionStatus: charge.transaction_status,
-        statusMessage: charge.status_message,
-        actions: charge.actions ?? [],
-        vaNumbers: charge.va_numbers ?? [],
-      },
+      data: this.transactionHelper.generateTransactionResponse(
+        transaction.dataValues.id,
+        charge,
+      ),
       code: 201,
     });
   }
@@ -134,43 +116,43 @@ export class TransactionController extends BaseController {
     if (!payload.order_id)
       throw new BadRequestException('order id must supplied');
 
-    if (!payload.order_id.startsWith('FG'))
+    if (!payload.order_id.startsWith(ORDER_ID_START_WITH))
       throw new BadRequestException('invalid order id');
 
     const transaction = await this.sequelize.transaction();
     try {
       const splitted = payload.order_id.split('-');
-      switch (splitted[splitted.length - 1]) {
-        case 'tp':
-          {
-            const wallet = await this.walletService.findByUserId(
-              transactionData.userId,
-              { lock: Transaction.LOCK.UPDATE, transaction },
-            );
-            if (!wallet) throw new NotFoundException('wallet not found');
+      const orderType = splitted[splitted.length - 1] as OrderType;
+      if (!ORDER_TYPES.includes(orderType))
+        throw new BadRequestException('invalid order id');
 
-            if (payload.transaction_status === 'settlement')
-              await this.walletService.updateBalance(
-                transactionData.userId,
-                +wallet.balance + +transactionData.amount,
-                { transaction },
-              );
+      if (orderType === 'tp') {
+        const wallet = await this.walletService.findByUserId(
+          transactionData.userId,
+          { lock: Transaction.LOCK.UPDATE, transaction },
+        );
+        if (!wallet) throw new NotFoundException('wallet not found');
 
-            await this.transactionService.updateStatus(
-              transactionData.id,
-              TransactionStatus[payload.transaction_status] ??
-                TransactionStatus.FAILED,
-              { transaction },
-            );
-          }
-          break;
-        case 'py':
-          //TODO
-          break;
-        default:
-          throw new BadRequestException('invalid order id');
+        if (payload.transaction_status === 'settlement')
+          await this.walletService.updateBalance(
+            transactionData.userId,
+            +wallet.balance + +transactionData.amount,
+            { transaction },
+          );
       }
+
+      await this.transactionService.updateStatus(
+        transactionData.id,
+        TransactionStatus[payload.transaction_status] ??
+          TransactionStatus.FAILED,
+        { transaction },
+      );
+
       await transaction.commit();
+      return this.sendResponseBody({
+        message: 'success',
+        code: 200,
+      });
     } catch (err) {
       await transaction.rollback();
       throw err;

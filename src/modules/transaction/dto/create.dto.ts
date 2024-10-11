@@ -8,7 +8,7 @@ export class CreateTransactionDto {
   amount: number;
   type: TransactionType;
   currency: Supported_Currency = 'IDR';
-  status: TransactionStatus.PENDING;
+  status: TransactionStatus;
   description?: string;
   detail?: string;
   signature: string;
@@ -27,6 +27,7 @@ export class CreateTransactionDto {
     discount,
     fee,
     tax,
+    status = TransactionStatus.PENDING,
   }: CreateTransactionDtoProps) {
     this.userId = userId;
     this.amount = amount;
@@ -37,6 +38,7 @@ export class CreateTransactionDto {
     this.discount = discount;
     this.fee = fee;
     this.tax = tax;
+    this.status = status;
   }
 }
 
@@ -50,4 +52,5 @@ export interface CreateTransactionDtoProps {
   discount?: number;
   fee: number;
   tax: number;
+  status?: TransactionStatus;
 }

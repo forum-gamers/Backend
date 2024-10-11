@@ -31,6 +31,7 @@ async function bootstrap() {
       referrerPolicy: { policy: 'same-origin' },
     }),
   );
+  app.use(helmet.xssFilter());
   await app.listen(process.env.PORT || 3001);
 }
 bootstrap();

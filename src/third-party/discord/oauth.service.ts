@@ -17,7 +17,7 @@ export class DiscordOauthService extends BaseThirdPartyRequest {
       data: new URLSearchParams({
         grant_type: 'authorization_code',
         code,
-        redirect_uri: `${process.env.PUBLIC_APP_URL}/discord/callback`, // <- uri yang di pakai utk authorization dari fe
+        redirect_uri: `https://1d63-36-77-238-151.ngrok-free.app/discord/callback`, // <- uri yang di pakai utk authorization dari fe
         client_id: process.env.DISCORD_CLIENTID,
         client_secret: process.env.DISCORD_CLIENT_SECRET,
       }).toString(),

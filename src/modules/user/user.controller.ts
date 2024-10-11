@@ -526,7 +526,7 @@ export class UserController extends BaseController {
         await this.walletService.createWallet(new CreateWallet(user.id), {
           transaction,
         });
-
+      //kalo user ganti gmail,ini bakal error karena discord profilenya ke gmail lain
       discordData = await this.discordService.findByUserId(user.id, {
         transaction,
       });

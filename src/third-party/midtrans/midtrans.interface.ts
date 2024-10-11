@@ -23,3 +23,5 @@ export interface ChargeTopupProps {
   email: string;
   amount: number;
 }
+
+export type OrderType = 'tp' | 'py' | 'rf' | 'st' | 'unk';

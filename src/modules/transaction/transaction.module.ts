@@ -12,6 +12,7 @@ import { TransactionController } from './transaction.controller';
 import { TransactionValidation } from './transaction.validation';
 import { USER_VERIFIED_MIDDLEWARE } from 'src/constants/global.constant';
 import { WalletModule } from '../wallet/wallet.module';
+import { TransactionHelper } from './transaction.helper';
 
 @Module({
   imports: [
@@ -19,8 +20,8 @@ import { WalletModule } from '../wallet/wallet.module';
     ThirdPartyModule,
     WalletModule,
   ],
-  providers: [TransactionService, TransactionValidation],
-  exports: [TransactionService],
+  providers: [TransactionService, TransactionValidation, TransactionHelper],
+  exports: [TransactionService, TransactionHelper],
   controllers: [TransactionController],
 })
 export class TransactionModule implements NestModule {

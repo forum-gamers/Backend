@@ -75,6 +75,7 @@ import { TeamAchievement } from './models/teamachievement';
 import { Achievement } from './models/achievement';
 import { Tournament } from './models/tournament';
 import { UserAchievement } from './models/userachievement';
+import { TournamentModule } from './modules/tournament/tournament.module';
 const conf = require('../config/config.js');
 const environment = process.env.NODE_ENV ?? 'development';
 
@@ -113,9 +114,9 @@ const environment = process.env.NODE_ENV ?? 'development';
       username: conf?.[environment]?.username,
       password: conf?.[environment]?.password,
       database: conf?.[environment]?.database,
-      dialect: conf?.[environment]?.dialect,
+      dialect: 'postgres',
       uri: conf?.[environment]?.uri,
-      logging: environment !== 'production',
+      logging: false,
       pool: {
         idle: 5,
         max: 20,
@@ -187,6 +188,7 @@ const environment = process.env.NODE_ENV ?? 'development';
     TransactionModule,
     DiscordModule,
     CommunityEventModule,
+    TournamentModule,
   ],
 })
 export class AppModule implements NestModule {
