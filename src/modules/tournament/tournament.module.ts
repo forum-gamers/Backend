@@ -1,4 +1,5 @@
 import {
+  forwardRef,
   type MiddlewareConsumer,
   Module,
   type NestModule,
@@ -14,18 +15,23 @@ import { CommunityMemberModule } from '../communityMember/communityMember.module
 import { TournamentHelper } from './tournament.helper';
 import { WalletModule } from '../wallet/wallet.module';
 import { TransactionModule } from '../transaction/transaction.module';
+import { TeamModule } from '../team/team.module';
+import { TournamentParticipantModule } from '../tournamentParticipant/tournamentParticipant.module';
 
 @Module({
   imports: [
+    TeamModule,
     GameModule,
     WalletModule,
     ThirdPartyModule,
-    TransactionModule,
+    forwardRef(() => TransactionModule),
     CommunityMemberModule,
+    TournamentParticipantModule,
     SequelizeModule.forFeature([Tournament]),
   ],
   providers: [TournamentService, TournamentHelper],
   controllers: [TournamentController],
+  exports: [TournamentService],
 })
 export class TournamentModule implements NestModule {
   public configure(consumer: MiddlewareConsumer) {

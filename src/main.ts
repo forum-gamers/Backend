@@ -32,6 +32,9 @@ async function bootstrap() {
     }),
   );
   app.use(helmet.xssFilter());
-  await app.listen(process.env.PORT || 3001);
+  const port = process.env.PORT || 3001;
+
+  console.log(`Server running on port ${port}`);
+  await app.listen(port);
 }
 bootstrap();

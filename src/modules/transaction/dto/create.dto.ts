@@ -2,6 +2,10 @@ import { TransactionStatus } from 'src/constants/transaction.constant';
 import type { Supported_Currency } from 'src/interfaces/model.interface';
 import type { TransactionType } from 'src/interfaces/transaction.interface';
 import { v4 } from 'uuid';
+import {
+  CREATE_TOURNAMENT_TRANSACTION,
+  PARTICIPATE_TOURNAMENT,
+} from '../transaction.constant';
 
 export class CreateTransactionDto {
   userId: string;
@@ -16,6 +20,7 @@ export class CreateTransactionDto {
   fee: number;
   tax: number;
   id = v4();
+  context?: Record<string, any> = {};
 
   constructor({
     userId,
@@ -53,4 +58,18 @@ export interface CreateTransactionDtoProps {
   fee: number;
   tax: number;
   status?: TransactionStatus;
+  context?:
+    | CreateTournamentTransactionContext
+    | ParticipateTournamentTransactionContext;
 }
+
+export type CreateTournamentTransactionContext = {
+  type: typeof CREATE_TOURNAMENT_TRANSACTION;
+  tournamentId: number;
+};
+
+export type ParticipateTournamentTransactionContext = {
+  type: typeof PARTICIPATE_TOURNAMENT;
+  tournamentId: number;
+  teamId: string;
+};

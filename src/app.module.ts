@@ -76,6 +76,8 @@ import { Achievement } from './models/achievement';
 import { Tournament } from './models/tournament';
 import { UserAchievement } from './models/userachievement';
 import { TournamentModule } from './modules/tournament/tournament.module';
+import { TournamentParticipant } from './models/tournamentparticipant';
+import { TournamentParticipantModule } from './modules/tournamentParticipant/tournamentParticipant.module';
 const conf = require('../config/config.js');
 const environment = process.env.NODE_ENV ?? 'development';
 
@@ -153,6 +155,7 @@ const environment = process.env.NODE_ENV ?? 'development';
         TeamAchievement,
         Tournament,
         UserAchievement,
+        TournamentParticipant,
       ],
       synchronize: environment !== 'production',
       timezone: '+07:00',
@@ -189,6 +192,7 @@ const environment = process.env.NODE_ENV ?? 'development';
     DiscordModule,
     CommunityEventModule,
     TournamentModule,
+    TournamentParticipantModule,
   ],
 })
 export class AppModule implements NestModule {

@@ -1,4 +1,5 @@
 import {
+  BadGatewayException,
   BadRequestException,
   Body,
   ConflictException,
@@ -20,7 +21,11 @@ import {
 } from 'src/constants/transaction.constant';
 import { type UserAttributes } from 'src/models/user';
 import type { ChargeResp } from 'midtrans-client';
-import { CreateTransactionDto } from './dto/create.dto';
+import {
+  type CreateTournamentTransactionContext,
+  CreateTransactionDto,
+  type ParticipateTournamentTransactionContext,
+} from './dto/create.dto';
 import { TransactionFindBySignaturePipe } from './pipes/findBySignature.locked.pipe';
 import { type TransactionAttributes } from 'src/models/transaction';
 import { WalletService } from '../wallet/wallet.service';
@@ -33,13 +38,22 @@ import {
 } from 'src/third-party/midtrans/midtrans.constant';
 import { OrderType } from 'src/third-party/midtrans/midtrans.interface';
 import { TransactionHelper } from './transaction.helper';
+import {
+  CREATE_TOURNAMENT_TRANSACTION,
+  PARTICIPATE_TOURNAMENT,
+} from './transaction.constant';
+import { TournamentService } from '../tournament/tournament.service';
+import { TeamService } from '../team/team.service';
+import { TournamentParticipantService } from '../tournamentParticipant/tournamentParticipant.service';
 
 @Controller('transaction')
 export class TransactionController extends BaseController {
   constructor(
+    private readonly tournamentParticipantService: TournamentParticipantService,
     private readonly transactionValidation: TransactionValidation,
     private readonly transactionService: TransactionService,
     private readonly transactionHelper: TransactionHelper,
+    private readonly tournamentService: TournamentService,
     private readonly midtransService: MidtransService,
     private readonly walletService: WalletService,
     private readonly sequelize: Sequelize,
@@ -75,6 +89,13 @@ export class TransactionController extends BaseController {
       email: user.email,
       amount,
     });
+
+    if (
+      !charge ||
+      isNaN(Number(charge.status_code)) ||
+      Number(charge.status_code) >= 400
+    )
+      throw new BadGatewayException('failed to charge topup');
 
     const transaction = await this.transactionService.create(
       new CreateTransactionDto({
@@ -140,6 +161,73 @@ export class TransactionController extends BaseController {
             { transaction },
           );
       }
+
+      if (orderType === 'py')
+        if (
+          payload.transaction_status === 'settlement' &&
+          transactionData?.context
+        )
+          switch (transactionData.context.type) {
+            case CREATE_TOURNAMENT_TRANSACTION:
+              {
+                const { tournamentId = null } =
+                  transactionData.context as CreateTournamentTransactionContext;
+                if (!tournamentId)
+                  throw new BadGatewayException(
+                    'unexpectedly missing tournamentId',
+                  );
+
+                const tournament = await this.tournamentService.findById(
+                  tournamentId,
+                  { transaction, lock: Transaction.LOCK.UPDATE },
+                );
+                if (!tournament)
+                  throw new NotFoundException('tournament not found');
+
+                await this.tournamentService.updateMoneyPool(
+                  tournament.id,
+                  +tournament.moneyPool + +transactionData.amount,
+                  { transaction },
+                );
+              }
+              break;
+            case PARTICIPATE_TOURNAMENT:
+              {
+                const { tournamentId = null, teamId = null } =
+                  transactionData.context as ParticipateTournamentTransactionContext;
+                if (!tournamentId)
+                  throw new BadGatewayException(
+                    'unexpectedly missing tournamentId',
+                  );
+
+                if (!teamId)
+                  throw new BadGatewayException('unexpectedly missing teamId');
+
+                const participant =
+                  await this.tournamentParticipantService.findByTournamentIdAndTeamId(
+                    tournamentId,
+                    teamId,
+                    { transaction, lock: Transaction.LOCK.UPDATE },
+                  );
+                if (!participant)
+                  throw new NotFoundException('participant not found');
+
+                if (participant.status)
+                  throw new ConflictException(
+                    'participant already participated to the tournament',
+                  );
+
+                await this.tournamentParticipantService.updateStatus(
+                  participant.tournamentId,
+                  participant.teamId,
+                  true,
+                  { transaction },
+                );
+              }
+              break;
+            default:
+              throw new BadRequestException('invalid transaction context');
+          }
 
       await this.transactionService.updateStatus(
         transactionData.id,

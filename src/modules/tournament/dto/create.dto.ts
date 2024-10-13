@@ -37,6 +37,7 @@ export class CreateTournamentDto {
   status: TournamentStatus = 'preparation';
   isPublic = true;
   moneyPool = 0;
+  context = {};
 
   constructor({
     name,

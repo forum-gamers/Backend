@@ -1,11 +1,15 @@
 import {
+  BadGatewayException,
   BadRequestException,
   Body,
   ConflictException,
   Controller,
+  ForbiddenException,
   HttpCode,
   NotFoundException,
+  Param,
   ParseIntPipe,
+  ParseUUIDPipe,
   Post,
   UploadedFile,
   UseGuards,
@@ -21,7 +25,10 @@ import { FileValidationPipe } from 'src/utils/pipes/file.pipe';
 import * as yup from 'yup';
 import { SUPPORTED_IMAGE_TYPE } from 'src/constants/global.constant';
 import { CreateTournamentPipe } from './pipes/create.pipe';
-import type { CreateTournamentBodyProps } from './tournament.interface';
+import type {
+  CreateTournamentBodyProps,
+  JointTournamentProps,
+} from './tournament.interface';
 import { RequiredField } from 'src/utils/pipes/requiredField.pipe';
 import { GameFindById } from '../game/pipes/findById.pipe';
 import { type GameAttributes } from 'src/models/game';
@@ -42,6 +49,18 @@ import {
 import { MINIMUM_FREE_ADMIN } from 'src/third-party/midtrans/midtrans.constant';
 import { TransactionHelper } from '../transaction/transaction.helper';
 import type { ChargeResp } from 'midtrans-client';
+import { TournamentFindByIdLockedPipe } from './pipes/findById.locked.pipe';
+import { type TournamentAttributes } from 'src/models/tournament';
+import { JoinTournamentBodyPipe } from './pipes/joinTournament.pipe';
+import { PaymentRequiredException } from 'src/utils/global/paymentRequired.error';
+import { TournamentParticipantService } from '../tournamentParticipant/tournamentParticipant.service';
+import { TeamAttributes } from 'src/models/team';
+import { TeamFindById } from '../team/pipes/findById.pipe';
+import { CreateTournamentParticipantDto } from '../tournamentParticipant/dto/create.dto';
+import {
+  CREATE_TOURNAMENT_TRANSACTION,
+  PARTICIPATE_TOURNAMENT,
+} from '../transaction/transaction.constant';
 
 @Controller('tournament')
 export class TournamentController extends BaseController {
@@ -54,6 +73,7 @@ export class TournamentController extends BaseController {
     private readonly midtransService: MidtransService,
     private readonly transactionService: TransactionService,
     private readonly transactionHelper: TransactionHelper,
+    private readonly tournamentParticipantService: TournamentParticipantService,
   ) {
     super();
   }
@@ -130,82 +150,6 @@ export class TournamentController extends BaseController {
     let uploadedFileId: string | null = null;
     let moneyPool = 0;
     try {
-      if (paymentType)
-        switch (paymentType) {
-          case 'wallet': {
-            const wallet = await this.walletService.findByUserId(user.id);
-            if (!wallet) throw new NotFoundException('wallet not found');
-
-            if (wallet.balance < pricePool)
-              throw new BadRequestException('balance not enough');
-
-            await this.walletService.updateBalance(
-              wallet.userId,
-              +wallet.balance - pricePool,
-              { transaction },
-            );
-
-            moneyPool = pricePool;
-            transactionData = await this.transactionService.create(
-              new CreateTransactionDto({
-                type: TransactionType.PAYMENT,
-                userId: user.id,
-                signature: this.midtransService.generateSignature(
-                  this.midtransService.generateTransactionId('payment'),
-                  '200',
-                  pricePool.toString(),
-                ),
-                amount: pricePool,
-                fee: 0,
-                tax: 0,
-                discount: 0,
-                description: 'Deploying tournament with wallet',
-                status: TransactionStatus.COMPLETE,
-              }),
-              { transaction },
-            );
-
-            break;
-          }
-          case 'transfer': {
-            chargeData = await this.midtransService.chargePayment(
-              paymentMethod,
-              {
-                username: user.username,
-                email: user.email,
-                amount: pricePool,
-                transactionName: 'Creating Tournament',
-              },
-            );
-
-            transactionData = await this.transactionService.create(
-              new CreateTransactionDto({
-                type: TransactionType.PAYMENT,
-                userId: user.id,
-                signature: this.midtransService.generateSignature(
-                  chargeData.order_id,
-                  '200',
-                  chargeData.gross_amount,
-                ),
-                amount: pricePool,
-                fee: pricePool < MINIMUM_FREE_ADMIN ? 4500 : 0,
-                tax: 0,
-                discount: 0,
-                description: 'Creating tournament with transfer',
-                status: TransactionStatus.PENDING,
-                detail:
-                  pricePool < MINIMUM_FREE_ADMIN
-                    ? '+ Midtrans Fee: 4500'
-                    : null,
-              }),
-              { transaction },
-            );
-            break;
-          }
-          default:
-            throw new BadRequestException('invalid payment type');
-        }
-
       const { fileId, url } = await this.imagekitService.uploadFile({
         file: buffer,
         fileName: originalname,
@@ -235,6 +179,95 @@ export class TournamentController extends BaseController {
         { transaction },
       );
 
+      if (paymentType)
+        switch (paymentType) {
+          case 'wallet': {
+            const wallet = await this.walletService.findByUserId(user.id, {
+              lock: transaction.LOCK.UPDATE,
+              transaction,
+            });
+            if (!wallet) throw new NotFoundException('wallet not found');
+
+            if (wallet.balance < +pricePool)
+              throw new BadRequestException('balance not enough');
+
+            await this.walletService.updateBalance(
+              wallet.userId,
+              +wallet.balance - +pricePool,
+              { transaction },
+            );
+
+            moneyPool = pricePool;
+            transactionData = await this.transactionService.create(
+              new CreateTransactionDto({
+                type: TransactionType.PAYMENT,
+                userId: user.id,
+                signature: this.midtransService.generateSignature(
+                  this.midtransService.generateTransactionId('payment'),
+                  '200',
+                  pricePool.toString(),
+                ),
+                amount: pricePool,
+                fee: 0,
+                tax: 0,
+                discount: 0,
+                description: 'Deploying tournament with wallet',
+                status: TransactionStatus.COMPLETE,
+                context: {
+                  type: CREATE_TOURNAMENT_TRANSACTION,
+                  tournamentId: data.id,
+                },
+              }),
+              { transaction },
+            );
+
+            break;
+          }
+          case 'transfer': {
+            chargeData = await this.midtransService.chargePayment(
+              paymentMethod,
+              {
+                username: user.username,
+                email: user.email,
+                amount: pricePool,
+                transactionName: 'Creating Tournament',
+              },
+            );
+            if (
+              !chargeData ||
+              isNaN(Number(chargeData.status_code)) ||
+              Number(chargeData.status_code) >= 400
+            )
+              throw new BadGatewayException('charge payment failed');
+
+            transactionData = await this.transactionService.create(
+              new CreateTransactionDto({
+                type: TransactionType.PAYMENT,
+                userId: user.id,
+                signature: this.midtransService.generateSignature(
+                  chargeData.order_id,
+                  '200',
+                  chargeData.gross_amount,
+                ),
+                amount: +pricePool,
+                fee: +pricePool < MINIMUM_FREE_ADMIN ? 4500 : 0,
+                tax: 0,
+                discount: 0,
+                description: 'Creating tournament with transfer',
+                status: TransactionStatus.PENDING,
+                detail:
+                  pricePool < MINIMUM_FREE_ADMIN
+                    ? '+ Midtrans Fee: 4500'
+                    : null,
+              }),
+              { transaction },
+            );
+            break;
+          }
+          default:
+            throw new BadRequestException('invalid payment type');
+        }
+
       await transaction.commit();
       return this.sendResponseBody({
         message: 'OK',
@@ -253,6 +286,191 @@ export class TournamentController extends BaseController {
     } catch (err) {
       await transaction.rollback();
       if (uploadedFileId) this.imagekitService.bulkDelete([uploadedFileId]);
+      throw err;
+    }
+  }
+
+  @Post(':id')
+  @HttpCode(201)
+  @UseGuards(
+    new RateLimitGuard({
+      windowMs: 1 * 60 * 1000,
+      max: 5,
+      message: 'Too many requests from this IP, please try again in 1 minute.',
+    }),
+  )
+  public async joinTournament(
+    @Param('id', ParseIntPipe, TournamentFindByIdLockedPipe)
+    tournament: TournamentAttributes | null,
+    @Body('teamId', RequiredField, ParseUUIDPipe, TeamFindById)
+    team: TeamAttributes | null,
+    @Body(JoinTournamentBodyPipe)
+    { paymentMethod = null, paymentType = null }: JointTournamentProps,
+    @UserMe() user: UserAttributes,
+  ) {
+    if (!tournament) throw new NotFoundException('tournament not found');
+    const NEED_PAYMENT = tournament.moneyPool < tournament.pricePool;
+    if (NEED_PAYMENT && (!paymentType || !paymentMethod))
+      throw new PaymentRequiredException();
+
+    if (!team) throw new NotFoundException('team not found');
+    if (team.owner !== user.id) throw new ForbiddenException('forbidden');
+    if (team.gameId !== tournament.gameId)
+      throw new BadRequestException('team and tournament game not match');
+
+    const exists =
+      await this.tournamentParticipantService.findByTournamentIdAndTeamId(
+        tournament.id,
+        team.id,
+      );
+    if (exists)
+      throw new ConflictException(
+        exists.status
+          ? 'team already joined tournament'
+          : 'team already joined tournament and need to pay the registration fee',
+      );
+
+    const transaction = await this.sequelize.transaction();
+    try {
+      if (
+        tournament.slot <=
+        (await this.tournamentParticipantService.countParticipant(
+          tournament.id,
+          true,
+          { transaction },
+        ))
+      )
+        throw new ConflictException('slot full');
+
+      let transactionData: TransactionAttributes | null = null;
+      let charge: ChargeResp | null = null;
+      if (NEED_PAYMENT) {
+        switch (paymentType) {
+          case 'wallet':
+            {
+              const wallet = await this.walletService.findByUserId(team.owner, {
+                lock: transaction.LOCK.UPDATE,
+                transaction,
+              });
+              if (!wallet) throw new NotFoundException('wallet not found');
+
+              if (+wallet.balance < +tournament.registrationFee)
+                throw new BadRequestException('balance not enough');
+
+              await this.walletService.updateBalance(
+                wallet.userId,
+                +wallet.balance - +tournament.registrationFee,
+                { transaction },
+              );
+
+              await this.tournamentService.updateMoneyPool(
+                +tournament.id,
+                +tournament.moneyPool + +tournament.registrationFee,
+                {
+                  transaction,
+                },
+              );
+
+              transactionData = await this.transactionService.create(
+                new CreateTransactionDto({
+                  type: TransactionType.PAYMENT,
+                  userId: team.owner,
+                  signature: this.midtransService.generateSignature(
+                    this.midtransService.generateTransactionId('payment'),
+                    '200',
+                    tournament.registrationFee.toString(),
+                  ),
+                  amount: +tournament.registrationFee,
+                  fee: 0,
+                  tax: 0,
+                  discount: 0,
+                  description: 'joining tournament payment via wallet',
+                  status: TransactionStatus.COMPLETE,
+                  context: {
+                    type: PARTICIPATE_TOURNAMENT,
+                    teamId: team.id,
+                    tournamentId: tournament.id,
+                  },
+                }),
+                { transaction },
+              );
+            }
+            break;
+          case 'transfer':
+            {
+              charge = await this.midtransService.chargePayment(paymentMethod, {
+                username: user.username,
+                email: user.email,
+                amount: tournament.pricePool,
+                transactionName: 'Joining tournament',
+              });
+              if (
+                !charge ||
+                isNaN(Number(charge.status_code)) ||
+                Number(charge?.status_code) >= 400
+              )
+                throw new BadGatewayException('charge payment failed');
+
+              transactionData = await this.transactionService.create(
+                new CreateTransactionDto({
+                  type: TransactionType.PAYMENT,
+                  userId: team.owner,
+                  signature: this.midtransService.generateSignature(
+                    charge.order_id,
+                    '200',
+                    charge.gross_amount,
+                  ),
+                  amount: +tournament.registrationFee,
+                  fee:
+                    +tournament.registrationFee < MINIMUM_FREE_ADMIN ? 4500 : 0,
+                  tax: 0,
+                  discount: 0,
+                  description: 'joining tournament payment via ' + paymentType,
+                  status: TransactionStatus.COMPLETE,
+                  detail:
+                    +tournament.registrationFee < MINIMUM_FREE_ADMIN
+                      ? '+ Midtrans Fee: 4500'
+                      : null,
+                  context: {
+                    type: PARTICIPATE_TOURNAMENT,
+                    teamId: team.id,
+                    tournamentId: tournament.id,
+                  },
+                }),
+                { transaction },
+              );
+            }
+            break;
+          default:
+            throw new BadRequestException('invalid payment type');
+        }
+      }
+      const participant = await this.tournamentParticipantService.create(
+        new CreateTournamentParticipantDto({
+          tournamentId: tournament.id,
+          teamId: team.id,
+          status: !NEED_PAYMENT || (NEED_PAYMENT && paymentType === 'wallet'),
+        }),
+        { transaction },
+      );
+
+      await transaction.commit();
+      return this.sendResponseBody({
+        message: 'OK',
+        code: 201,
+        data: {
+          participant,
+          transaction:
+            transactionData && charge
+              ? this.transactionHelper.generateTransactionResponse(
+                  transactionData.id,
+                  charge,
+                )
+              : null,
+        },
+      });
+    } catch (err) {
+      await transaction.rollback();
       throw err;
     }
   }

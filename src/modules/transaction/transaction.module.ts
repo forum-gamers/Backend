@@ -1,4 +1,5 @@
 import {
+  forwardRef,
   MiddlewareConsumer,
   Module,
   NestModule,
@@ -13,12 +14,16 @@ import { TransactionValidation } from './transaction.validation';
 import { USER_VERIFIED_MIDDLEWARE } from 'src/constants/global.constant';
 import { WalletModule } from '../wallet/wallet.module';
 import { TransactionHelper } from './transaction.helper';
+import { TournamentModule } from '../tournament/tournament.module';
+import { TournamentParticipantModule } from '../tournamentParticipant/tournamentParticipant.module';
 
 @Module({
   imports: [
     SequelizeModule.forFeature([Transaction]),
     ThirdPartyModule,
     WalletModule,
+    forwardRef(() => TournamentModule),
+    TournamentParticipantModule,
   ],
   providers: [TransactionService, TransactionValidation, TransactionHelper],
   exports: [TransactionService, TransactionHelper],

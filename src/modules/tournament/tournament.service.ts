@@ -2,7 +2,12 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Tournament, type TournamentAttributes } from 'src/models/tournament';
 import { CreateTournamentDto } from './dto/create.dto';
-import { FindOptions, Op, type CreateOptions } from 'sequelize';
+import {
+  type FindOptions,
+  Op,
+  type UpdateOptions,
+  type CreateOptions,
+} from 'sequelize';
 
 @Injectable()
 export class TournamentService {
@@ -47,5 +52,17 @@ export class TournamentService {
         status: { [Op.or]: ['started', 'preparation'] },
       },
     });
+  }
+
+  public async findById(id: number, opts?: FindOptions<TournamentAttributes>) {
+    return await this.model.findByPk(id, opts);
+  }
+
+  public async updateMoneyPool(
+    id: number,
+    moneyPool: number,
+    opts?: Omit<UpdateOptions<TournamentAttributes>, 'where'>,
+  ) {
+    return this.model.update({ moneyPool }, { ...opts, where: { id } });
   }
 }

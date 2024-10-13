@@ -1,6 +1,6 @@
-import type { PaymentProvider } from 'src/interfaces/transaction.interface';
+import type { PaymentOptions } from '../transaction/transaction.interface';
 
-export interface CreateTournamentBodyProps {
+export interface CreateTournamentBodyProps extends Partial<PaymentOptions> {
   name: string;
   gameId: number;
   pricePool: number;
@@ -12,6 +12,8 @@ export interface CreateTournamentBodyProps {
   tags: string[];
   communityId?: number | null;
   isPublic?: boolean;
-  paymentType: 'wallet' | 'transfer';
-  paymentMethod?: PaymentProvider | null;
+}
+
+export interface JointTournamentProps extends Partial<PaymentOptions> {
+  teamId: string;
 }

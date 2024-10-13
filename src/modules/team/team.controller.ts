@@ -6,8 +6,6 @@ import {
   UploadedFile,
   UseGuards,
   UseInterceptors,
-  HttpException,
-  HttpStatus,
   Delete,
   Param,
   ParseUUIDPipe,
@@ -42,6 +40,7 @@ import { GameFindById } from '../game/pipes/findById.pipe';
 import { type GameAttributes } from 'src/models/game';
 import { QueryPipe } from 'src/utils/pipes/query.pipe';
 import type { BaseQuery } from 'src/interfaces/request.interface';
+import { PaymentRequiredException } from 'src/utils/global/paymentRequired.error';
 
 @Controller('team')
 export class TeamController extends BaseController {
@@ -96,7 +95,7 @@ export class TeamController extends BaseController {
       await this.teamValidation.validateCreateTeam(payload);
 
     if ((await this.teamService.countByOwner(user.id)) >= 5)
-      throw new HttpException('payment required', HttpStatus.PAYMENT_REQUIRED);
+      throw new PaymentRequiredException();
 
     const transaction = await this.sequelize.transaction();
     const data = new CreateTeamDto({
@@ -193,7 +192,7 @@ export class TeamController extends BaseController {
 
     if (team.owner !== userId) throw new ForbiddenException('forbidden');
     if (team.totalMember + 1 >= team.maxMember)
-      throw new HttpException('team is full', HttpStatus.PAYMENT_REQUIRED);
+      throw new PaymentRequiredException('team is full');
     const member = await this.teamMemberService.findByTeamIdAndUserId(
       team.id,
       user.id,

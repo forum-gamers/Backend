@@ -21,6 +21,7 @@ export interface TransactionAttributes {
   tax: number;
   createdAt: Date;
   updatedAt: Date;
+  context: Record<string, any>;
 }
 
 @Table<Model<TransactionAttributes, TransactionAttributes>>({
@@ -167,4 +168,11 @@ export class Transaction
     type: DataTypes.DATE,
   })
   public updatedAt: Date;
+
+  @Column({
+    allowNull: true,
+    defaultValue: {},
+    type: DataTypes.JSONB,
+  })
+  public context: Record<string, any>;
 }
