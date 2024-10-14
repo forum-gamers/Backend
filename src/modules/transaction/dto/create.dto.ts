@@ -6,6 +6,7 @@ import {
   CREATE_TOURNAMENT_TRANSACTION,
   PARTICIPATE_TOURNAMENT,
 } from '../transaction.constant';
+import type { EWalletActionResp, VaNumber } from 'midtrans-client';
 
 export class CreateTransactionDto {
   userId: string;
@@ -20,7 +21,10 @@ export class CreateTransactionDto {
   fee: number;
   tax: number;
   id = v4();
-  context?: Record<string, any> = {};
+  context?: Record<string, any> = {
+    vaNumber: [],
+    actions: [],
+  };
 
   constructor({
     userId,
@@ -33,6 +37,7 @@ export class CreateTransactionDto {
     fee,
     tax,
     status = TransactionStatus.PENDING,
+    context = null,
   }: CreateTransactionDtoProps) {
     this.userId = userId;
     this.amount = amount;
@@ -44,6 +49,7 @@ export class CreateTransactionDto {
     this.fee = fee;
     this.tax = tax;
     this.status = status;
+    this.context = { ...this.context, ...context };
   }
 }
 
@@ -58,9 +64,12 @@ export interface CreateTransactionDtoProps {
   fee: number;
   tax: number;
   status?: TransactionStatus;
-  context?:
-    | CreateTournamentTransactionContext
-    | ParticipateTournamentTransactionContext;
+  context?: Partial<{ vaNumber?: VaNumber[]; actions?: EWalletActionResp[] }> &
+    (
+      | {}
+      | CreateTournamentTransactionContext
+      | ParticipateTournamentTransactionContext
+    );
 }
 
 export type CreateTournamentTransactionContext = {

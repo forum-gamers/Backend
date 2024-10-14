@@ -105,7 +105,7 @@ export class PostService {
     { page, limit }: PostResponseQuery,
     userId: string,
   ) {
-    const [{ datas, totalData }] =
+    const [{ datas, totalData } = { datas: [], totalData: 0 }] =
       await this.sequelize.query<PostResponseQueryDB>(
         `WITH 
         top_tags AS (
@@ -461,6 +461,8 @@ export class PostService {
       },
     );
 
+    if (!data) return null;
+
     return data;
   }
 
@@ -470,7 +472,7 @@ export class PostService {
     withMediaOnly: boolean,
     { page = 1, limit = 10 }: QueryParamsDto,
   ) {
-    const [{ datas, totalData }] =
+    const [{ datas, totalData } = { datas: [], totalData: 0 }] =
       await this.sequelize.query<PostResponseQueryDB>(
         `WITH filtered_posts AS (
         SELECT 
@@ -591,7 +593,7 @@ export class PostService {
     id: string,
     { page = 1, limit = 15 }: QueryParamsDto,
   ) {
-    const [{ datas, totalData }] =
+    const [{ datas, totalData } = { datas: [], totalData: 0 }] =
       await this.sequelize.query<PostResponseQueryDB>(
         `WITH liked_posts AS (
           SELECT 
@@ -737,7 +739,7 @@ export class PostService {
     id: string,
     { page = 1, limit = 15 }: QueryParamsDto,
   ) {
-    const [{ datas, totalData }] =
+    const [{ datas, totalData } = { datas: [], totalData: 0 }] =
       await this.sequelize.query<PostResponseQueryDB>(
         `WITH bookmarked_posts AS (
           SELECT 

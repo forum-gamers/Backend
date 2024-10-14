@@ -24,6 +24,7 @@ export class CreateTournamentPipe
           name: yup
             .string()
             .typeError('name must be a string')
+            .trim()
             .required('name is required'),
           gameId: yup
             .number()
@@ -32,6 +33,7 @@ export class CreateTournamentPipe
           description: yup
             .string()
             .transform((_, val?: string) => (!val ? null : val.trim()))
+            .trim()
             .default(null)
             .nullable()
             .optional(),
@@ -65,6 +67,7 @@ export class CreateTournamentPipe
           location: yup
             .string()
             .typeError('location must be a string')
+            .trim()
             .required('location is required'),
           tags: yup
             .array()

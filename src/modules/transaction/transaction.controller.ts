@@ -112,6 +112,10 @@ export class TransactionController extends BaseController {
         discount: 0,
         description: 'Topup wallet via ' + paymentType,
         detail: amount < MINIMUM_FREE_ADMIN ? '+ Midtrans Fee: 4500' : null,
+        context: {
+          vaNumber: charge?.va_numbers ?? [],
+          actions: charge?.actions ?? [],
+        },
       }),
     );
 

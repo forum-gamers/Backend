@@ -5,12 +5,14 @@ import {
   ConflictException,
   Controller,
   ForbiddenException,
+  Get,
   HttpCode,
   NotFoundException,
   Param,
   ParseIntPipe,
   ParseUUIDPipe,
   Post,
+  Query,
   UploadedFile,
   UseGuards,
   UseInterceptors,
@@ -61,6 +63,8 @@ import {
   CREATE_TOURNAMENT_TRANSACTION,
   PARTICIPATE_TOURNAMENT,
 } from '../transaction/transaction.constant';
+import { QueryPipe } from 'src/utils/pipes/query.pipe';
+import type { BaseQuery } from 'src/interfaces/request.interface';
 
 @Controller('tournament')
 export class TournamentController extends BaseController {
@@ -148,7 +152,6 @@ export class TournamentController extends BaseController {
     let transactionData: TransactionAttributes | null = null;
     let chargeData: ChargeResp | null = null;
     let uploadedFileId: string | null = null;
-    let moneyPool = 0;
     try {
       const { fileId, url } = await this.imagekitService.uploadFile({
         file: buffer,
@@ -174,7 +177,7 @@ export class TournamentController extends BaseController {
           imageId: fileId,
           isPublic: !!communityId ? isPublic : true,
           userId: user.id,
-          moneyPool,
+          moneyPool: 0,
         }),
         { transaction },
       );
@@ -197,7 +200,9 @@ export class TournamentController extends BaseController {
               { transaction },
             );
 
-            moneyPool = pricePool;
+            await this.tournamentService.updateMoneyPool(data.id, +pricePool, {
+              transaction,
+            });
             transactionData = await this.transactionService.create(
               new CreateTransactionDto({
                 type: TransactionType.PAYMENT,
@@ -259,6 +264,12 @@ export class TournamentController extends BaseController {
                   pricePool < MINIMUM_FREE_ADMIN
                     ? '+ Midtrans Fee: 4500'
                     : null,
+                context: {
+                  type: CREATE_TOURNAMENT_TRANSACTION,
+                  tournamentId: data.id,
+                  actions: chargeData?.actions ?? [],
+                  vaNumber: chargeData?.va_numbers ?? [],
+                },
               }),
               { transaction },
             );
@@ -435,6 +446,8 @@ export class TournamentController extends BaseController {
                     type: PARTICIPATE_TOURNAMENT,
                     teamId: team.id,
                     tournamentId: tournament.id,
+                    vaNumber: charge?.va_numbers ?? [],
+                    actions: charge?.actions ?? [],
                   },
                 }),
                 { transaction },
@@ -473,5 +486,38 @@ export class TournamentController extends BaseController {
       await transaction.rollback();
       throw err;
     }
+  }
+
+  @Get()
+  @HttpCode(200)
+  public async findAll(
+    @Query(
+      new QueryPipe(1, 10, {
+        q: yup.string().optional(),
+      }),
+    )
+    { page, limit, q = null }: BaseQuery & { q?: string },
+    @UserMe('id') userId: string,
+  ) {
+    const { datas, totalData } = await this.tournamentService.getTournament({
+      page,
+      limit,
+      q,
+      userId,
+    });
+
+    return this.sendResponseBody(
+      {
+        message: 'OK',
+        code: 200,
+        data: datas,
+      },
+      {
+        totalData,
+        totalPage: Math.ceil(totalData / limit),
+        page,
+        limit,
+      },
+    );
   }
 }

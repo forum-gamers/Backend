@@ -1,12 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { type ChargeResp } from 'midtrans-client';
+import type { TransactionResponse } from './transaction.interface';
 
 @Injectable()
 export class TransactionHelper {
   public generateTransactionResponse(
     transactionId: string,
     charge: ChargeResp,
-  ) {
+  ): TransactionResponse {
     return {
       orderId: charge.order_id,
       grossAmount: +charge.gross_amount,
