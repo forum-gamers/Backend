@@ -65,12 +65,17 @@ export class PostValidation extends BaseValidation {
                 /^(?=.*\S)[a-zA-Z0-9.,!?'"()\-\n ]{1,2000}$/.test(value)) ||
               (!value && mediaExists),
           ),
-        allowComment: yup.boolean().default(true),
+        allowComment: yup.boolean().transform(Boolean).default(true),
         privacy: yup
           .string()
           .oneOf(['public', 'private', 'friend-only'], 'invalid privacy')
           .default('public'),
-        communityId: yup.number().optional(),
+        communityId: yup
+          .number()
+          .transform((_, val) => (typeof val === 'number' ? val : null))
+          .default(null)
+          .optional()
+          .nullable(),
       }),
       data,
     );

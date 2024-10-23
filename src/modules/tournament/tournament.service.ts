@@ -77,8 +77,9 @@ export class TournamentService {
     page = 1,
     limit = 10,
     q,
+    gameId = [],
     userId,
-  }: BaseQuery & { q?: string; userId: string }) {
+  }: BaseQuery & { q?: string; userId: string; gameId?: number[] }) {
     const bind: any[] = [(page - 1) * limit, limit, userId];
     if (q) bind.push(q);
 
@@ -139,7 +140,14 @@ export class TournamentService {
         LEFT JOIN "Games" g ON t."gameId" = g.id
         LEFT JOIN "Users" u ON t."userId" = u.id
         LEFT JOIN "Communities" c ON t."communityId" = c.id
-        ${q ? `WHERE t.name ILIKE '%' || $4 || '%' OR t.description ILIKE '%' || $4 || '%' OR g.name ILIKE '%' || $4 || '%'` : ''}
+        ${
+          !!q || !!gameId.length
+            ? `WHERE 
+          ${q ? ` (t.name ILIKE '%' || $4 || '%' OR t.description ILIKE '%' || $4 || '%' OR g.name ILIKE '%' || $4 || '%')` : ''} 
+          ${gameId.length ? `${q ? 'AND' : ''} g.id IN (${gameId.join(',')})` : ''}
+        `
+            : ''
+        }
         GROUP BY 
           t.id, 
           t.name, 

@@ -43,7 +43,6 @@ import {
   PARTICIPATE_TOURNAMENT,
 } from './transaction.constant';
 import { TournamentService } from '../tournament/tournament.service';
-import { TeamService } from '../team/team.service';
 import { TournamentParticipantService } from '../tournamentParticipant/tournamentParticipant.service';
 
 @Controller('transaction')

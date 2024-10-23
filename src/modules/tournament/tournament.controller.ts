@@ -494,9 +494,24 @@ export class TournamentController extends BaseController {
     @Query(
       new QueryPipe(1, 10, {
         q: yup.string().optional(),
+        gameId: yup
+          .array()
+          .of(yup.number())
+          .transform((_, val: string | null | string[]) =>
+            typeof val === 'string'
+              ? val.split(',').map(Number).filter(Boolean)
+              : [],
+          )
+          .optional()
+          .nullable(),
       }),
     )
-    { page, limit, q = null }: BaseQuery & { q?: string },
+    {
+      page,
+      limit,
+      q = null,
+      gameId = [],
+    }: BaseQuery & { q?: string; gameId: number[] },
     @UserMe('id') userId: string,
   ) {
     const { datas, totalData } = await this.tournamentService.getTournament({
@@ -504,6 +519,7 @@ export class TournamentController extends BaseController {
       limit,
       q,
       userId,
+      gameId,
     });
 
     return this.sendResponseBody(

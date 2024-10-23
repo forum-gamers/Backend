@@ -118,7 +118,7 @@ const environment = process.env.NODE_ENV ?? 'development';
       database: conf?.[environment]?.database,
       dialect: 'postgres',
       uri: conf?.[environment]?.uri,
-      logging: false,
+      logging: process.env.NODE_ENV !== 'production',
       pool: {
         idle: 5,
         max: 20,

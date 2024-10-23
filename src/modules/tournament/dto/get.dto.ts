@@ -13,6 +13,7 @@ import type { TournamentStatus } from 'src/interfaces/model.interface';
 import { GetCommunityDto } from 'src/modules/community/dto/get.dto';
 import { BaseUserDto } from 'src/modules/user/dto/baseUser.dto';
 import { IsNotNaN } from 'src/utils/decorators/IsNotNaN.decorator';
+import { TOURNAMENT_STATUS } from '../tournament.constant';
 
 export class GetTournamentDto {
   @IsInt()
@@ -95,6 +96,6 @@ export class GetTournamentDto {
   public isPublic: boolean;
 
   @IsString()
-  @IsIn(['preparation', 'started', 'finished', 'cancel'])
+  @IsIn(TOURNAMENT_STATUS)
   public status: TournamentStatus;
 }
